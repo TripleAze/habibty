@@ -7,6 +7,8 @@ import BottomNav from '@/components/BottomNav';
 import { addMessage } from '@/lib/messages';
 import { MessageType, DeliveryType } from '@/types';
 
+console.log("Project ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+
 const MOOD_CHIPS = [
   'Sad',
   'Lonely',
@@ -210,3 +212,5 @@ export default function CreatePage() {
     </div>
   );
 }
+
+
