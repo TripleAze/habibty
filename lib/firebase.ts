@@ -30,4 +30,4 @@ if (isFirebaseConfigured && getApps().length === 0) {
   db = {} as Firestore;
 }
 
-export { db, isFirebaseConfigured };
+export { app, db, isFirebaseConfigured };
