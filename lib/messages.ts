@@ -1,0 +1,183 @@
+import {
+  collection,
+  doc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  Timestamp,
+} from 'firebase/firestore';
+import { db } from './firebase';
+import { Message, MessageStatus } from '@/types';
+
+const MESSAGES_COLLECTION = 'messages';
+
+export async function getMessages(): Promise<Message[]> {
+  try {
+    const q = query(
+      collection(db, MESSAGES_COLLECTION),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Message[];
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    // Return mock data for development without Firebase
+    return getMockMessages();
+  }
+}
+
+export async function addMessage(
+  message: Omit<Message, 'id' | 'createdAt'>
+): Promise<Message> {
+  try {
+    const docRef = await addDoc(collection(db, MESSAGES_COLLECTION), {
+      ...message,
+      createdAt: Date.now(),
+    });
+    return {
+      id: docRef.id,
+      ...message,
+      createdAt: Date.now(),
+    };
+  } catch (error) {
+    console.error('Error adding message:', error);
+    // Return mock for development
+    return {
+      id: Math.random().toString(36).substr(2, 9),
+      ...message,
+      createdAt: Date.now(),
+    };
+  }
+}
+
+export async function updateMessageStatus(
+  messageId: string,
+  status: MessageStatus
+): Promise<void> {
+  try {
+    const docRef = doc(db, MESSAGES_COLLECTION, messageId);
+    await updateDoc(docRef, { status });
+  } catch (error) {
+    console.error('Error updating message status:', error);
+  }
+}
+
+export async function unlockDueMessages(): Promise<void> {
+  try {
+    const messages = await getMessages();
+    const now = Date.now();
+
+    const updates = messages
+      .filter(
+        (msg) =>
+          msg.status === 'locked' &&
+          msg.deliveryType === 'scheduled' &&
+          msg.deliveryTime &&
+          msg.deliveryTime <= now
+      )
+      .map((msg) => updateMessageStatus(msg.id, 'available'));
+
+    await Promise.all(updates);
+  } catch (error) {
+    console.error('Error unlocking messages:', error);
+  }
+}
+
+// Mock data for development
+function getMockMessages(): Message[] {
+  const now = Date.now();
+  return [
+    {
+      id: '1',
+      title: 'Open when you feel sad',
+      content:
+        "Hey you. I know today feels heavy, and that's okay. You don't have to be okay all the time. But I want you to know — you're not alone, not even a little bit. I'm thinking of you right now, and I love every version of you, especially the ones that need a quiet moment. You're going to be alright, I promise.",
+      type: 'text',
+      status: 'available',
+      deliveryType: 'immediate',
+      createdAt: now - 86400000,
+      emoji: '🌧️',
+    },
+    {
+      id: '2',
+      title: 'I miss you so much',
+      content:
+        "If you're reading this, you're probably thinking of me. Good. I'm thinking of you too — always. The distance is just distance. My heart is wherever you are.",
+      type: 'text',
+      status: 'available',
+      deliveryType: 'immediate',
+      createdAt: now - 172800000,
+      emoji: '🌙',
+    },
+    {
+      id: '3',
+      title: 'Good morning, love',
+      content: '',
+      type: 'voice',
+      status: 'available',
+      deliveryType: 'immediate',
+      createdAt: now - 3600000,
+      emoji: '☀️',
+      meta: 'Voice note · 0:32',
+    },
+    {
+      id: '4',
+      title: "Open when you're proud of yourself",
+      content:
+        "Look at you. Seriously. Do you ever stop and realize how incredibly far you've come? I've watched you grow and fight for things and show up even when you didn't feel like it. That matters. You matter. I'm so proud of you — always.",
+      type: 'text',
+      status: 'available',
+      deliveryType: 'immediate',
+      createdAt: now - 259200000,
+      emoji: '🌟',
+    },
+    {
+      id: '5',
+      title: "Open when you can't sleep",
+      content: 'A soothing message for sleepless nights...',
+      type: 'voice',
+      status: 'locked',
+      deliveryType: 'scheduled',
+      deliveryTime: now + 604800000, // 1 week from now
+      createdAt: now - 432000000,
+      emoji: '🔒',
+    },
+    {
+      id: '6',
+      title: 'Our 6 month anniversary',
+      content: 'Happy anniversary my love!',
+      type: 'text',
+      status: 'locked',
+      deliveryType: 'scheduled',
+      deliveryTime: now + 1209600000, // 2 weeks from now
+      createdAt: now - 604800000,
+      emoji: '🔒',
+    },
+    {
+      id: '7',
+      title: 'Open when you need a hug',
+      content: 'Sending you the biggest virtual hug...',
+      type: 'text',
+      status: 'locked',
+      deliveryType: 'scheduled',
+      createdAt: now - 345600000,
+      emoji: '🔒',
+    },
+    {
+      id: '8',
+      title: 'Read this when you doubt yourself',
+      content: 'You are capable of amazing things...',
+      type: 'text',
+      status: 'locked',
+      deliveryType: 'scheduled',
+      createdAt: now - 518400000,
+      emoji: '🔒',
+    },
+  ];
+}
