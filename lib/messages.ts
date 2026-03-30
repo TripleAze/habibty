@@ -4,17 +4,23 @@ import {
   getDocs,
   addDoc,
   updateDoc,
-  deleteDoc,
   query,
   orderBy,
-  Timestamp,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, isFirebaseConfigured } from './firebase';
 import { Message, MessageStatus } from '@/types';
 
 const MESSAGES_COLLECTION = 'messages';
 
+// In-memory storage for development (fallback)
+let localMessages: Message[] = getMockMessages();
+
 export async function getMessages(): Promise<Message[]> {
+  if (!isFirebaseConfigured) {
+    console.log('Using local mock data');
+    return localMessages;
+  }
+
   try {
     const q = query(
       collection(db, MESSAGES_COLLECTION),
@@ -27,32 +33,38 @@ export async function getMessages(): Promise<Message[]> {
     })) as Message[];
   } catch (error) {
     console.error('Error fetching messages:', error);
-    // Return mock data for development without Firebase
-    return getMockMessages();
+    return localMessages;
   }
 }
 
 export async function addMessage(
   message: Omit<Message, 'id' | 'createdAt'>
 ): Promise<Message> {
+  const newMessage: Message = {
+    id: Math.random().toString(36).substr(2, 9),
+    ...message,
+    createdAt: Date.now(),
+  };
+
+  if (!isFirebaseConfigured) {
+    console.log('Adding to local storage');
+    localMessages = [newMessage, ...localMessages];
+    return newMessage;
+  }
+
   try {
     const docRef = await addDoc(collection(db, MESSAGES_COLLECTION), {
       ...message,
       createdAt: Date.now(),
     });
     return {
+      ...newMessage,
       id: docRef.id,
-      ...message,
-      createdAt: Date.now(),
     };
   } catch (error) {
     console.error('Error adding message:', error);
-    // Return mock for development
-    return {
-      id: Math.random().toString(36).substr(2, 9),
-      ...message,
-      createdAt: Date.now(),
-    };
+    localMessages = [newMessage, ...localMessages];
+    return newMessage;
   }
 }
 
@@ -60,6 +72,15 @@ export async function updateMessageStatus(
   messageId: string,
   status: MessageStatus
 ): Promise<void> {
+  // Update local state first
+  localMessages = localMessages.map((msg) =>
+    msg.id === messageId ? { ...msg, status } : msg
+  );
+
+  if (!isFirebaseConfigured) {
+    return;
+  }
+
   try {
     const docRef = doc(db, MESSAGES_COLLECTION, messageId);
     await updateDoc(docRef, { status });
