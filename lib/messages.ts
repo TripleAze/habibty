@@ -96,11 +96,13 @@ export async function unlockDueMessages(): Promise<void> {
 
     const updates = messages
       .filter(
-        (msg) =>
-          msg.status === 'locked' &&
-          msg.deliveryType === 'scheduled' &&
-          msg.deliveryTime &&
-          msg.deliveryTime <= now
+        (msg) => {
+          const scheduledTime = msg.scheduledFor ? new Date(msg.scheduledFor).getTime() : 0;
+          return msg.status === 'locked' &&
+                 msg.deliveryType === 'scheduled' &&
+                 msg.scheduledFor &&
+                 scheduledTime <= now;
+        }
       )
       .map((msg) => updateMessageStatus(msg.id, 'available'));
 
@@ -124,6 +126,9 @@ function getMockMessages(): Message[] {
       deliveryType: 'immediate',
       createdAt: now - 86400000,
       emoji: '🌧️',
+      isDelivered: true,
+      senderId: 'mock',
+      receiverId: 'mock',
     },
     {
       id: '2',
@@ -135,6 +140,9 @@ function getMockMessages(): Message[] {
       deliveryType: 'immediate',
       createdAt: now - 172800000,
       emoji: '🌙',
+      isDelivered: true,
+      senderId: 'mock',
+      receiverId: 'mock',
     },
     {
       id: '3',
@@ -146,6 +154,9 @@ function getMockMessages(): Message[] {
       createdAt: now - 3600000,
       emoji: '☀️',
       meta: 'Voice note · 0:32',
+      isDelivered: true,
+      senderId: 'mock',
+      receiverId: 'mock',
     },
     {
       id: '4',
@@ -157,6 +168,9 @@ function getMockMessages(): Message[] {
       deliveryType: 'immediate',
       createdAt: now - 259200000,
       emoji: '🌟',
+      isDelivered: true,
+      senderId: 'mock',
+      receiverId: 'mock',
     },
     {
       id: '5',
@@ -165,9 +179,12 @@ function getMockMessages(): Message[] {
       type: 'voice',
       status: 'locked',
       deliveryType: 'scheduled',
-      deliveryTime: now + 604800000, // 1 week from now
+      scheduledFor: now + 604800000, // 1 week from now
       createdAt: now - 432000000,
       emoji: '🔒',
+      isDelivered: false,
+      senderId: 'mock',
+      receiverId: 'mock',
     },
     {
       id: '6',
@@ -176,9 +193,12 @@ function getMockMessages(): Message[] {
       type: 'text',
       status: 'locked',
       deliveryType: 'scheduled',
-      deliveryTime: now + 1209600000, // 2 weeks from now
+      scheduledFor: now + 1209600000, // 2 weeks from now
       createdAt: now - 604800000,
       emoji: '🔒',
+      isDelivered: false,
+      senderId: 'mock',
+      receiverId: 'mock',
     },
     {
       id: '7',
@@ -189,6 +209,9 @@ function getMockMessages(): Message[] {
       deliveryType: 'scheduled',
       createdAt: now - 345600000,
       emoji: '🔒',
+      isDelivered: false,
+      senderId: 'mock',
+      receiverId: 'mock',
     },
     {
       id: '8',
@@ -199,6 +222,9 @@ function getMockMessages(): Message[] {
       deliveryType: 'scheduled',
       createdAt: now - 518400000,
       emoji: '🔒',
+      isDelivered: false,
+      senderId: 'mock',
+      receiverId: 'mock',
     },
   ];
 }
