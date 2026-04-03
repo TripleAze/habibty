@@ -4,10 +4,9 @@ import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
-import { addMessage } from '@/lib/messages';
+import { db, auth } from '@/lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import { MessageType, DeliveryType } from '@/types';
-
-console.log("Project ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
 
 const MOOD_CHIPS = [
   'Sad',
@@ -57,10 +56,10 @@ export default function CreatePage() {
 
       setSending(true);
 
-      const deliveryTime =
+      const scheduledFor =
         deliveryType === 'scheduled' && deliveryDate
           ? new Date(deliveryDate).getTime()
-          : undefined;
+          : null;
 
       const emoji =
         type === 'text'
@@ -70,13 +69,19 @@ export default function CreatePage() {
           : '🎬';
 
       try {
-        await addMessage({
+        const uid = auth?.currentUser?.uid || 'anonymous';
+        
+        await addDoc(collection(db, 'letters'), {
           title: title.trim(),
           content: content.trim(),
           type,
           status: deliveryType === 'immediate' ? 'available' : 'locked',
           deliveryType,
-          deliveryTime,
+          scheduledFor,
+          isDelivered: deliveryType === 'immediate',
+          senderId: uid,
+          receiverId: uid, // for testing purposes
+          createdAt: Date.now(),
           emoji,
           meta:
             type === 'voice'

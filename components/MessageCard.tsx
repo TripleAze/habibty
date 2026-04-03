@@ -6,7 +6,7 @@ export default function MessageCard({
   title,
   emoji,
   status,
-  deliveryTime,
+  scheduledFor,
   meta,
   onClick,
 }: MessageCardProps) {
@@ -14,8 +14,8 @@ export default function MessageCard({
 
   const getStatusLabel = () => {
     if (isLocked) {
-      if (deliveryTime) {
-        const date = new Date(deliveryTime);
+      if (scheduledFor) {
+        const date = new Date(scheduledFor);
         const month = date.toLocaleString('en-US', { month: 'short' });
         const day = date.getDate();
         return `🔒 ${month} ${day}`;

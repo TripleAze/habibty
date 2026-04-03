@@ -11,7 +11,10 @@ export interface Message {
   type: MessageType;
   status: MessageStatus;
   deliveryType: DeliveryType;
-  deliveryTime?: number;
+  scheduledFor: number | null;
+  isDelivered: boolean;
+  senderId: string;
+  receiverId: string;
   createdAt: number;
   emoji?: string;
   meta?: string;
@@ -22,7 +25,7 @@ export interface MessageCardProps {
   title: string;
   emoji: string;
   status: MessageStatus;
-  deliveryTime?: number;
+  scheduledFor?: number | null;
   meta?: string;
   onClick?: () => void;
 }

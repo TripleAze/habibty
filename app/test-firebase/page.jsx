@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, collection, addDoc, query, onSnapshot } from "firebase/firestore";
-import { app } from "../../firebaseConfig"; // adjust path if needed
+import { app } from "@/lib/firebase";
 
 export default function TestFirebase() {
   const [user, setUser] = useState(null);
@@ -65,7 +65,13 @@ export default function TestFirebase() {
       <ul>
         {messages.map((msg) => (
           <li key={msg.id}>
-            <strong>{msg.userId}:</strong> {msg.text} <em>({msg.createdAt?.toDateString() || ""})</em>
+            <strong>{msg.userId}:</strong> {msg.text} <em>
+              (
+              {msg.createdAt
+                ? msg.createdAt.toDate().toDateString()
+                : ""}
+              )
+            </em>
           </li>
         ))}
       </ul>

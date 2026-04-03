@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
 import Splash from '@/components/Splash';
 import MessageCard from '@/components/MessageCard';
 import RevealModal from '@/components/RevealModal';
 import BottomNav from '@/components/BottomNav';
-import { getMessages, unlockDueMessages } from '@/lib/messages';
 import { Message } from '@/types';
 
 export default function Home() {
@@ -17,6 +18,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [now, setNow] = useState(Date.now()); // State to trigger re-renders for scheduled items
 
   // Check for first visit
   useEffect(() => {
@@ -26,21 +28,27 @@ export default function Home() {
     }
   }, []);
 
-  // Load messages and unlock due ones
+  // Update "now" periodically so locked messages naturally unlock without refresh
   useEffect(() => {
-    const loadMessages = async () => {
-      await unlockDueMessages();
-      const msgs = await getMessages();
-      setMessages(msgs);
-      setLoading(false);
-    };
-
-    loadMessages();
-
-    // Check for unlocks every minute
-    const interval = setInterval(loadMessages, 60000);
+    const interval = setInterval(() => setNow(Date.now()), 60000);
     return () => clearInterval(interval);
   }, []);
+
+  // Load messages from Firestore via listener
+  useEffect(() => {
+    const q = query(collection(db, 'letters'), orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Message[];
+      setMessages(data);
+      if (loading) setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [loading]);
 
   const handleEnter = useCallback(() => {
     localStorage.setItem('hasVisited', 'true');
@@ -50,11 +58,6 @@ export default function Home() {
   const handleOpenMessage = useCallback((message: Message) => {
     setSelectedMessage(message);
     setIsModalOpen(true);
-
-    // Update status to opened if available
-    if (message.status === 'available') {
-      // In a real app, you'd update the status in Firestore here
-    }
   }, []);
 
   const handleCloseModal = useCallback(() => {
@@ -62,8 +65,21 @@ export default function Home() {
     setTimeout(() => setSelectedMessage(null), 300);
   }, []);
 
-  const availableMessages = messages.filter((m) => m.status !== 'locked');
-  const lockedMessages = messages.filter((m) => m.status === 'locked');
+  const currentUserId = auth?.currentUser?.uid || 'anonymous';
+
+  // Filter messages based on auth and time
+  const myMessages = messages.filter(
+    (m) => m.receiverId === currentUserId || m.receiverId === 'anonymous'
+  );
+
+  const availableMessages = myMessages.filter((m) => {
+    // If no scheduled time or time passed, it's available
+    return !m.scheduledFor || m.scheduledFor <= now;
+  });
+
+  const lockedMessages = myMessages.filter((m) => {
+    return m.scheduledFor && m.scheduledFor > now;
+  });
 
   if (showSplash) {
     return <Splash onEnter={handleEnter} />;
@@ -110,8 +126,8 @@ export default function Home() {
                     id={message.id}
                     title={message.title}
                     emoji={message.emoji || '💌'}
-                    status={message.status}
-                    deliveryTime={message.deliveryTime}
+                    status="available"
+                    scheduledFor={message.scheduledFor}
                     meta={message.meta}
                     onClick={() => handleOpenMessage(message)}
                   />
@@ -135,8 +151,8 @@ export default function Home() {
                     id={message.id}
                     title={message.title}
                     emoji={message.emoji || '🔒'}
-                    status={message.status}
-                    deliveryTime={message.deliveryTime}
+                    status="locked"
+                    scheduledFor={message.scheduledFor}
                     meta={message.meta}
                   />
                 ))}
