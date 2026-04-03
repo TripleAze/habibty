@@ -93,9 +93,9 @@ export default function CreatePage() {
 
         showToast('Message sent 💌');
         setTimeout(() => router.push('/scheduled'), 1000);
-      } catch (error) {
-        console.error('Error sending message:', error);
-        showToast('Something went wrong 😢');
+      } catch (err: any) {
+        console.error('FULL ERROR:', err);
+        alert(err.message);
       } finally {
         setSending(false);
       }
