@@ -71,7 +71,7 @@ export default function CreatePage() {
       try {
         const uid = auth?.currentUser?.uid || 'anonymous';
         
-        await addDoc(collection(db, 'letters'), {
+        const payload = {
           title: title.trim(),
           content: content.trim(),
           type,
@@ -89,7 +89,13 @@ export default function CreatePage() {
               : type === 'video'
               ? 'Video message · 0:00'
               : undefined,
-        });
+        };
+
+        const cleanData = Object.fromEntries(
+          Object.entries(payload).filter(([_, v]) => v !== undefined)
+        );
+
+        await addDoc(collection(db, 'letters'), cleanData);
 
         showToast('Message sent 💌');
         setTimeout(() => router.push('/scheduled'), 1000);
