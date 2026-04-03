@@ -3,26 +3,19 @@
 import { MessageCardProps } from '@/types';
 
 export default function MessageCard({
-  title,
-  emoji,
-  status,
-  scheduledFor,
-  meta,
+  message,
   onClick,
 }: MessageCardProps) {
-  const isLocked = status === 'locked';
+  const isLocked = message.status === 'locked';
 
   const getStatusLabel = () => {
-    if (isLocked) {
-      if (scheduledFor) {
-        const date = new Date(scheduledFor);
-        const month = date.toLocaleString('en-US', { month: 'short' });
-        const day = date.getDate();
-        return `🔒 ${month} ${day}`;
-      }
-      return '🔒 Anytime';
+    if (message.deliveryType === 'scheduled' && message.scheduledFor) {
+      const date = new Date(message.scheduledFor);
+      const month = date.toLocaleString('en-US', { month: 'short' });
+      const day = date.getDate();
+      return `🔒 ${month} ${day}`;
     }
-    return '✦ Open now';
+    return isLocked ? '🔒 Anytime' : '✦ Open now';
   };
 
   return (
@@ -31,14 +24,14 @@ export default function MessageCard({
       onClick={isLocked ? undefined : onClick}
       style={{ cursor: isLocked ? 'not-allowed' : 'pointer' }}
     >
-      <span className="card-icon">{emoji}</span>
-      <p className="card-title">{title}</p>
+      <span className="card-icon">{message.emoji || '💌'}</span>
+      <p className="card-title">{message.title}</p>
       <span
         className={`card-status ${isLocked ? 'status-locked' : 'status-available'}`}
       >
         {getStatusLabel()}
       </span>
-      {meta && <p className="card-meta">{meta}</p>}
+      {message.meta && <p className="card-meta">{message.meta}</p>}
     </div>
   );
 }

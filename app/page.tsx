@@ -74,11 +74,13 @@ export default function Home() {
 
   const availableMessages = myMessages.filter((m) => {
     // If no scheduled time or time passed, it's available
-    return !m.scheduledFor || m.scheduledFor <= now;
+    const scheduledTime = m.scheduledFor ? new Date(m.scheduledFor).getTime() : 0;
+    return !m.scheduledFor || scheduledTime <= now;
   });
 
   const lockedMessages = myMessages.filter((m) => {
-    return m.scheduledFor && m.scheduledFor > now;
+    const scheduledTime = m.scheduledFor ? new Date(m.scheduledFor).getTime() : 0;
+    return m.scheduledFor && scheduledTime > now;
   });
 
   if (showSplash) {
@@ -123,12 +125,7 @@ export default function Home() {
                 {availableMessages.map((message) => (
                   <MessageCard
                     key={message.id}
-                    id={message.id}
-                    title={message.title}
-                    emoji={message.emoji || '💌'}
-                    status="available"
-                    scheduledFor={message.scheduledFor}
-                    meta={message.meta}
+                    message={message}
                     onClick={() => handleOpenMessage(message)}
                   />
                 ))}
@@ -148,12 +145,7 @@ export default function Home() {
                 {lockedMessages.map((message) => (
                   <MessageCard
                     key={message.id}
-                    id={message.id}
-                    title={message.title}
-                    emoji={message.emoji || '🔒'}
-                    status="locked"
-                    scheduledFor={message.scheduledFor}
-                    meta={message.meta}
+                    message={message}
                   />
                 ))}
               </div>
