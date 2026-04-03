@@ -53,8 +53,8 @@ function formatMeta(message: Message): string {
     return `Delivered ${month} ${day} · ${typeLabel}`;
   }
 
-  if (message.deliveryType === 'scheduled' && message.deliveryTime) {
-    const date = new Date(message.deliveryTime);
+  if (message.deliveryType === 'scheduled' && message.scheduledFor) {
+    const date = new Date(message.scheduledFor);
     const month = date.toLocaleString('en-US', { month: 'short' });
     const day = date.getDate();
     return `Scheduled ${month} ${day} · ${typeLabel}`;
