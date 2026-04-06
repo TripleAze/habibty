@@ -68,6 +68,20 @@ export default function AuthPage() {
     }
   };
 
+  useEffect(() => {
+    // If already paired, redirect to inbox
+    if (!auth) return;
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists() && snap.data().partnerId) {
+          router.replace('/inbox');
+        }
+      }
+    });
+    return () => unsub();
+  }, [router]);
+
   if (checking) return null;
 
   return (
@@ -219,7 +233,9 @@ export default function AuthPage() {
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      <a href="/" className="auth-back">← Back</a>
+      {!checking && (
+        <a href="/" className="auth-back">← Back</a>
+      )}
 
       <div className="auth-root">
         <div className="auth-card">

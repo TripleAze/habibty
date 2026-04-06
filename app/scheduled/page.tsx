@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged } from 'firebase/auth';
 import BottomNav from '@/components/BottomNav';
 import { getMessages } from '@/lib/messages';
 import { Message, MessageStatus } from '@/types';
@@ -64,10 +66,25 @@ function formatMeta(message: Message): string {
 }
 
 export default function ScheduledPage() {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    if (!auth) { setChecking(false); return; }
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.replace('/auth');
+      } else {
+        setChecking(false);
+      }
+    });
+    return () => unsub();
+  }, [router]);
+
+  useEffect(() => {
+    if (checking) return;
     const loadMessages = async () => {
       const msgs = await getMessages();
       setMessages(msgs);
@@ -75,7 +92,18 @@ export default function ScheduledPage() {
     };
 
     loadMessages();
-  }, []);
+  }, [checking]);
+
+  if (checking) {
+    return (
+      <div className="app-container">
+        <div className="loading-state">
+          <div className="loading-spinner" />
+          <p>Loading... 📬</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">

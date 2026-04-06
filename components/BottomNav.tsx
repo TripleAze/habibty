@@ -7,7 +7,7 @@ export default function BottomNav({ activeTab }: BottomNavProps) {
   return (
     <nav className="bottom-nav">
       <Link
-        href="/"
+        href="/inbox"
         className={`nav-item ${activeTab === 'inbox' ? 'active' : ''}`}
       >
         <span className="nav-icon">💌</span>

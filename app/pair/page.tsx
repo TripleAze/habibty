@@ -305,7 +305,7 @@ export default function PairPage() {
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      <a href="/" className="pair-back">← Back</a>
+      <a href="/inbox" className="pair-back">← Back</a>
 
       <div className="pair-root">
         <div className="pair-card">

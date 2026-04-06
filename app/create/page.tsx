@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import BottomNav from '@/components/BottomNav';
 import { db, auth } from '@/lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { addMessage } from '@/lib/messages';
 import { MessageType, DeliveryType } from '@/types';
 
 const MOOD_CHIPS = [
@@ -28,6 +30,26 @@ export default function CreatePage() {
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState('');
+  const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!auth) { setLoading(false); return; }
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) { router.replace('/auth'); return; }
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        if (!data.partnerId) {
+          router.replace('/pair');
+          return;
+        }
+        setPartnerId(data.partnerId);
+      }
+      setLoading(false);
+    });
+    return () => unsub();
+  }, [router]);
 
   const toggleMood = useCallback((mood: string) => {
     setSelectedMoods((prev) =>
@@ -43,6 +65,12 @@ export default function CreatePage() {
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
+
+      if (!partnerId) {
+        showToast('You need to pair with someone first 💕');
+        router.push('/pair');
+        return;
+      }
 
       if (!title.trim()) {
         showToast('Please add a title 💕');
@@ -69,9 +97,7 @@ export default function CreatePage() {
           : '🎬';
 
       try {
-        const uid = auth?.currentUser?.uid || 'anonymous';
-        
-        const payload = {
+        await addMessage({
           title: title.trim(),
           content: content.trim(),
           type,
@@ -79,9 +105,7 @@ export default function CreatePage() {
           deliveryType,
           scheduledFor,
           isDelivered: deliveryType === 'immediate',
-          senderId: uid,
-          receiverId: uid, // for testing purposes
-          createdAt: Date.now(),
+          toUid: partnerId,
           emoji,
           meta:
             type === 'voice'
@@ -89,16 +113,10 @@ export default function CreatePage() {
               : type === 'video'
               ? 'Video message · 0:00'
               : undefined,
-        };
-
-        const cleanData = Object.fromEntries(
-          Object.entries(payload).filter(([_, v]) => v !== undefined)
-        );
-
-        await addDoc(collection(db, 'letters'), cleanData);
+        });
 
         showToast('Message sent 💌');
-        setTimeout(() => router.push('/scheduled'), 1000);
+        setTimeout(() => router.push('/inbox'), 1000);
       } catch (err: any) {
         console.error('FULL ERROR:', err);
         alert(err.message);
@@ -106,7 +124,7 @@ export default function CreatePage() {
         setSending(false);
       }
     },
-    [title, content, type, deliveryType, deliveryDate, router, showToast]
+    [title, content, type, deliveryType, deliveryDate, partnerId, router, showToast]
   );
 
   return (

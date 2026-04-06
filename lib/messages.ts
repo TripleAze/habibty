@@ -4,13 +4,42 @@ import {
   getDocs,
   addDoc,
   updateDoc,
+  getDoc,
   query,
   orderBy,
+  where,
 } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from './firebase';
+import { db, isFirebaseConfigured, auth } from './firebase';
 import { Message, MessageStatus } from '@/types';
 
 const MESSAGES_COLLECTION = 'messages';
+
+export async function getCurrentUserPartnerId(): Promise<string | null> {
+  const currentUserId = auth?.currentUser?.uid;
+  if (!currentUserId) return null;
+
+  try {
+    const userSnap = await getDoc(doc(db, 'users', currentUserId));
+    if (userSnap.exists()) {
+      return userSnap.data().partnerId || null;
+    }
+  } catch (error) {
+    console.error('Error fetching partner ID:', error);
+  }
+  return null;
+}
+
+export async function getPartnerInfo(partnerId: string) {
+  try {
+    const userSnap = await getDoc(doc(db, 'users', partnerId));
+    if (userSnap.exists()) {
+      return userSnap.data();
+    }
+  } catch (error) {
+    console.error('Error fetching partner info:', error);
+  }
+  return null;
+}
 
 // In-memory storage for development (fallback)
 let localMessages: Message[] = getMockMessages();
@@ -22,8 +51,15 @@ export async function getMessages(): Promise<Message[]> {
   }
 
   try {
+    const currentUserId = auth?.currentUser?.uid;
+    if (!currentUserId) {
+      return [];
+    }
+
+    // Get messages sent to the current user (they are the receiver)
     const q = query(
       collection(db, MESSAGES_COLLECTION),
+      where('toUid', '==', currentUserId),
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(q);
@@ -38,11 +74,15 @@ export async function getMessages(): Promise<Message[]> {
 }
 
 export async function addMessage(
-  message: Omit<Message, 'id' | 'createdAt'>
+  message: Omit<Message, 'id' | 'createdAt'> & { toUid?: string }
 ): Promise<Message> {
+  const currentUserId = auth?.currentUser?.uid;
+
   const newMessage: Message = {
     id: Math.random().toString(36).substr(2, 9),
     ...message,
+    fromUid: message.fromUid || currentUserId,
+    toUid: message.toUid || currentUserId,
     createdAt: Date.now(),
   };
 
@@ -54,6 +94,8 @@ export async function addMessage(
 
   try {
     const docRef = await addDoc(collection(db, MESSAGES_COLLECTION), {
+      fromUid: newMessage.fromUid,
+      toUid: newMessage.toUid,
       ...message,
       createdAt: Date.now(),
     });
