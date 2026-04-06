@@ -59,7 +59,7 @@ export default function InboxPage() {
 
     const q = query(
       collection(db, 'messages'),
-      where('toUid', '==', currentUserId),
+      where('receiverId', '==', currentUserId),
       orderBy('createdAt', 'desc')
     );
 
@@ -69,6 +69,9 @@ export default function InboxPage() {
         ...doc.data(),
       })) as Message[];
       setMessages(data);
+      if (loading) setLoading(false);
+    }, (error) => {
+      console.error('Snapshot failed:', error);
       if (loading) setLoading(false);
     });
 
