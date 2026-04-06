@@ -1,6 +1,6 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
-import { getAuth, Auth, signInAnonymously } from 'firebase/auth';
+import { getAuth, Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -25,7 +25,6 @@ if (isFirebaseConfigured && getApps().length === 0) {
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
   auth = getAuth(app);
-  signInAnonymously(auth).catch(console.error); // Ensure user is signed in
 } else if (getApps().length > 0) {
   app = getApps()[0];
   db = getFirestore(app);
