@@ -18,6 +18,7 @@ export interface Message {
   createdAt: number;
   emoji?: string;
   meta?: string;
+  moods?: string[];
 }
 
 export interface MessageCardProps {

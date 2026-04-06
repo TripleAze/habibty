@@ -105,7 +105,8 @@ export default function CreatePage() {
           deliveryType,
           scheduledFor,
           isDelivered: deliveryType === 'immediate',
-          toUid: partnerId,
+          receiverId: partnerId!,
+          moods: selectedMoods,
           emoji,
           meta:
             type === 'voice'

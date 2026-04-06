@@ -7,6 +7,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import BottomNav from '@/components/BottomNav';
 import { getMessages } from '@/lib/messages';
 import { Message, MessageStatus } from '@/types';
+import { auth } from '@/lib/firebase';
 
 function getTimelineDotClass(status: MessageStatus): string {
   switch (status) {

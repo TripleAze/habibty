@@ -59,7 +59,7 @@ export async function getMessages(): Promise<Message[]> {
     // Get messages sent to the current user (they are the receiver)
     const q = query(
       collection(db, MESSAGES_COLLECTION),
-      where('toUid', '==', currentUserId),
+      where('receiverId', '==', currentUserId),
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(q);
@@ -74,15 +74,14 @@ export async function getMessages(): Promise<Message[]> {
 }
 
 export async function addMessage(
-  message: Omit<Message, 'id' | 'createdAt'> & { toUid?: string }
+  message: Omit<Message, 'id' | 'createdAt' | 'senderId'>
 ): Promise<Message> {
-  const currentUserId = auth?.currentUser?.uid;
+  const currentUserId = auth?.currentUser?.uid || '';
 
   const newMessage: Message = {
     id: Math.random().toString(36).substr(2, 9),
     ...message,
-    fromUid: message.fromUid || currentUserId,
-    toUid: message.toUid || currentUserId,
+    senderId: currentUserId,
     createdAt: Date.now(),
   };
 
@@ -93,12 +92,7 @@ export async function addMessage(
   }
 
   try {
-    const docRef = await addDoc(collection(db, MESSAGES_COLLECTION), {
-      fromUid: newMessage.fromUid,
-      toUid: newMessage.toUid,
-      ...message,
-      createdAt: Date.now(),
-    });
+    const docRef = await addDoc(collection(db, MESSAGES_COLLECTION), newMessage);
     return {
       ...newMessage,
       id: docRef.id,
