@@ -62,7 +62,8 @@ export default function AuthPage() {
     } catch (err: unknown) {
       console.error(err);
       const msg = err instanceof Error ? err.message : 'Sign-in failed';
-      setError(msg.includes('popup-closed') ? '' : 'Something went wrong. Try again.');
+      // If the error isn't just the user closing the popup, show the actual error
+      setError(msg.includes('popup-closed') ? '' : msg);
       setLoading(false);
     }
   };
