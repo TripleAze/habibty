@@ -37,6 +37,27 @@ export async function getMessages(): Promise<Message[]> {
   }
 }
 
+export async function getSentMessages(): Promise<Message[]> {
+  if (!isFirebaseConfigured) {
+    console.log('Using local mock data');
+    return localMessages.filter(m => m.isDelivered !== false);
+  }
+
+  try {
+    const q = query(
+      collection(db, MESSAGES_COLLECTION),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }) as Message)
+      .filter((msg) => msg.isDelivered !== false);
+  } catch (error) {
+    console.error('Error fetching sent messages:', error);
+    return localMessages.filter(m => m.isDelivered !== false);
+  }
+}
+
 export async function addMessage(
   message: Omit<Message, 'id' | 'createdAt'>,
   senderId: string,
