@@ -84,25 +84,21 @@ export async function addMessage(
   };
 
   if (!isFirebaseConfigured) {
-    console.warn('addMessage: Firebase NOT configured, falling back to local storage');
     localMessages = [newMessage, ...localMessages];
     return newMessage;
   }
 
-  console.log('addMessage: Attempting to save to Firestore...', {
-    senderId,
-    receiverId,
-    title: message.title
-  });
 
   try {
-    const docRef = await addDoc(collection(db, MESSAGES_COLLECTION), {
+    // Firestore does not allow 'undefined' values. Strip them out.
+    const dataToSave = JSON.parse(JSON.stringify({
       ...message,
       senderId,
       receiverId,
       createdAt: Date.now(),
-    });
-    console.log('addMessage: Successfully saved to Firestore with ID:', docRef.id);
+    }));
+
+    const docRef = await addDoc(collection(db, MESSAGES_COLLECTION), dataToSave);
     return { ...newMessage, id: docRef.id };
   } catch (error) {
     console.error('Error adding message to Firestore:', error);
