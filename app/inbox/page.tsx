@@ -45,7 +45,15 @@ export default function InboxPage() {
             if (partnerSnap.exists()) {
               setPartnerName(partnerSnap.data().displayName || 'your love');
             }
+          } else {
+            // No partner - redirect to pairing page
+            router.replace('/pair');
+            return;
           }
+        } else {
+          // User doc doesn't exist - redirect to pair to create it
+          router.replace('/pair');
+          return;
         }
         setChecking(false);
       }
