@@ -102,14 +102,17 @@ export default function ProfilePage() {
         fileName: `profile_${auth.currentUser.uid}`,
         folder: '/profiles',
         publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || '',
-        urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || '',
         signature: authData.signature,
         token: authData.token,
         expire: authData.expire,
       });
       
-      setPhotoURL(response.url);
-      showToast('Photo uploaded! 📸');
+      if (response.url) {
+        setPhotoURL(response.url);
+        showToast('Photo uploaded! 📸');
+      } else {
+        throw new Error('Upload successful but no URL returned');
+      }
     } catch (err) {
       console.error('Upload error:', err);
       showToast('Upload failed 😢');
