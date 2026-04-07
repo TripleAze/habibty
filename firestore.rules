@@ -15,11 +15,11 @@ service cloud.firestore {
     // Messages collection - scoped to sender and receiver
     match /messages/{messageId} {
       allow read: if request.auth != null &&
-        (request.auth.uid == resource.data.toUid || request.auth.uid == resource.data.fromUid);
+        (request.auth.uid == resource.data.receiverId || request.auth.uid == resource.data.senderId);
       allow create: if request.auth != null &&
-        request.auth.uid == request.resource.data.fromUid;
+        request.auth.uid == request.resource.data.senderId;
       allow update: if request.auth != null &&
-        (request.auth.uid == resource.data.toUid || request.auth.uid == resource.data.fromUid);
+        (request.auth.uid == resource.data.receiverId || request.auth.uid == resource.data.senderId);
     }
   }
 }
