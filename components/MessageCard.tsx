@@ -1,33 +1,46 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { MessageCardProps } from '@/types';
 
 export default function MessageCard({
   message,
   onClick,
+  now,
 }: MessageCardProps) {
-  const isLocked = message.status === 'locked';
+  const currentTime = now || Date.now();
+  
+  // Calculate locked state dynamically
+  const isDelayedLocked = 
+    message.status === 'locked' && 
+    message.deliveryType === 'scheduled' && 
+    message.scheduledFor 
+      ? new Date(message.scheduledFor).getTime() > currentTime
+      : message.status === 'locked';
 
   const getStatusLabel = () => {
     if (message.deliveryType === 'scheduled' && message.scheduledFor) {
-      const date = new Date(message.scheduledFor);
-      const month = date.toLocaleString('en-US', { month: 'short' });
-      const day = date.getDate();
-      return `🔒 ${month} ${day}`;
+      if (isDelayedLocked) {
+        const date = new Date(message.scheduledFor);
+        const month = date.toLocaleString('en-US', { month: 'short' });
+        const day = date.getDate();
+        return `🔒 ${month} ${day}`;
+      }
+      return '✦ Available now';
     }
-    return isLocked ? '🔒 Anytime' : '✦ Open now';
+    return isDelayedLocked ? '🔒 Anytime' : '✦ Open now';
   };
 
   return (
     <div
-      className={`msg-card ${isLocked ? 'locked' : 'card-available'}`}
-      onClick={isLocked ? undefined : onClick}
-      style={{ cursor: isLocked ? 'not-allowed' : 'pointer' }}
+      className={`msg-card ${isDelayedLocked ? 'locked' : 'card-available'}`}
+      onClick={isDelayedLocked ? undefined : onClick}
+      style={{ cursor: isDelayedLocked ? 'not-allowed' : 'pointer' }}
     >
       <span className="card-icon">{message.emoji || '💌'}</span>
       <p className="card-title">{message.title}</p>
       <span
-        className={`card-status ${isLocked ? 'status-locked' : 'status-available'}`}
+        className={`card-status ${isDelayedLocked ? 'status-locked' : 'status-available'}`}
       >
         {getStatusLabel()}
       </span>

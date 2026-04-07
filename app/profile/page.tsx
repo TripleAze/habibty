@@ -24,6 +24,7 @@ export default function ProfilePage() {
   const [toast, setToast] = useState('');
   const [checking, setChecking] = useState(true);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!auth) { setChecking(false); return; }
@@ -34,23 +35,39 @@ export default function ProfilePage() {
       }
       
       setEmail(user.email || '');
-      setDisplayName(user.displayName || '');
-      setPhotoURL(user.photoURL || '');
-
-      const userSnap = await getDoc(doc(db, 'users', user.uid));
-      if (userSnap.exists()) {
-        const data = userSnap.data();
-        setInviteCode(data.inviteCode || '');
-        if (data.displayName) setDisplayName(data.displayName);
-        if (data.photoURL) setPhotoURL(data.photoURL);
-
-        if (data.partnerId) {
-          const partnerSnap = await getDoc(doc(db, 'users', data.partnerId));
-          if (partnerSnap.exists()) {
-            setPartnerName(partnerSnap.data().displayName || 'your partner');
-          }
-        }
+      
+      // Only set initial display name if we haven't loaded data yet
+      if (!hasLoadedRef.current) {
+        setDisplayName(user.displayName || '');
+        setPhotoURL(user.photoURL || '');
       }
+
+      try {
+        const userSnap = await getDoc(doc(db, 'users', user.uid));
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          setInviteCode(data.inviteCode || '');
+          
+          // Initial population check
+          if (!hasLoadedRef.current) {
+            if (data.displayName) setDisplayName(data.displayName);
+            if (data.photoURL) setPhotoURL(data.photoURL);
+            hasLoadedRef.current = true;
+          }
+
+          if (data.partnerId) {
+            const partnerSnap = await getDoc(doc(db, 'users', data.partnerId));
+            if (partnerSnap.exists()) {
+              setPartnerName(partnerSnap.data().displayName || 'your partner');
+            }
+          }
+        } else {
+          hasLoadedRef.current = true;
+        }
+      } catch (err) {
+        console.error('Error loading profile data:', err);
+      }
+      
       setChecking(false);
     });
     return () => unsub();

@@ -179,6 +179,7 @@ export default function InboxPage() {
                     key={message.id}
                     message={message}
                     onClick={() => handleOpenMessage(message)}
+                    now={now}
                   />
                 ))}
               </div>
@@ -195,7 +196,7 @@ export default function InboxPage() {
             {lockedMessages.length > 0 ? (
               <div className="cards-grid">
                 {lockedMessages.map((message) => (
-                  <MessageCard key={message.id} message={message} />
+                  <MessageCard key={message.id} message={message} now={now} />
                 ))}
               </div>
             ) : (

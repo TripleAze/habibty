@@ -10,8 +10,8 @@ export interface Message {
   content: string;
   type: MessageType;
   status: MessageStatus;
-  deliveryType: DeliveryType | 'instant' | 'scheduled';
-  scheduledFor?: string | Date | number | null;
+  deliveryType: DeliveryType;
+  scheduledFor?: string | null;
   isDelivered: boolean;
   senderId: string;
   senderName?: string;
@@ -25,6 +25,7 @@ export interface Message {
 export interface MessageCardProps {
   message: Message;
   onClick?: () => void;
+  now?: number;
 }
 
 export interface RevealModalProps {
