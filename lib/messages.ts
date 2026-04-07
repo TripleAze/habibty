@@ -84,10 +84,16 @@ export async function addMessage(
   };
 
   if (!isFirebaseConfigured) {
-    console.log('Adding to local storage (Firebase not configured)');
+    console.warn('addMessage: Firebase NOT configured, falling back to local storage');
     localMessages = [newMessage, ...localMessages];
     return newMessage;
   }
+
+  console.log('addMessage: Attempting to save to Firestore...', {
+    senderId,
+    receiverId,
+    title: message.title
+  });
 
   try {
     const docRef = await addDoc(collection(db, MESSAGES_COLLECTION), {
@@ -96,6 +102,7 @@ export async function addMessage(
       receiverId,
       createdAt: Date.now(),
     });
+    console.log('addMessage: Successfully saved to Firestore with ID:', docRef.id);
     return { ...newMessage, id: docRef.id };
   } catch (error) {
     console.error('Error adding message to Firestore:', error);

@@ -105,6 +105,7 @@ export default function CreatePage() {
         type === 'text' ? '✍️' : type === 'voice' ? '🎙️' : '🎬';
 
       try {
+        console.log('handleSubmit: Calling addMessage...');
         await addMessage(
           {
             title: title.trim(),
@@ -130,11 +131,12 @@ export default function CreatePage() {
           partnerId       // ← receiverId (your partner sees this in their inbox)
         );
 
+        console.log('handleSubmit: addMessage finished successfully');
         showToast('Message sent 💌');
         setTimeout(() => router.push('/inbox'), 1000);
       } catch (error) {
-        console.error('Error sending message:', error);
-        showToast('Something went wrong 😢');
+        console.error('handleSubmit: Error detected in addMessage:', error);
+        showToast(`Error: ${error instanceof Error ? error.message : 'Unknown failure'}`);
       } finally {
         setSending(false);
       }
