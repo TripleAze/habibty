@@ -100,7 +100,8 @@ export default function ProfilePage() {
       const response = await ikUpload({
         file,
         fileName: `profile_${auth.currentUser.uid}`,
-        folder: '/profiles',
+        folder: 'profiles', // Match existing folder name
+        useUniqueFileName: false, // Ensure we don't spam files
         publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || '',
         signature: authData.signature,
         token: authData.token,
@@ -108,8 +109,17 @@ export default function ProfilePage() {
       });
       
       if (response.url) {
+        // Auto-save the new URL so it doesn't disappear on reload
+        await updateProfile(auth.currentUser, {
+          photoURL: response.url
+        });
+
+        await setDoc(doc(db, 'users', auth.currentUser.uid), {
+          photoURL: response.url
+        }, { merge: true });
+
         setPhotoURL(response.url);
-        showToast('Photo uploaded! 📸');
+        showToast('Photo updated & saved! 📸');
       } else {
         throw new Error('Upload successful but no URL returned');
       }
