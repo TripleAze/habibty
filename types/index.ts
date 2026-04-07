@@ -14,6 +14,7 @@ export interface Message {
   scheduledFor?: string | Date | number | null;
   isDelivered: boolean;
   senderId: string;
+  senderName?: string;
   receiverId: string;
   createdAt: number;
   emoji?: string;
