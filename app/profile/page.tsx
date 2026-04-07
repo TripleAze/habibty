@@ -1,19 +1,27 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { upload as ikUpload } from '@imagekit/javascript';
 import { auth, db } from '@/lib/firebase';
 import BottomNav from '@/components/BottomNav';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [displayName, setDisplayName] = useState('');
+  const [photoURL, setPhotoURL] = useState('');
   const [email, setEmail] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [partnerName, setPartnerName] = useState('');
+  
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [toast, setToast] = useState('');
   const [checking, setChecking] = useState(true);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
@@ -24,13 +32,17 @@ export default function ProfilePage() {
         router.replace('/auth');
         return;
       }
-      setDisplayName(user.displayName || 'Your name');
+      
       setEmail(user.email || '');
+      setDisplayName(user.displayName || '');
+      setPhotoURL(user.photoURL || '');
 
       const userSnap = await getDoc(doc(db, 'users', user.uid));
       if (userSnap.exists()) {
         const data = userSnap.data();
         setInviteCode(data.inviteCode || '');
+        if (data.displayName) setDisplayName(data.displayName);
+        if (data.photoURL) setPhotoURL(data.photoURL);
 
         if (data.partnerId) {
           const partnerSnap = await getDoc(doc(db, 'users', data.partnerId));
@@ -44,6 +56,68 @@ export default function ProfilePage() {
     return () => unsub();
   }, [router]);
 
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3000);
+  }, []);
+
+  const handleSave = async () => {
+    if (!auth?.currentUser) return;
+    setSaving(true);
+    try {
+      await updateProfile(auth.currentUser, {
+        displayName: displayName.trim(),
+        photoURL: photoURL
+      });
+
+      await setDoc(doc(db, 'users', auth.currentUser.uid), {
+        displayName: displayName.trim(),
+        photoURL: photoURL
+      }, { merge: true });
+
+      showToast('Profile updated! ✨');
+    } catch (err) {
+      console.error('Save error:', err);
+      showToast('Failed to save changes 😢');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !auth?.currentUser) return;
+
+    setUploading(true);
+    try {
+      // 1. Get Auth Signature from our API
+      const authResponse = await fetch('/api/imagekit-auth');
+      const authData = await authResponse.json();
+
+      if (authData.error) throw new Error(authData.error);
+
+      // 2. Perform Upload using v5 SDK
+      const response = await ikUpload({
+        file,
+        fileName: `profile_${auth.currentUser.uid}`,
+        folder: '/profiles',
+        publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || '',
+        urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || '',
+        signature: authData.signature,
+        token: authData.token,
+        expire: authData.expire,
+      });
+      
+      setPhotoURL(response.url);
+      showToast('Photo uploaded! 📸');
+    } catch (err) {
+      console.error('Upload error:', err);
+      showToast('Upload failed 😢');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSignOut = useCallback(async () => {
     if (!auth) return;
     try {
@@ -56,7 +130,8 @@ export default function ProfilePage() {
 
   const copyCode = useCallback(() => {
     navigator.clipboard.writeText(inviteCode);
-  }, [inviteCode]);
+    showToast('Code copied! 📋');
+  }, [inviteCode, showToast]);
 
   if (checking) {
     return (
@@ -72,27 +147,69 @@ export default function ProfilePage() {
   return (
     <div className="app-container">
       <div className="home-header">
-        <p className="home-label">Your profile</p>
-        <h1 className="home-title">
-          Hello, <span>{displayName}</span>
-        </h1>
+        <p className="home-label">Settings</p>
+        <h1 className="home-title">Your Profile</h1>
       </div>
 
       <div className="profile-content">
-        {/* Partner Card */}
+        <div className="profile-avatar-section">
+          <div className="avatar-wrapper" onClick={() => fileInputRef.current?.click()}>
+            {photoURL ? (
+              <img src={photoURL} alt="Avatar" className="profile-img" />
+            ) : (
+              <div className="avatar-placeholder">
+                <span>{displayName?.charAt(0) || 'H'}</span>
+              </div>
+            )}
+            <div className="avatar-edit-overlay">
+              <span>{uploading ? '...' : 'Edit'}</span>
+            </div>
+          </div>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            style={{ display: 'none' }} 
+            accept="image/*"
+          />
+        </div>
+
         <div className="profile-card">
           <div className="profile-section">
-            <span className="profile-label">Connected with</span>
-            <span className="profile-value">{partnerName || 'No one yet'}</span>
-            {!partnerName && (
-              <Link href="/pair" className="profile-action">
-                Pair now →
-              </Link>
-            )}
+            <label className="profile-label">What should your partner call you?</label>
+            <input 
+              type="text"
+              className="profile-input"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Your display name"
+            />
+            <button 
+              className="btn-save" 
+              onClick={handleSave} 
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
           </div>
         </div>
 
-        {/* Invite Code Card */}
+        <div className="profile-card">
+          <div className="profile-section">
+            <span className="profile-label">Partner connection</span>
+            <div className="partner-status">
+              <span className="profile-value">
+                {partnerName ? `Paired with ${partnerName} 💖` : 'Searching for love...'}
+              </span>
+              {!partnerName && (
+                <Link href="/pair" className="profile-action">
+                  Pair now →
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="profile-card">
           <div className="profile-section">
             <span className="profile-label">Your invite code</span>
@@ -102,22 +219,19 @@ export default function ProfilePage() {
                 Copy
               </button>
             </div>
-            <span className="profile-hint">Share this with your partner</span>
+            <span className="profile-hint">Tap code to copy and send to your partner</span>
           </div>
         </div>
 
-        {/* Account Card */}
-        <div className="profile-card">
+        <div className="profile-card transparent">
           <div className="profile-section">
-            <span className="profile-label">Account</span>
-            <span className="profile-value">{email}</span>
+            <span className="profile-label">Account email</span>
+            <span className="profile-value small">{email}</span>
           </div>
         </div>
 
-        {/* Sign Out Card */}
-        <div className="profile-card danger">
+        <div className="profile-card logout-card">
           <div className="profile-section">
-            <span className="profile-label">Danger zone</span>
             {!showSignOutConfirm ? (
               <button
                 className="btn-signout"
@@ -128,7 +242,7 @@ export default function ProfilePage() {
               </button>
             ) : (
               <div className="signout-confirm">
-                <p>Are you sure?</p>
+                <p>Are you sure you want to sign out?</p>
                 <div className="signout-actions">
                   <button
                     className="btn-cancel"
@@ -149,64 +263,162 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
-
-        {/* Back to Home */}
-        <div className="profile-card">
-          <div className="profile-section">
-            <Link href="/" className="profile-action-link">
-              ← Back to home
-            </Link>
-          </div>
-        </div>
       </div>
+
+      {toast && <div className={`toast ${toast ? 'show' : ''}`}>{toast}</div>}
 
       <BottomNav activeTab="profile" />
 
       <style>{`
         .profile-content {
-          padding: 20px;
+          padding: 0 20px 100px;
         }
+        
+        .profile-avatar-section {
+          display: flex;
+          justify-content: center;
+          margin: 10px 0 30px;
+        }
+        
+        .avatar-wrapper {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          position: relative;
+          cursor: pointer;
+          overflow: hidden;
+          background: #fff;
+          box-shadow: 0 8px 24px rgba(232, 160, 160, 0.2);
+          border: 3px solid #fff;
+        }
+        
+        .profile-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        
+        .avatar-placeholder {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%);
+          font-size: 32px;
+          color: #fff;
+          font-weight: bold;
+        }
+        
+        .avatar-edit-overlay {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 30%;
+          background: rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #fff;
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          backdrop-filter: blur(4px);
+        }
+
         .profile-card {
-          background: rgba(255, 255, 255, 0.72);
+          background: rgba(255, 255, 255, 0.7);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
-          border-radius: 20px;
-          padding: 20px;
+          border-radius: 24px;
+          padding: 24px;
           border: 1px solid rgba(255, 255, 255, 0.8);
-          margin-bottom: 16px;
+          margin-bottom: 20px;
         }
-        .profile-card.danger {
-          border-color: rgba(232, 160, 160, 0.4);
+        
+        .profile-card.transparent {
+          background: transparent;
+          border: none;
+          padding: 10px 24px;
         }
+
         .profile-section {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 12px;
         }
+
         .profile-label {
-          font-size: 11px;
-          letter-spacing: 0.15em;
+          font-size: 12px;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
-          color: rgba(122, 92, 122, 0.55);
-          font-weight: 500;
+          color: #7A5C7A;
+          font-weight: 600;
+          opacity: 0.6;
         }
-        .profile-value {
-          font-size: 15px;
+
+        .profile-input {
+          background: rgba(255,255,255,0.8);
+          border: 1px solid rgba(232, 160, 160, 0.2);
+          border-radius: 14px;
+          padding: 14px 18px;
+          font-size: 16px;
           color: #3D2B3D;
-          font-weight: 400;
+          font-family: 'DM Sans', sans-serif;
+          outline: none;
+          transition: border-color 0.2s;
         }
-        .profile-action {
-          font-size: 13px;
-          color: #E8A0A0;
-          text-decoration: none;
+        
+        .profile-input:focus {
+          border-color: #E8A0A0;
+        }
+
+        .btn-save {
+          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
+          color: white;
+          border: none;
+          padding: 14px;
+          border-radius: 14px;
+          font-weight: 600;
+          font-size: 14px;
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+          box-shadow: 0 4px 12px rgba(232, 160, 160, 0.3);
+        }
+        
+        .btn-save:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(232, 160, 160, 0.4);
+        }
+        
+        .btn-save:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .profile-value {
+          font-size: 16px;
+          color: #3D2B3D;
           font-weight: 500;
-          margin-top: 4px;
         }
+        
+        .profile-value.small {
+          font-size: 14px;
+          opacity: 0.8;
+        }
+
+        .partner-status {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
         .code-display {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin-top: 4px;
         }
         .code-text {
           font-family: 'Cormorant Garamond', serif;
@@ -219,92 +431,82 @@ export default function ProfilePage() {
           border: 1px solid rgba(232, 160, 160, 0.2);
         }
         .code-copy {
-          padding: 8px 16px;
-          background: rgba(232, 160, 160, 0.15);
-          border: 1px solid rgba(232, 160, 160, 0.3);
-          border-radius: 10px;
-          font-size: 12px;
-          color: #7A5C7A;
-          cursor: pointer;
-          transition: all 0.2s;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 500;
-        }
-        .code-copy:hover {
-          background: rgba(232, 160, 160, 0.25);
-        }
-        .profile-hint {
-          font-size: 11px;
-          color: rgba(122, 92, 122, 0.5);
-        }
-        .btn-signout {
-          padding: 12px 20px;
-          background: transparent;
-          border: 1.5px solid rgba(232, 160, 160, 0.4);
+          padding: 10px 18px;
+          background: rgba(232, 160, 160, 0.1);
+          border: 1px solid rgba(232, 160, 160, 0.2);
           border-radius: 12px;
           font-size: 13px;
+          color: #7A5C7A;
+          cursor: pointer;
+          font-weight: 600;
+          font-family: 'DM Sans', sans-serif;
+        }
+
+        .btn-signout {
+          width: 100%;
+          padding: 14px;
+          background: transparent;
+          border: 1.5px solid rgba(232, 160, 160, 0.3);
+          border-radius: 16px;
           color: #B06060;
+          font-size: 14px;
+          font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 500;
-          margin-top: 8px;
         }
+        
         .btn-signout:hover {
-          background: rgba(232, 160, 160, 0.1);
+          background: rgba(232, 160, 160, 0.05);
+          border-color: rgba(232, 160, 160, 0.5);
         }
-        .signout-confirm {
-          margin-top: 8px;
-        }
+
         .signout-confirm p {
-          font-size: 13px;
+          font-size: 14px;
           color: #3D2B3D;
-          margin-bottom: 12px;
+          text-align: center;
+          margin-bottom: 16px;
         }
         .signout-actions {
           display: flex;
-          gap: 8px;
+          gap: 12px;
+        }
+        .btn-cancel, .btn-confirm {
+          flex: 1;
+          padding: 12px;
+          border-radius: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          font-family: 'DM Sans', sans-serif;
         }
         .btn-cancel {
-          flex: 1;
-          padding: 10px 16px;
-          background: rgba(240, 234, 245, 0.6);
-          border: 1px solid rgba(201, 184, 216, 0.3);
-          border-radius: 10px;
-          font-size: 13px;
-          color: #7A5C7A;
-          cursor: pointer;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 500;
-          transition: all 0.2s;
-        }
-        .btn-cancel:hover {
-          background: rgba(240, 234, 245, 0.8);
+          background: #eee;
+          border: none;
+          color: #666;
         }
         .btn-confirm {
-          flex: 1;
-          padding: 10px 16px;
-          background: rgba(232, 160, 160, 0.2);
-          border: 1.5px solid rgba(232, 160, 160, 0.4);
-          border-radius: 10px;
-          font-size: 13px;
+          background: #FAD0DC;
+          border: none;
           color: #B06060;
-          cursor: pointer;
-          font-family: 'DM Sans', sans-serif;
-          font-weight: 500;
-          transition: all 0.2s;
         }
-        .btn-confirm:hover {
-          background: rgba(232, 160, 160, 0.3);
+
+        .toast {
+          position: fixed;
+          bottom: 100px;
+          left: 50%;
+          transform: translateX(-50%) translateY(20px);
+          background: rgba(0,0,0,0.8);
+          color: white;
+          padding: 12px 24px;
+          border-radius: 30px;
+          font-size: 14px;
+          opacity: 0;
+          transition: all 0.3s;
+          pointer-events: none;
+          z-index: 1000;
         }
-        .profile-action-link {
-          font-size: 13px;
-          color: #7A5C7A;
-          text-decoration: none;
-          font-weight: 500;
-        }
-        .profile-action-link:hover {
-          color: #3D2B3D;
+        .toast.show {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
         }
       `}</style>
     </div>
