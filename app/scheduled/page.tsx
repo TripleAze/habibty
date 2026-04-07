@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import BottomNav from '@/components/BottomNav';
-import { getMessages } from '@/lib/messages';
+import { getSentMessages } from '@/lib/messages';
 import { Message, MessageStatus } from '@/types';
 import { auth } from '@/lib/firebase';
 
@@ -87,7 +87,7 @@ export default function ScheduledPage() {
   useEffect(() => {
     if (checking) return;
     const loadMessages = async () => {
-      const msgs = await getMessages();
+      const msgs = await getSentMessages();
       setMessages(msgs);
       setLoading(false);
     };

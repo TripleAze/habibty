@@ -59,16 +59,41 @@ export async function getMessages(): Promise<Message[]> {
     // Get messages sent to the current user (they are the receiver)
     const q = query(
       collection(db, MESSAGES_COLLECTION),
-      where('receiverId', '==', currentUserId),
-      orderBy('createdAt', 'desc')
+      where('receiverId', '==', currentUserId)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
+    const data = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as Message[];
+    
+    return data.sort((a, b) => b.createdAt - a.createdAt);
   } catch (error) {
     console.error('Error fetching messages:', error);
+    return localMessages;
+  }
+}
+
+export async function getSentMessages(): Promise<Message[]> {
+  if (!isFirebaseConfigured) return localMessages;
+
+  try {
+    const currentUserId = auth?.currentUser?.uid;
+    if (!currentUserId) return [];
+
+    const q = query(
+      collection(db, MESSAGES_COLLECTION),
+      where('senderId', '==', currentUserId)
+    );
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Message[];
+    
+    return data.sort((a, b) => b.createdAt - a.createdAt);
+  } catch (error) {
+    console.error('Error fetching sent messages:', error);
     return localMessages;
   }
 }

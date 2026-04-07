@@ -59,8 +59,7 @@ export default function InboxPage() {
 
     const q = query(
       collection(db, 'messages'),
-      where('receiverId', '==', currentUserId),
-      orderBy('createdAt', 'desc')
+      where('receiverId', '==', currentUserId)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -68,6 +67,7 @@ export default function InboxPage() {
         id: doc.id,
         ...doc.data(),
       })) as Message[];
+      data.sort((a, b) => b.createdAt - a.createdAt);
       setMessages(data);
       if (loading) setLoading(false);
     }, (error) => {
