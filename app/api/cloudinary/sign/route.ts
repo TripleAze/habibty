@@ -18,13 +18,16 @@ export async function POST(request: Request) {
 
     const params = {
       timestamp,
-      resource_type: resourceType,
       folder: 'romantic-messages',
     };
 
+    if (!process.env.CLOUDINARY_API_SECRET) {
+      throw new Error('CLOUDINARY_API_SECRET is not defined');
+    }
+
     const signature = cloudinary.utils.api_sign_request(
       params,
-      process.env.CLOUDINARY_API_SECRET || ''
+      process.env.CLOUDINARY_API_SECRET
     );
 
     return NextResponse.json({

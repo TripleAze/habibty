@@ -38,7 +38,6 @@ export async function uploadToCloudinary(
   formData.append('timestamp', timestamp.toString());
   formData.append('api_key', apiKey);
   formData.append('folder', folder);
-  formData.append('resource_type', resourceType);
 
   // Upload to Cloudinary
   return new Promise((resolve, reject) => {
@@ -57,8 +56,9 @@ export async function uploadToCloudinary(
     };
 
     xhr.onload = () => {
+      const responseText = xhr.responseText;
       if (xhr.status === 200) {
-        const result = JSON.parse(xhr.responseText);
+        const result = JSON.parse(responseText);
         resolve({
           url: result.secure_url,
           secureUrl: result.secure_url,
@@ -67,12 +67,19 @@ export async function uploadToCloudinary(
           resourceType: result.resource_type,
         });
       } else {
-        reject(new Error('Upload failed'));
+        console.error('Cloudinary upload error response:', responseText);
+        let errorMsg = 'Upload failed';
+        try {
+          const errorJson = JSON.parse(responseText);
+          errorMsg = errorJson.error?.message || errorMsg;
+        } catch (e) {}
+        reject(new Error(errorMsg));
       }
     };
 
     xhr.onerror = () => {
-      reject(new Error('Upload failed'));
+      console.error('Cloudinary XHR error');
+      reject(new Error('Network error during upload'));
     };
 
     xhr.send(formData);
