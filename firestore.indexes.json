@@ -5,12 +5,22 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "toUid",
+          "fieldPath": "receiverId",
           "order": "ASCENDING"
         },
         {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "inviteCode",
+          "order": "ASCENDING"
         }
       ]
     }

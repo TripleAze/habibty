@@ -2,12 +2,13 @@ import {
   collection,
   doc,
   getDocs,
+  getDoc,
   addDoc,
   updateDoc,
   query,
-  orderBy,
+  where,
 } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from './firebase';
+import { db, isFirebaseConfigured, auth } from './firebase';
 import { Message, MessageStatus } from '@/types';
 
 const MESSAGES_COLLECTION = 'messages';
@@ -22,15 +23,20 @@ export async function getMessages(): Promise<Message[]> {
   }
 
   try {
+    const currentUserId = auth?.currentUser?.uid;
+    if (!currentUserId) return [];
+
     const q = query(
       collection(db, MESSAGES_COLLECTION),
-      orderBy('createdAt', 'desc')
+      where('receiverId', '==', currentUserId)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
+    const data = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })) as Message[];
+    
+    return data.sort((a, b) => b.createdAt - a.createdAt);
   } catch (error) {
     console.error('Error fetching messages:', error);
     return localMessages;
@@ -40,21 +46,27 @@ export async function getMessages(): Promise<Message[]> {
 export async function getSentMessages(): Promise<Message[]> {
   if (!isFirebaseConfigured) {
     console.log('Using local mock data');
-    return localMessages.filter(m => m.isDelivered !== false);
+    return localMessages;
   }
 
   try {
+    const currentUserId = auth?.currentUser?.uid;
+    if (!currentUserId) return [];
+
     const q = query(
       collection(db, MESSAGES_COLLECTION),
-      orderBy('createdAt', 'desc')
+      where('senderId', '==', currentUserId)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }) as Message)
-      .filter((msg) => msg.isDelivered !== false);
+    const data = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Message[];
+    
+    return data.sort((a, b) => b.createdAt - a.createdAt);
   } catch (error) {
     console.error('Error fetching sent messages:', error);
-    return localMessages.filter(m => m.isDelivered !== false);
+    return localMessages;
   }
 }
 

@@ -73,9 +73,16 @@ export default function PairPage() {
 
       setStatus('Paired! Taking you to your inbox 💌');
       setTimeout(() => router.replace('/inbox'), 1500);
-    } catch (err) {
-      console.error(err);
-      setError('Something went wrong. Try again.');
+    } catch (err: any) {
+      console.error('Pair error:', err);
+      // Show specific error for Firestore index issues
+      if (err.code === 'failed-precondition' || (err.message && err.message.includes('index'))) {
+        setError('Database index not ready. Please try again in a few seconds.');
+      } else if (err.message && err.message.includes('permission-denied')) {
+        setError('Permission denied. Make sure you are signed in.');
+      } else {
+        setError('Something went wrong. Try again.');
+      }
       setLoading(false);
     }
   };

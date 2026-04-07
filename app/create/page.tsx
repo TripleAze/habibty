@@ -26,6 +26,7 @@ export default function CreatePage() {
   // Auth + pairing state
   const [currentUserId, setCurrentUserId] = useState('');
   const [partnerId, setPartnerId] = useState('');
+  const [senderName, setSenderName] = useState('');
   const [checking, setChecking] = useState(true);
 
   // Form state
@@ -50,7 +51,11 @@ export default function CreatePage() {
       try {
         const snap = await getDoc(doc(db, 'users', user.uid));
         if (snap.exists()) {
-          setPartnerId(snap.data().partnerId || '');
+          const data = snap.data();
+          setPartnerId(data.partnerId || '');
+          setSenderName(data.displayName || user.displayName || 'Unknown');
+        } else {
+          setSenderName(user.displayName || 'Unknown');
         }
       } catch (err) {
         console.error('Error fetching user doc:', err);
@@ -110,6 +115,7 @@ export default function CreatePage() {
             scheduledFor,
             emoji,
             isDelivered: deliveryType === 'immediate',
+            senderName,
             senderId: currentUserId,   // will be overwritten by addMessage param anyway
             receiverId: partnerId,     // will be overwritten by addMessage param anyway
             moods: selectedMoods,
