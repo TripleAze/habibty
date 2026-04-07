@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { RevealModalProps } from '@/types';
+import MediaPlayer from './MediaPlayer';
 
 export default function RevealModal({ isOpen, onClose, message }: RevealModalProps) {
   const [displayedText, setDisplayedText] = useState('');
@@ -96,7 +97,19 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         <h2 className="reveal-title">{message.title}</h2>
         <div className="reveal-divider" />
 
-        {isVoice ? (
+        {message.type === 'text' ? (
+          <p className="reveal-text">
+            {displayedText}
+            {showCursor && displayedText.length < message.content.length && (
+              <span className="typing-cursor" />
+            )}
+          </p>
+        ) : message.mediaUrl ? (
+          <MediaPlayer
+            src={message.mediaUrl}
+            type={message.type === 'voice' ? 'audio' : 'video'}
+          />
+        ) : (
           <div className="reveal-voice" style={{ display: 'block' }}>
             <button className="play-btn" onClick={togglePlay}>
               {isPlaying ? '⏸' : '▶'}
@@ -115,13 +128,6 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
               ))}
             </div>
           </div>
-        ) : (
-          <p className="reveal-text">
-            {displayedText}
-            {showCursor && displayedText.length < message.content.length && (
-              <span className="typing-cursor" />
-            )}
-          </p>
         )}
 
         <p className="reveal-date">

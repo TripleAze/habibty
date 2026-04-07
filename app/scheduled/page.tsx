@@ -8,6 +8,7 @@ import BottomNav from '@/components/BottomNav';
 import { getSentMessages } from '@/lib/messages';
 import { Message, MessageStatus } from '@/types';
 import { auth } from '@/lib/firebase';
+import { ListSkeleton } from '@/components/skeleton';
 
 function getTimelineDotClass(status: MessageStatus): string {
   switch (status) {
@@ -120,10 +121,7 @@ export default function ScheduledPage() {
 
       <div className="timeline">
         {loading ? (
-          <div className="loading-state">
-            <div className="loading-spinner" />
-            <p>Loading messages... 📬</p>
-          </div>
+          <ListSkeleton count={4} variant="list" />
         ) : messages.length > 0 ? (
           messages.map((message, index) => (
             <div key={message.id} className="timeline-item">

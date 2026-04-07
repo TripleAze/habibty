@@ -20,6 +20,9 @@ export interface Message {
   emoji?: string;
   meta?: string;
   moods?: string[];
+  mediaUrl?: string;
+  mediaPublicId?: string;
+  mediaDuration?: number;
 }
 
 export interface MessageCardProps {

@@ -9,6 +9,7 @@ import MessageCard from '@/components/MessageCard';
 import RevealModal from '@/components/RevealModal';
 import BottomNav from '@/components/BottomNav';
 import { Message } from '@/types';
+import { MessageCardSkeleton, ListSkeleton } from '@/components/skeleton';
 
 export default function InboxPage() {
   const router = useRouter();
@@ -166,46 +167,48 @@ export default function InboxPage() {
       {/* Messages */}
       <div className="messages-section">
         {loading ? (
-          <div className="loading-state">
-            <div className="loading-spinner" />
-          </div>
-        ) : activeTab === 'available' ? (
-          <>
-            <div className="section-label">Ready to open</div>
-            {availableMessages.length > 0 ? (
-              <div className="cards-grid">
-                {availableMessages.map((message) => (
-                  <MessageCard
-                    key={message.id}
-                    message={message}
-                    onClick={() => handleOpenMessage(message)}
-                    now={now}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <span className="empty-state-icon">💌</span>
-                <p className="empty-state-text">No messages yet… check back soon</p>
-              </div>
-            )}
-          </>
+          <ListSkeleton count={4} variant="grid" />
         ) : (
-          <>
-            <div className="section-label">Coming soon</div>
-            {lockedMessages.length > 0 ? (
-              <div className="cards-grid">
-                {lockedMessages.map((message) => (
-                  <MessageCard key={message.id} message={message} now={now} />
-                ))}
-              </div>
+          <div className="transition-opacity duration-300 opacity-100">
+            {activeTab === 'available' ? (
+              <>
+                <div className="section-label">Ready to open</div>
+                {availableMessages.length > 0 ? (
+                  <div className="cards-grid">
+                    {availableMessages.map((message) => (
+                      <MessageCard
+                        key={message.id}
+                        message={message}
+                        onClick={() => handleOpenMessage(message)}
+                        now={now}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state">
+                    <span className="empty-state-icon">💌</span>
+                    <p className="empty-state-text">No messages yet… check back soon</p>
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="empty-state">
-                <span className="empty-state-icon">🔓</span>
-                <p className="empty-state-text">Nothing locked — everything is ready</p>
-              </div>
+              <>
+                <div className="section-label">Coming soon</div>
+                {lockedMessages.length > 0 ? (
+                  <div className="cards-grid">
+                    {lockedMessages.map((message) => (
+                      <MessageCard key={message.id} message={message} now={now} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state">
+                    <span className="empty-state-icon">🔓</span>
+                    <p className="empty-state-text">Nothing locked — everything is ready</p>
+                  </div>
+                )}
+              </>
             )}
-          </>
+          </div>
         )}
       </div>
 

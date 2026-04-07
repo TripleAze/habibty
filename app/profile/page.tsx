@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { upload as ikUpload } from '@imagekit/javascript';
 import { auth, db } from '@/lib/firebase';
+import { uploadMedia } from '@/lib/imagekit';
 import BottomNav from '@/components/BottomNav';
 
 export default function ProfilePage() {
@@ -107,23 +107,12 @@ export default function ProfilePage() {
 
     setUploading(true);
     try {
-      // 1. Get Auth Signature from our API
-      const authResponse = await fetch('/api/imagekit-auth');
-      const authData = await authResponse.json();
-
-      if (authData.error) throw new Error(authData.error);
-
-      // 2. Perform Upload using v5 SDK
-      const response = await ikUpload({
-        file,
-        fileName: `profile_${auth.currentUser.uid}`,
-        folder: 'little-letters', // Using the folder shown in your screenshot
-        useUniqueFileName: false,
-        publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || '',
-        signature: authData.signature,
-        token: authData.token,
-        expire: authData.expire,
-      });
+      showToast('Uploading photo... 📤');
+      const response = await uploadMedia(
+        file, 
+        `profile_${auth.currentUser.uid}`, 
+        'little-letters'
+      );
       
       if (response.url) {
         // Apply ImageKit transformation for a square, optimized profile pic

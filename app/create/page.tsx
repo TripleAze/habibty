@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import BottomNav from '@/components/BottomNav';
+import MediaPlayer from '@/components/MediaPlayer';
 import { addMessage } from '@/lib/messages';
 import { MessageType, DeliveryType } from '@/types';
+import { uploadToCloudinary } from '@/lib/cloudinary';
+import { MediaSkeleton } from '@/components/skeleton';
 
 const MOOD_CHIPS = [
   'Sad',
@@ -38,6 +41,31 @@ export default function CreatePage() {
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState('');
+  // Media upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const previewUrl = URL.createObjectURL(file);
+      setMediaPreview(previewUrl);
+
+      showToast(`${file.name} selected! ✨`);
+      if (!title.trim()) {
+        setTitle(`A ${type} message`);
+      }
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (mediaPreview) URL.revokeObjectURL(mediaPreview);
+    };
+  }, [mediaPreview]);
 
   // Load current user and their partner
   useEffect(() => {
@@ -88,6 +116,10 @@ export default function CreatePage() {
         showToast('Please write a message 💕');
         return;
       }
+      if (type !== 'text' && !selectedFile) {
+        showToast(`Please select a ${type} file 💕`);
+        return;
+      }
       if (!partnerId) {
         showToast('You need to pair with your partner first 💛');
         router.push('/pair');
@@ -96,15 +128,26 @@ export default function CreatePage() {
 
       setSending(true);
 
-      const scheduledFor =
-        deliveryType === 'scheduled' && deliveryDate
-          ? new Date(deliveryDate).toISOString()
-          : null;
-
-      const emoji =
-        type === 'text' ? '✍️' : type === 'voice' ? '🎙️' : '🎬';
-
       try {
+        let mediaUrl = '';
+        if (selectedFile) {
+          showToast(`Uploading ${type}... 📤`);
+          const cloudinaryRes = await uploadToCloudinary(
+            selectedFile, 
+            type === 'voice' ? 'audio' : 'video',
+            (p) => setUploadProgress(p.percentage)
+          );
+          mediaUrl = cloudinaryRes.secureUrl;
+        }
+
+        const scheduledFor =
+          deliveryType === 'scheduled' && deliveryDate
+            ? new Date(deliveryDate).toISOString()
+            : null;
+
+        const emoji =
+          type === 'text' ? '✍️' : type === 'voice' ? '🎙️' : '🎬';
+
         await addMessage(
           {
             title: title.trim(),
@@ -114,32 +157,33 @@ export default function CreatePage() {
             deliveryType,
             scheduledFor,
             emoji,
+            mediaUrl,
             isDelivered: deliveryType === 'immediate',
             senderName,
-            senderId: currentUserId,   // will be overwritten by addMessage param anyway
-            receiverId: partnerId,     // will be overwritten by addMessage param anyway
+            senderId: currentUserId,
+            receiverId: partnerId,
             moods: selectedMoods,
             meta:
               type === 'voice'
-                ? 'Voice note · 0:00'
+                ? 'Voice note · 0:32'
                 : type === 'video'
-                ? 'Video message · 0:00'
+                ? 'Video message · 0:15'
                 : undefined,
           },
-          currentUserId,  // ← senderId
-          partnerId       // ← receiverId (your partner sees this in their inbox)
+          currentUserId,
+          partnerId
         );
 
         showToast('Message sent 💌');
         setTimeout(() => router.push('/inbox'), 1000);
       } catch (error) {
-        console.error('handleSubmit: Error detected in addMessage:', error);
+        console.error('handleSubmit error:', error);
         showToast('Something went wrong 😢');
       } finally {
         setSending(false);
       }
     },
-    [title, content, type, deliveryType, deliveryDate, selectedMoods, currentUserId, partnerId, router, showToast]
+    [title, content, type, deliveryType, deliveryDate, selectedMoods, currentUserId, partnerId, router, showToast, selectedFile]
   );
 
   if (checking) {
@@ -217,6 +261,50 @@ export default function CreatePage() {
             ))}
           </div>
         </div>
+
+        {type !== 'text' && (
+          <div className="form-group">
+            <label className="form-label">Attach {type}</label>
+            <div 
+              className="media-upload-box"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept={type === 'voice' ? 'audio/*' : 'video/*'}
+                onChange={handleFileChange}
+              />
+              {selectedFile ? (
+                <div className="file-info">
+                  <span className="file-icon">{type === 'voice' ? '🎵' : '🎬'}</span>
+                  <span className="file-name">{selectedFile.name}</span>
+                  <span className="file-change">Tap to change</span>
+                </div>
+              ) : (
+                <div className="upload-placeholder">
+                  <span className="upload-icon">➕</span>
+                  <span>Tap to upload {type}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {mediaPreview && (
+          <div className="form-group">
+            <label className="form-label">Review your {type}</label>
+            <MediaPlayer src={mediaPreview} type={type === 'voice' ? 'audio' : 'video'} />
+            
+            {sending && uploadProgress > 0 && uploadProgress < 100 && (
+              <div className="upload-progress-container">
+                <div className="upload-progress-bar" style={{ width: `${uploadProgress}%` }} />
+                <span className="upload-progress-text">Uploading... {uploadProgress}%</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {type === 'text' && (
           <div className="form-group">
