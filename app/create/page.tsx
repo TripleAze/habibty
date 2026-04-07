@@ -31,6 +31,7 @@ export default function CreatePage() {
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState('');
   const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [senderName, setSenderName] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,6 +46,7 @@ export default function CreatePage() {
           return;
         }
         setPartnerId(data.partnerId);
+        setSenderName(data.displayName || user.displayName || 'Unknown');
       }
       setLoading(false);
     });
@@ -106,6 +108,7 @@ export default function CreatePage() {
           scheduledFor,
           isDelivered: deliveryType === 'immediate',
           receiverId: partnerId!,
+          senderName,
           moods: selectedMoods,
           emoji,
           meta:
