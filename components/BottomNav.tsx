@@ -27,6 +27,13 @@ export default function BottomNav({ activeTab }: BottomNavProps) {
         <span className="nav-icon">📬</span>
         <span className="nav-label">Sent</span>
       </Link>
+      <Link
+        href="/profile"
+        className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
+      >
+        <span className="nav-icon">⚙️</span>
+        <span className="nav-label">Profile</span>
+      </Link>
     </nav>
   );
 }
