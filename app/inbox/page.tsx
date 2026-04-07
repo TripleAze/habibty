@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, onSnapshot, query, where, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import MessageCard from '@/components/MessageCard';
 import RevealModal from '@/components/RevealModal';
@@ -20,48 +20,51 @@ export default function InboxPage() {
   const [now, setNow] = useState(Date.now());
   const [checking, setChecking] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [partnerName, setPartnerName] = useState<string>('');
 
-  // Update "now" periodically so locked messages naturally unlock without refresh
+  // Partner info
+  const [partnerName, setPartnerName] = useState('');
+  const [partnerPhoto, setPartnerPhoto] = useState<string | null>(null);
+
+  // Tick every minute so locked messages auto-unlock
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Check auth and get current user
+  // Auth check + fetch partner info
   useEffect(() => {
     if (!auth) { setChecking(false); router.replace('/auth'); return; }
     const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.replace('/auth');
-      } else {
-        setCurrentUserId(user.uid);
-        // Fetch partner info
+      if (!user) { router.replace('/auth'); return; }
+      setCurrentUserId(user.uid);
+
+      try {
         const userSnap = await getDoc(doc(db, 'users', user.uid));
         if (userSnap.exists()) {
-          const partnerId = userSnap.data().partnerId;
+          const { partnerId } = userSnap.data();
           if (partnerId) {
             const partnerSnap = await getDoc(doc(db, 'users', partnerId));
             if (partnerSnap.exists()) {
-              setPartnerName(partnerSnap.data().displayName || 'your love');
+              const p = partnerSnap.data();
+              setPartnerName(p.displayName || 'your love');
+              setPartnerPhoto(p.photoURL || null);
             }
           } else {
-            // No partner - redirect to pairing page
+            // Not paired yet — redirect to pair page
             router.replace('/pair');
             return;
           }
-        } else {
-          // User doc doesn't exist - redirect to pair to create it
-          router.replace('/pair');
-          return;
         }
-        setChecking(false);
+      } catch (err) {
+        console.error('Error fetching partner:', err);
       }
+
+      setChecking(false);
     });
     return () => unsub();
   }, [router]);
 
-  // Load messages from Firestore via listener - scoped to current user
+  // Real-time messages listener scoped to current user as receiver
   useEffect(() => {
     if (!currentUserId) return;
 
@@ -77,14 +80,14 @@ export default function InboxPage() {
       })) as Message[];
       data.sort((a, b) => b.createdAt - a.createdAt);
       setMessages(data);
-      if (loading) setLoading(false);
+      setLoading(false);
     }, (error) => {
       console.error('Snapshot failed:', error);
-      if (loading) setLoading(false);
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [loading, currentUserId]);
+  }, [currentUserId]);
 
   const handleOpenMessage = useCallback((message: Message) => {
     setSelectedMessage(message);
@@ -96,7 +99,6 @@ export default function InboxPage() {
     setTimeout(() => setSelectedMessage(null), 300);
   }, []);
 
-  // Filter messages based on time
   const availableMessages = messages.filter((m) => {
     const scheduledTime = m.scheduledFor ? new Date(m.scheduledFor).getTime() : 0;
     return !m.scheduledFor || scheduledTime <= now;
@@ -112,7 +114,6 @@ export default function InboxPage() {
       <div className="app-container">
         <div className="loading-state">
           <div className="loading-spinner" />
-          <p>Loading your inbox... 💌</p>
         </div>
       </div>
     );
@@ -120,33 +121,53 @@ export default function InboxPage() {
 
   return (
     <div className="app-container">
+      {/* Header with partner avatar */}
       <div className="home-header">
-        <p className="home-label">Your inbox</p>
-        <h1 className="home-title">
-          From {partnerName || 'your love'} <span>❤️</span>
-        </h1>
+        <div className="home-header-left">
+          <p className="home-label">Your inbox</p>
+          <h1 className="home-title">
+            From <em>{partnerName || 'your love'}</em>
+          </h1>
+        </div>
+
+        <div className="partner-avatar-wrap">
+          {partnerPhoto ? (
+            <img
+              src={partnerPhoto}
+              alt={partnerName}
+              className="partner-avatar"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="partner-avatar-fallback">
+              {partnerName ? partnerName[0].toUpperCase() : '♡'}
+            </div>
+          )}
+          <div className="partner-avatar-ring" />
+        </div>
       </div>
 
+      {/* Tabs */}
       <div className="tab-bar">
         <button
           className={`tab ${activeTab === 'available' ? 'active' : ''}`}
           onClick={() => setActiveTab('available')}
         >
-          💌 Available
+          Available
         </button>
         <button
           className={`tab ${activeTab === 'locked' ? 'active' : ''}`}
           onClick={() => setActiveTab('locked')}
         >
-          🔒 Locked
+          Locked
         </button>
       </div>
 
+      {/* Messages */}
       <div className="messages-section">
         {loading ? (
           <div className="loading-state">
             <div className="loading-spinner" />
-            <p>Loading messages... 💌</p>
           </div>
         ) : activeTab === 'available' ? (
           <>
@@ -164,7 +185,7 @@ export default function InboxPage() {
             ) : (
               <div className="empty-state">
                 <span className="empty-state-icon">💌</span>
-                <p className="empty-state-text">No messages yet... check back soon! 🌸</p>
+                <p className="empty-state-text">No messages yet… check back soon</p>
               </div>
             )}
           </>
@@ -174,16 +195,13 @@ export default function InboxPage() {
             {lockedMessages.length > 0 ? (
               <div className="cards-grid">
                 {lockedMessages.map((message) => (
-                  <MessageCard
-                    key={message.id}
-                    message={message}
-                  />
+                  <MessageCard key={message.id} message={message} />
                 ))}
               </div>
             ) : (
               <div className="empty-state">
                 <span className="empty-state-icon">🔓</span>
-                <p className="empty-state-text">No locked messages. Everything is ready! ✨</p>
+                <p className="empty-state-text">Nothing locked — everything is ready</p>
               </div>
             )}
           </>

@@ -4,53 +4,46 @@ import Link from 'next/link';
 import { BottomNavProps } from '@/types';
 
 export default function BottomNav({ activeTab }: BottomNavProps) {
+  const color = (tab: string) =>
+    activeTab === tab ? '#E8A0A0' : '#C0A0B0';
+
   return (
     <nav className="bottom-nav">
-      <Link
-        href="/inbox"
-        className={`nav-item ${activeTab === 'inbox' ? 'active' : ''}`}
-      >
-        <span className="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/>
-            <path d="M22 6l-10 7L2 6"/>
+      <Link href="/inbox" className={`nav-item ${activeTab === 'inbox' ? 'active' : ''}`}>
+        <div className="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color('inbox')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 4H4a1 1 0 00-1 1v14a1 1 0 001 1h16a1 1 0 001-1V5a1 1 0 00-1-1z"/>
+            <path d="M3 7l9 6 9-6"/>
           </svg>
-        </span>
+        </div>
         <span className="nav-label">Inbox</span>
       </Link>
-      <Link
-        href="/create"
-        className={`nav-item ${activeTab === 'create' ? 'active' : ''}`}
-      >
-        <span className="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 19V5"/>
-            <path d="M5 12h14"/>
+
+      <Link href="/create" className={`nav-item ${activeTab === 'create' ? 'active' : ''}`}>
+        <div className="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color('create')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14"/>
           </svg>
-        </span>
+        </div>
         <span className="nav-label">Create</span>
       </Link>
-      <Link
-        href="/scheduled"
-        className={`nav-item ${activeTab === 'scheduled' ? 'active' : ''}`}
-      >
-        <span className="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+
+      <Link href="/scheduled" className={`nav-item ${activeTab === 'scheduled' ? 'active' : ''}`}>
+        <div className="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color('scheduled')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/>
           </svg>
-        </span>
+        </div>
         <span className="nav-label">Sent</span>
       </Link>
-      <Link
-        href="/profile"
-        className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-      >
-        <span className="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+
+      <Link href="/profile" className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}>
+        <div className="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={color('profile')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
           </svg>
-        </span>
+        </div>
         <span className="nav-label">Profile</span>
       </Link>
     </nav>
