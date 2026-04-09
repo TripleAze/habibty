@@ -20,6 +20,7 @@ export default function ProfilePage() {
   const [partnerName, setPartnerName] = useState('');
   
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [toast, setToast] = useState('');
   const [checking, setChecking] = useState(true);
@@ -92,7 +93,8 @@ export default function ProfilePage() {
         photoURL: photoURL
       }, { merge: true });
 
-      showToast('Profile updated! ✨');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       console.error('Save error:', err);
       showToast('Failed to save changes 😢');
@@ -208,11 +210,11 @@ export default function ProfilePage() {
               placeholder="Your display name"
             />
             <button 
-              className="btn-save" 
+              className={`btn-save ${saved ? 'saved' : ''}`} 
               onClick={handleSave} 
-              disabled={saving}
+              disabled={saving || saved}
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Saving...' : saved ? 'Saved! ✨' : 'Save Changes'}
             </button>
           </div>
         </div>
@@ -416,9 +418,14 @@ export default function ProfilePage() {
         }
         
         .btn-save:disabled {
-          opacity: 0.7;
+          opacity: 0.85;
           cursor: not-allowed;
           transform: none;
+        }
+
+        .btn-save.saved {
+          background: linear-gradient(135deg, #A8D5A2, #94C5A5);
+          box-shadow: 0 4px 12px rgba(168, 213, 162, 0.3);
         }
 
         .profile-value {
