@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [photoSaved, setPhotoSaved] = useState(false);
   const [toast, setToast] = useState('');
   const [checking, setChecking] = useState(true);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
@@ -140,6 +141,8 @@ export default function ProfilePage() {
       showToast('Upload failed 😢');
     } finally {
       setUploading(false);
+      setPhotoSaved(true);
+      setTimeout(() => setPhotoSaved(false), 3000);
     }
   };
 
@@ -186,8 +189,8 @@ export default function ProfilePage() {
                 <span>{displayName?.charAt(0) || 'H'}</span>
               </div>
             )}
-            <div className="avatar-edit-overlay">
-              <span>{uploading ? '...' : 'Edit'}</span>
+            <div className={`avatar-edit-overlay ${uploading ? 'uploading' : photoSaved ? 'saved' : ''}`}>
+              <span>{uploading ? 'Uploading...' : photoSaved ? 'Saved! ✨' : 'Edit'}</span>
             </div>
           </div>
           <input 
@@ -341,7 +344,7 @@ export default function ProfilePage() {
           left: 0;
           width: 100%;
           height: 30%;
-          background: rgba(0,0,0,0.3);
+          background: rgba(0,0,0,0.4);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -350,6 +353,19 @@ export default function ProfilePage() {
           text-transform: uppercase;
           letter-spacing: 0.1em;
           backdrop-filter: blur(4px);
+          transition: all 0.3s;
+        }
+
+        .avatar-edit-overlay.uploading {
+          height: 100%;
+          background: rgba(0,0,0,0.6);
+          font-size: 11px;
+        }
+
+        .avatar-edit-overlay.saved {
+          height: 100%;
+          background: rgba(168, 213, 162, 0.8);
+          font-size: 11px;
         }
 
         .profile-card {
