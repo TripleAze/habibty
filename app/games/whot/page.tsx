@@ -445,12 +445,12 @@ function WhotInner() {
                  {iWon && <div className="absolute inset-0 rounded-[32px] animate-ping ring-4 ring-yellow-400 opacity-20" />}
               </div>
               <h2 className="font-serif text-3xl italic text-romantic-dark mb-2">
-                {iWon ? 'Champion! 🎉' : 'Heartbreak 💔'}
+                {iWon ? "When you're good, you're good!! 😌🎉" : 'Do Better Next Time 😘💌'}
               </h2>
               <p className="text-gray-500 text-sm mb-12 leading-relaxed italic font-serif">
                 {iWon 
-                  ? 'Victory is yours, my lovely! Well played and gracefully won.'
-                  : `Alas, ${oppName} took the glory this time. Rematch?`}
+                  ? "There's something about being good, it's not a fluke 😎."
+                  : `Alas, ${oppName} took the glory this time. Rematch? 🥺`}
               </p>
               
               <div className="space-y-4">
