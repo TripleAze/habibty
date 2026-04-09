@@ -194,7 +194,7 @@ export async function joinWhotGame(
 
   // 3. Create hidden deck
   deck.forEach((card, index) => {
-    const cardRef = doc(db, 'games', gameId.toUpperCase(), 'deck', 'cards', index.toString());
+    const cardRef = doc(db, 'games', gameId.toUpperCase(), 'deck', index.toString());
     batch.set(cardRef, card);
   });
 
@@ -279,7 +279,7 @@ export async function playCard(
   } else if (effect === 'skip') {
     nextTurn = uid;
   } else if (effect === 'general-market' && newDeckCount > 0) {
-    const deckCardRef = doc(db, 'games', gameId, 'deck', 'cards', nextDeckIndex.toString());
+    const deckCardRef = doc(db, 'games', gameId.toUpperCase(), 'deck', nextDeckIndex.toString());
     const cardSnap = await getDoc(deckCardRef);
     if (cardSnap.exists()) {
       const drawnCard = cardSnap.data() as WhotCard;
@@ -337,7 +337,7 @@ export async function drawCard(
 
   for (let i = 0; i < count; i++) {
     if (newDeckCount > 0) {
-      const cardRef = doc(db, 'games', gameId, 'deck', 'cards', (nextDeckIndex + i).toString());
+      const cardRef = doc(db, 'games', gameId.toUpperCase(), 'deck', (nextDeckIndex + i).toString());
       drawPromises.push(getDoc(cardRef));
     }
   }
@@ -411,7 +411,7 @@ export async function rematchWhot(gameId: string): Promise<string> {
   }
 
   deck.forEach((card, index) => {
-    batch.set(doc(db, 'games', newId, 'deck', 'cards', index.toString()), card);
+    batch.set(doc(db, 'games', newId, 'deck', index.toString()), card);
   });
 
   await batch.commit();

@@ -24,28 +24,30 @@ service cloud.firestore {
 
     // Games collection - 2 players only, restricted read/write
     match /games/{gameId} {
+      // Allow read if you are a participant OR the game is waiting (so 2nd player can find it)
       allow read: if request.auth != null && (
-        request.auth.uid in resource.data.players || 
-        resource.data.status == 'waiting'
+        resource.data.status == 'waiting' ||
+        request.auth.uid in resource.data.players
       );
       allow create: if request.auth != null;
+      // Allow update if already a player, OR if you are joining as 2nd player
       allow update: if request.auth != null && (
-        request.auth.uid in resource.data.players || 
-        (resource.data.status == 'waiting' && 
-         resource.data.players.size() == 1 && 
+        request.auth.uid in resource.data.players ||
+        (resource.data.status == 'waiting' &&
+         resource.data.players.size() == 1 &&
          request.resource.data.players.size() == 2 &&
          request.resource.data.players.hasAll(resource.data.players) &&
          request.auth.uid in request.resource.data.players)
       );
 
-      // Private hands - only the owner can read/write their own hand
+      // Private hands — only the owner can read/write their own hand
       match /hands/{userId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
 
-      // Hidden deck - players can 'get' a specific card but cannot 'list' all cards
-      match /deck/cards/{cardId} {
-        allow get: if request.auth != null && 
+      // Hidden deck — players can 'get' a specific card by index but cannot 'list' the full pile
+      match /deck/{cardId} {
+        allow get, write: if request.auth != null &&
           request.auth.uid in get(/databases/$(database)/documents/games/$(gameId)).data.players;
         allow list: if false;
       }
