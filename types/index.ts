@@ -38,5 +38,5 @@ export interface RevealModalProps {
 }
 
 export interface BottomNavProps {
-  activeTab: 'inbox' | 'create' | 'scheduled' | 'profile';
+  activeTab: 'inbox' | 'create' | 'games' | 'scheduled' | 'profile';
 }
