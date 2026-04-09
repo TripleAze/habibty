@@ -89,7 +89,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
       onClick={handleClose}
     >
       <div className="reveal-card" onClick={(e) => e.stopPropagation()}>
-        <button className="reveal-close" onClick={() => handleClose()}>
+        <button type="button" className="reveal-close" onClick={() => handleClose()}>
           ✕
         </button>
         <span className="reveal-envelope">{message.emoji || '💌'}</span>
@@ -111,7 +111,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           />
         ) : (
           <div className="reveal-voice" style={{ display: 'block' }}>
-            <button className="play-btn" onClick={togglePlay}>
+            <button type="button" className="play-btn" onClick={togglePlay}>
               {isPlaying ? '⏸' : '▶'}
             </button>
             <div className="waveform">

@@ -6,18 +6,23 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { createGame, joinGame } from '@/lib/games';
+import { createWhotGame, joinWhotGame } from '@/lib/whot';
 import BottomNav from '@/components/BottomNav';
-import Link from 'next/link';
+
+type GameType = 'tictactoe' | 'whot';
 
 export default function GamesPage() {
   const router = useRouter();
   const [uid, setUid] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [photoURL, setPhotoURL] = useState('');
+  const [checking, setChecking] = useState(true);
+
+  // Per-game state
+  const [activeGame, setActiveGame] = useState<GameType | null>(null);
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     if (!auth) return;
@@ -26,42 +31,47 @@ export default function GamesPage() {
       setUid(user.uid);
       setPhotoURL(user.photoURL || '');
       const snap = await getDoc(doc(db, 'users', user.uid));
-      if (snap.exists()) {
-        setDisplayName(snap.data().displayName || user.displayName || 'Player');
-      } else {
-        setDisplayName(user.displayName || 'Player');
-      }
+      setDisplayName(snap.exists()
+        ? snap.data().displayName || user.displayName || 'Player'
+        : user.displayName || 'Player');
       setChecking(false);
     });
     return () => unsub();
   }, [router]);
 
-  const handleCreate = async () => {
+  const handleCreate = async (type: GameType) => {
     if (!uid) return;
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
-      const gameId = await createGame(uid, displayName, photoURL);
-      router.push(`/games/tictactoe?id=${gameId}`);
+      if (type === 'tictactoe') {
+        const id = await createGame(uid, displayName, photoURL);
+        router.push(`/games/tictactoe?id=${id}`);
+      } else {
+        const id = await createWhotGame(uid, displayName, photoURL);
+        router.push(`/games/whot?id=${id}`);
+      }
     } catch {
       setError('Could not create game. Try again.');
       setLoading(false);
     }
   };
 
-  const handleJoin = async () => {
+  const handleJoin = async (type: GameType) => {
     const code = joinCode.trim().toUpperCase();
-    if (!code || !uid) { setError('Please enter a game code'); return; }
-    setLoading(true);
-    setError('');
-    const result = await joinGame(code, uid, displayName, photoURL);
+    if (!code) { setError('Enter a game code'); return; }
+    setLoading(true); setError('');
+    const result = type === 'tictactoe'
+      ? await joinGame(code, uid, displayName, photoURL)
+      : await joinWhotGame(code, uid, displayName, photoURL);
     if (result.ok) {
-      router.push(`/games/tictactoe?id=${code}`);
+      router.push(`/games/${type}?id=${code}`);
     } else {
-      setError(result.error || 'Could not join game.');
+      setError(result.error || 'Could not join.');
       setLoading(false);
     }
   };
+
+  const resetGame = () => { setActiveGame(null); setJoinCode(''); setError(''); };
 
   if (checking) return (
     <div className="app-container">
@@ -69,139 +79,63 @@ export default function GamesPage() {
     </div>
   );
 
+  const games = [
+    {
+      type: 'tictactoe' as GameType,
+      name: 'Tic Tac Toe',
+      desc: 'Classic 3×3 board game',
+      symbol: '✕ ○',
+      color: '#E8A0A0',
+      bg: 'rgba(232,160,160,0.12)',
+      border: 'rgba(232,160,160,0.3)',
+    },
+    {
+      type: 'whot' as GameType,
+      name: 'Naija Whot',
+      desc: 'Nigerian shedding card game',
+      symbol: '★ ●',
+      color: '#C9B8D8',
+      bg: 'rgba(201,184,216,0.12)',
+      border: 'rgba(201,184,216,0.3)',
+    },
+  ];
+
   return (
     <>
       <style>{`
-        .games-lobby {
-          margin: 0 16px;
-          background: rgba(255,255,255,0.62);
+        .game-card {
+          background: rgba(255,255,255,0.65);
           backdrop-filter: blur(12px);
           border-radius: 20px;
-          padding: 24px 20px;
+          padding: 20px;
           border: 1px solid rgba(255,255,255,0.8);
+          margin: 0 16px 12px;
+          transition: transform 0.2s;
         }
-        .games-lobby-sub {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 15px;
-          font-style: italic;
-          color: var(--soft-ink);
-          text-align: center;
-          margin-bottom: 20px;
-          opacity: 0.8;
-        }
-        .btn-create {
-          width: 100%;
-          padding: 15px;
-          border-radius: 100px;
-          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
-          border: none;
-          color: white;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 14px;
-          font-weight: 500;
-          letter-spacing: 0.04em;
-          cursor: pointer;
-          margin-bottom: 12px;
-          transition: all 0.25s ease;
-          box-shadow: 0 4px 16px rgba(232,160,160,0.3);
-        }
-        .btn-create:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(232,160,160,0.4);
-        }
-        .btn-create:disabled { opacity: 0.6; cursor: not-allowed; }
-        .join-row {
-          display: flex;
-          gap: 8px;
-        }
-        .join-input {
-          flex: 1;
-          padding: 12px 16px;
-          border-radius: 100px;
-          border: 1.5px solid rgba(232,160,160,0.3);
-          background: rgba(255,255,255,0.7);
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          color: var(--ink);
-          outline: none;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          transition: border-color 0.2s;
-        }
+        .game-card:hover { transform: translateY(-2px); }
+        .game-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .game-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; flex-shrink: 0; letter-spacing: 0.04em; font-family: 'DM Sans', sans-serif; }
+        .game-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; color: #3D2B3D; margin-bottom: 2px; }
+        .game-desc { font-size: 11px; color: rgba(122,92,122,0.6); }
+        .game-btns { display: flex; gap: 8px; }
+        .btn-game-create { flex: 1; padding: 11px; border-radius: 100px; border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; letter-spacing: 0.03em; }
+        .btn-game-join { padding: 11px 16px; border-radius: 100px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; cursor: pointer; transition: all 0.2s; background: transparent; white-space: nowrap; }
+
+        .join-panel { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid rgba(201,184,216,0.3); }
+        .join-row { display: flex; gap: 8px; }
+        .join-input { flex: 1; padding: 10px 14px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.3); background: rgba(255,255,255,0.7); font-family: 'DM Sans', sans-serif; font-size: 13px; color: #3D2B3D; outline: none; text-transform: uppercase; letter-spacing: 0.08em; transition: border-color 0.2s; }
         .join-input::placeholder { text-transform: none; letter-spacing: 0; color: rgba(122,92,122,0.4); }
-        .join-input:focus { border-color: var(--rose); }
-        .btn-join {
-          padding: 12px 18px;
-          border-radius: 100px;
-          border: 1.5px solid rgba(232,160,160,0.4);
-          background: transparent;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          color: #B06060;
-          cursor: pointer;
-          transition: all 0.2s;
-          white-space: nowrap;
-          font-weight: 500;
-        }
-        .btn-join:hover:not(:disabled) { background: rgba(232,160,160,0.1); }
-        .btn-join:disabled { opacity: 0.5; cursor: not-allowed; }
-        .lobby-error {
-          font-size: 12px;
-          color: #c0706a;
-          text-align: center;
-          margin-top: 10px;
-        }
-        .games-divider {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin: 12px 0;
-        }
-        .games-divider::before,
-        .games-divider::after {
-          content: '';
-          flex: 1;
-          height: 0.5px;
-          background: rgba(201,184,216,0.4);
-        }
-        .games-divider span {
-          font-size: 11px;
-          letter-spacing: 0.1em;
-          color: rgba(122,92,122,0.4);
-        }
-        .coming-soon-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
-          margin: 16px 16px 0;
-        }
-        .coming-soon-card {
-          padding: 16px 10px;
-          background: rgba(255,255,255,0.4);
-          border-radius: 16px;
-          border: 1.5px dashed rgba(201,184,216,0.4);
-          text-align: center;
-          cursor: not-allowed;
-        }
-        .coming-soon-icon {
-          font-size: 20px;
-          opacity: 0.3;
-          margin-bottom: 4px;
-          display: block;
-        }
-        .coming-soon-label {
-          font-size: 11px;
-          color: rgba(122,92,122,0.4);
-          letter-spacing: 0.04em;
-        }
-        .soon-label {
-          font-size: 10px;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: rgba(122,92,122,0.4);
-          text-align: center;
-          margin: 14px 0 10px;
-        }
+        .join-input:focus { border-color: #E8A0A0; }
+        .join-confirm { padding: 10px 16px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.4); background: transparent; font-size: 13px; color: #B06060; cursor: pointer; font-weight: 500; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+        .join-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+        .join-cancel { font-size: 11px; color: rgba(122,92,122,0.5); cursor: pointer; margin-top: 6px; text-align: center; display: block; }
+        .lobby-error { font-size: 12px; color: #c0706a; margin-top: 8px; text-align: center; }
+
+        .coming-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 0 16px; }
+        .coming-card { padding: 16px 10px; background: rgba(255,255,255,0.35); border-radius: 16px; border: 1.5px dashed rgba(201,184,216,0.4); text-align: center; }
+        .coming-icon { font-size: 20px; opacity: 0.3; margin-bottom: 4px; display: block; }
+        .coming-lbl { font-size: 11px; color: rgba(122,92,122,0.4); }
+        .soon-lbl { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(122,92,122,0.4); text-align: center; margin: 14px 0 10px; }
       `}</style>
 
       <div className="app-container">
@@ -212,48 +146,70 @@ export default function GamesPage() {
           </div>
         </div>
 
-        {/* Active game: Tic Tac Toe */}
-        <div style={{ margin: '0 16px 12px' }}>
-          <div className="section-label" style={{ padding: '0 4px', marginBottom: '10px' }}>Now playing</div>
+        <div style={{ margin: '0 16px 10px' }}>
+          <div className="section-label" style={{ padding: '0 4px' }}>Available games</div>
         </div>
 
-        <div className="games-lobby">
-          <p className="games-lobby-sub">Challenge your partner to a round</p>
+        {games.map(g => (
+          <div key={g.type} className="game-card">
+            <div className="game-card-header">
+              <div className="game-icon" style={{ background: g.bg, color: g.color, border: `1px solid ${g.border}` }}>
+                {g.symbol}
+              </div>
+              <div>
+                <div className="game-name">{g.name}</div>
+                <div className="game-desc">{g.desc}</div>
+              </div>
+            </div>
 
-          <button className="btn-create" onClick={handleCreate} disabled={loading}>
-            {loading ? 'Starting…' : 'Create game'}
-          </button>
-
-          <div className="games-divider"><span>or join</span></div>
-
-          <div className="join-row">
-            <input
-              className="join-input"
-              type="text"
-              maxLength={6}
-              placeholder="Enter game code"
-              value={joinCode}
-              onChange={e => { setJoinCode(e.target.value); setError(''); }}
-              onKeyDown={e => e.key === 'Enter' && handleJoin()}
-            />
-            <button className="btn-join" onClick={handleJoin} disabled={loading || !joinCode.trim()}>
-              Join
-            </button>
+            {activeGame === g.type ? (
+              <div className="join-panel">
+                <div className="join-row">
+                  <input
+                    className="join-input"
+                    type="text"
+                    maxLength={6}
+                    placeholder="Enter game code"
+                    value={joinCode}
+                    onChange={e => { setJoinCode(e.target.value); setError(''); }}
+                    onKeyDown={e => e.key === 'Enter' && handleJoin(g.type)}
+                    autoFocus
+                  />
+                  <button className="join-confirm" onClick={() => handleJoin(g.type)} disabled={loading || !joinCode.trim()}>
+                    Join
+                  </button>
+                </div>
+                {error && <p className="lobby-error">{error}</p>}
+                <span className="join-cancel" onClick={resetGame}>Cancel</span>
+              </div>
+            ) : (
+              <div className="game-btns">
+                <button
+                  className="btn-game-create"
+                  style={{ background: `linear-gradient(135deg, ${g.color}, #C9B8D8)`, color: 'white' }}
+                  onClick={() => handleCreate(g.type)}
+                  disabled={loading}
+                >
+                  Create game
+                </button>
+                <button
+                  className="btn-game-join"
+                  style={{ border: `1.5px solid ${g.border}`, color: g.color }}
+                  onClick={() => { setActiveGame(g.type); setError(''); }}
+                >
+                  Join
+                </button>
+              </div>
+            )}
           </div>
-          {error && <p className="lobby-error">{error}</p>}
-        </div>
+        ))}
 
-        {/* Coming soon */}
-        <p className="soon-label">More games coming</p>
-        <div className="coming-soon-grid">
-          {[
-            { icon: '♟', label: 'Chess' },
-            { icon: '🎯', label: 'Wordle' },
-            { icon: '🃏', label: 'Cards' },
-          ].map(g => (
-            <div key={g.label} className="coming-soon-card">
-              <span className="coming-soon-icon">{g.icon}</span>
-              <span className="coming-soon-label">{g.label}</span>
+        <p className="soon-lbl">More games coming</p>
+        <div className="coming-grid">
+          {[{ icon: '♟', label: 'Chess' }, { icon: '🎯', label: 'Wordle' }, { icon: '🀄', label: 'More' }].map(g => (
+            <div key={g.label} className="coming-card">
+              <span className="coming-icon">{g.icon}</span>
+              <span className="coming-lbl">{g.label}</span>
             </div>
           ))}
         </div>

@@ -66,7 +66,7 @@ export default function Splash({ onEnter }: SplashProps) {
           <em>for you</em>
         </h1>
         <p className="splash-sub">From someone who loves you</p>
-        <button className="btn-enter" onClick={handleEnter}>
+        <button type="button" className="btn-enter" onClick={handleEnter}>
           Enter ✨
         </button>
       </div>

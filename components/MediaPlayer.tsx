@@ -98,7 +98,7 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
         />
         {mediaLoaded && (
           <div className="video-controls">
-            <button className="play-btn" onClick={togglePlay}>
+            <button type="button" className="play-btn" onClick={togglePlay}>
               {isPlaying ? '⏸️' : '▶️'}
             </button>
             <input
@@ -141,7 +141,7 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
             ))}
           </div>
           <div className="audio-controls-bar">
-            <button className="play-circle" onClick={togglePlay}>
+            <button type="button" className="play-circle" onClick={togglePlay}>
               {isPlaying ? '⏸️' : '▶️'}
             </button>
             <input
