@@ -26,9 +26,15 @@ export async function getMessages(): Promise<Message[]> {
     const currentUserId = auth?.currentUser?.uid;
     if (!currentUserId) return [];
 
+    // Get current partnerId
+    const userSnap = await getDoc(doc(db, 'users', currentUserId));
+    const partnerId = userSnap.data()?.partnerId;
+    if (!partnerId) return [];
+
     const q = query(
       collection(db, MESSAGES_COLLECTION),
-      where('receiverId', '==', currentUserId)
+      where('receiverId', '==', currentUserId),
+      where('senderId', '==', partnerId)
     );
     const snapshot = await getDocs(q);
     const data = snapshot.docs.map((doc) => ({
@@ -53,9 +59,15 @@ export async function getSentMessages(): Promise<Message[]> {
     const currentUserId = auth?.currentUser?.uid;
     if (!currentUserId) return [];
 
+    // Get current partnerId
+    const userSnap = await getDoc(doc(db, 'users', currentUserId));
+    const partnerId = userSnap.data()?.partnerId;
+    if (!partnerId) return [];
+
     const q = query(
       collection(db, MESSAGES_COLLECTION),
-      where('senderId', '==', currentUserId)
+      where('senderId', '==', currentUserId),
+      where('receiverId', '==', partnerId)
     );
     const snapshot = await getDocs(q);
     const data = snapshot.docs.map((doc) => ({

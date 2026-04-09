@@ -6,9 +6,15 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if request.auth != null && 
         (request.auth.uid == userId || 
+         // Pairing: Allow if partnerId is null and setting to current user
          (resource.data.partnerId == null && 
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['partnerId']) && 
-          request.resource.data.partnerId == request.auth.uid));
+          request.resource.data.partnerId == request.auth.uid) ||
+         // Unpairing: Allow if current user is the partner and clearing it
+         (resource.data.partnerId == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['partnerId']) &&
+          (!('partnerId' in request.resource.data) || request.resource.data.partnerId == null))
+        );
     }
 
     match /messages/{messageId} {

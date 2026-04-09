@@ -21,6 +21,7 @@ export default function InboxPage() {
   const [now, setNow] = useState(Date.now());
   const [checking, setChecking] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [partnerId, setPartnerId] = useState<string | null>(null);
 
   // Partner info
   const [partnerName, setPartnerName] = useState('');
@@ -42,9 +43,10 @@ export default function InboxPage() {
       try {
         const userSnap = await getDoc(doc(db, 'users', user.uid));
         if (userSnap.exists()) {
-          const { partnerId } = userSnap.data();
-          if (partnerId) {
-            const partnerSnap = await getDoc(doc(db, 'users', partnerId));
+          const { partnerId: pid } = userSnap.data();
+          if (pid) {
+            setPartnerId(pid);
+            const partnerSnap = await getDoc(doc(db, 'users', pid));
             if (partnerSnap.exists()) {
               const p = partnerSnap.data();
               setPartnerName(p.displayName || 'your love');
@@ -67,11 +69,16 @@ export default function InboxPage() {
 
   // Real-time messages listener scoped to current user as receiver
   useEffect(() => {
-    if (!currentUserId) return;
+    if (!currentUserId || !partnerId) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
 
     const q = query(
       collection(db, 'messages'),
-      where('receiverId', '==', currentUserId)
+      where('receiverId', '==', currentUserId),
+      where('senderId', '==', partnerId)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
