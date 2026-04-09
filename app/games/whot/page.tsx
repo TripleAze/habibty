@@ -2,93 +2,83 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import {
   WhotCard, WhotGameState, Suit, PlayerHand,
 } from '@/types';
 import {
   subscribeToWhotGame, playCard, drawCard, rematchWhot,
-  canPlay, getEffectLabel, SUIT_SYMBOL, SUIT_COLOR, SUIT_BG, cardLabel,
+  canPlay, getEffectLabel, SUIT_SYMBOL, SUIT_COLOR, cardLabel,
 } from '@/lib/whot';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import BottomNav from '@/components/BottomNav';
 import Link from 'next/link';
+import { ChevronLeft, Share2, Info, CheckCircle2, Clock, Trophy, Zap } from 'lucide-react';
 
 // ─── CARD COMPONENT ───────────────────────────────────────
 
 function Card({
-  card, playable, selected, onClick, small = false,
+  card, playable, selected, onClick, large = false, disabled = false,
 }: {
   card: WhotCard;
   playable?: boolean;
   selected?: boolean;
   onClick?: () => void;
-  small?: boolean;
+  large?: boolean;
+  disabled?: boolean;
 }) {
   const isWhot = card.suit === 'whot';
   const effect = getEffectLabel(card);
+  const color = SUIT_COLOR[card.suit];
 
   return (
     <div
-      onClick={onClick}
+      onClick={!disabled ? onClick : undefined}
+      className={`
+        relative flex flex-col items-center justify-center
+        rounded-2xl bg-white border-2 transition-all duration-300
+        ${large ? 'w-24 h-36' : 'w-20 h-28'}
+        ${disabled ? 'opacity-50 grayscale cursor-not-allowed border-gray-100' : 'cursor-pointer'}
+        ${selected 
+          ? 'scale-110 -translate-y-4 shadow-2xl z-10' 
+          : playable && !disabled
+            ? 'hover:scale-105 hover:-translate-y-2 shadow-lg'
+            : 'shadow-md'}
+        ${selected ? 'border-indigo-500' : playable && !disabled ? 'border-indigo-100 ring-2 ring-indigo-500/10' : 'border-transparent'}
+      `}
       style={{
-        width: small ? 44 : 64,
-        height: small ? 64 : 96,
-        borderRadius: 10,
-        background: selected
-          ? SUIT_COLOR[card.suit]
-          : SUIT_BG[card.suit],
-        border: selected
-          ? `2px solid ${SUIT_COLOR[card.suit]}`
-          : playable
-          ? `1.5px solid ${SUIT_COLOR[card.suit]}`
-          : '1.5px solid rgba(200,180,200,0.25)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: playable ? 'pointer' : 'default',
-        opacity: playable || selected ? 1 : 0.55,
-        transition: 'all 0.18s ease',
-        transform: selected ? 'translateY(-10px)' : playable ? 'translateY(0)' : 'none',
-        flexShrink: 0,
-        userSelect: 'none',
-        position: 'relative',
-        boxShadow: selected ? `0 6px 20px ${SUIT_COLOR[card.suit]}55` : 'none',
+        boxShadow: selected ? `0 20px 40px -10px ${color}44` : undefined,
       }}
     >
-      <span style={{
-        fontSize: small ? 14 : 20,
-        color: selected ? 'white' : SUIT_COLOR[card.suit],
-        fontWeight: 400,
-        fontFamily: "'Cormorant Garamond', serif",
-        lineHeight: 1,
-      }}>
-        {isWhot ? 'W' : cardLabel(card)}
-      </span>
-      <span style={{
-        fontSize: small ? 11 : 15,
-        color: selected ? 'rgba(255,255,255,0.85)' : SUIT_COLOR[card.suit],
-        marginTop: 2,
-      }}>
-        {SUIT_SYMBOL[card.suit]}
-      </span>
-      {!small && effect && (
-        <span style={{
-          position: 'absolute',
-          bottom: 4,
-          left: 0, right: 0,
-          textAlign: 'center',
-          fontSize: 7,
-          color: selected ? 'rgba(255,255,255,0.7)' : SUIT_COLOR[card.suit],
-          letterSpacing: '0.04em',
-          fontFamily: "'DM Sans', sans-serif",
-          fontWeight: 500,
-          textTransform: 'uppercase',
-        }}>
-          {effect}
+      {/* Playable Pulse Effect */}
+      {playable && !disabled && !selected && (
+        <div className="absolute inset-0 rounded-2xl animate-pulse ring-4 ring-indigo-500/20" />
+      )}
+
+      {/* Card Value/Suit */}
+      <div className="flex flex-col items-center">
+        <span 
+          className={`font-serif leading-none ${large ? 'text-4xl' : 'text-3xl'}`}
+          style={{ color }}
+        >
+          {isWhot ? 'W' : cardLabel(card)}
         </span>
+        <span 
+          className={`mt-1 font-medium ${large ? 'text-xl' : 'text-lg'}`}
+          style={{ color }}
+        >
+          {SUIT_SYMBOL[card.suit]}
+        </span>
+      </div>
+
+      {/* Special Effect Label */}
+      {effect && (
+        <div className="absolute bottom-2 left-0 right-0 text-center">
+          <span className="text-[7px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-gray-50 text-gray-400">
+            {effect}
+          </span>
+        </div>
       )}
     </div>
   );
@@ -99,43 +89,22 @@ function Card({
 function SuitPicker({ onPick }: { onPick: (suit: Suit) => void }) {
   const suits: Exclude<Suit, 'whot'>[] = ['circle', 'triangle', 'cross', 'square', 'star'];
   return (
-    <div style={{
-      position: 'fixed', inset: 0,
-      background: 'rgba(61,43,61,0.6)',
-      backdropFilter: 'blur(10px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 200, padding: 24,
-    }}>
-      <div style={{
-        background: 'rgba(255,255,255,0.95)',
-        borderRadius: 24, padding: '28px 24px',
-        width: '100%', maxWidth: 340, textAlign: 'center',
-      }}>
-        <p style={{
-          fontFamily: "'Cormorant Garamond', serif",
-          fontSize: 22, fontWeight: 300, fontStyle: 'italic',
-          color: '#3D2B3D', marginBottom: 6,
-        }}>Call a suit</p>
-        <p style={{ fontSize: 12, color: 'rgba(122,92,122,0.6)', marginBottom: 20 }}>
-          Choose the suit your partner must play
-        </p>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+    <div className="fixed inset-0 bg-romantic-dark/60 backdrop-blur-md z-[100] flex items-center justify-center p-6">
+      <div className="bg-white rounded-3xl p-8 w-full max-w-sm text-center shadow-2xl animate-in zoom-in duration-300">
+        <h3 className="font-serif text-2xl italic text-romantic-dark mb-2">Call a Suit</h3>
+        <p className="text-sm text-gray-500 mb-6">Choose the suit your partner must play</p>
+        <div className="grid grid-cols-3 gap-3">
           {suits.map(suit => (
-            <button key={suit} onClick={() => onPick(suit)} style={{
-              width: 56, height: 72,
-              borderRadius: 12,
-              background: SUIT_BG[suit],
-              border: `1.5px solid ${SUIT_COLOR[suit]}`,
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center',
-              gap: 6, cursor: 'pointer',
-              transition: 'transform 0.15s',
-            }}
-              onMouseOver={e => (e.currentTarget.style.transform = 'scale(1.08)')}
-              onMouseOut={e => (e.currentTarget.style.transform = 'scale(1)')}
+            <button
+              key={suit}
+              onClick={() => onPick(suit)}
+              className="group flex flex-col items-center justify-center p-4 rounded-2xl transition-all hover:scale-105 active:scale-95"
+              style={{ background: `${SUIT_COLOR[suit]}11`, border: `1px solid ${SUIT_COLOR[suit]}33` }}
             >
-              <span style={{ fontSize: 22, color: SUIT_COLOR[suit] }}>{SUIT_SYMBOL[suit]}</span>
-              <span style={{ fontSize: 9, color: SUIT_COLOR[suit], fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <span className="text-2xl mb-1 group-hover:scale-125 transition-transform" style={{ color: SUIT_COLOR[suit] }}>
+                {SUIT_SYMBOL[suit]}
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-tight opacity-60" style={{ color: SUIT_COLOR[suit] }}>
                 {suit}
               </span>
             </button>
@@ -146,7 +115,7 @@ function SuitPicker({ onPick }: { onPick: (suit: Suit) => void }) {
   );
 }
 
-// ─── MAIN PAGE ────────────────────────────────────────────
+// ─── MAIN INNER COMPONENT ─────────────────────────────────
 
 function WhotInner() {
   const searchParams = useSearchParams();
@@ -187,35 +156,26 @@ function WhotInner() {
     return () => unsub();
   }, [gameId, uid]);
 
-  // Clear error after 2s
   useEffect(() => {
     if (!actionError) return;
-    const t = setTimeout(() => setActionError(''), 2000);
+    const t = setTimeout(() => setActionError(''), 2500);
     return () => clearTimeout(t);
   }, [actionError]);
 
   if (!game || !uid) return (
-    <div className="app-container">
-      <div className="loading-state"><div className="loading-spinner" /></div>
+    <div className="flex items-center justify-center min-h-screen bg-slate-50">
+      <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-500 rounded-full animate-spin" />
     </div>
   );
 
   const opponent = game.players.find(p => p !== uid) ?? '';
-  const myHandCount = game.handCounts[uid] ?? 0;
-  const opponentHandCount = game.handCounts[opponent] ?? 0;
-  const isMyTurn = game.turn === uid && game.status === 'playing';
-  const myName = game.playerNames[uid] ?? 'You';
   const oppName = game.playerNames[opponent] ?? 'Partner';
-  const myPhoto = game.playerPhotos[uid];
   const oppPhoto = game.playerPhotos[opponent];
+  const oppHandCount = game.handCounts[opponent] ?? 0;
+  const isMyTurn = game.turn === uid && game.status === 'playing';
   const iWon = game.winner === uid;
-  const iLost = game.winner && game.winner !== uid;
   const hasLastCard = game.lastCardUids.includes(uid);
   const oppHasLastCard = game.lastCardUids.includes(opponent);
-
-  const playableCards = myHand.filter(c =>
-    canPlay(c, game.topCard, game.calledSuit, game.pendingPickup)
-  );
 
   const handleCardTap = (card: WhotCard) => {
     if (!isMyTurn) return;
@@ -229,8 +189,9 @@ function WhotInner() {
       setShowSuitPicker(true);
       return;
     }
+    const cardToPlay = selectedCard;
     setSelectedCard(null);
-    const result = await playCard(gameId, uid, selectedCard);
+    const result = await playCard(gameId, uid, cardToPlay);
     if (!result.ok) setActionError(result.error ?? 'Cannot play that card');
   };
 
@@ -245,14 +206,19 @@ function WhotInner() {
 
   const handleDraw = async () => {
     if (!isMyTurn) return;
+    setSelectedCard(null);
     const result = await drawCard(gameId, uid);
     if (!result.ok) setActionError(result.error ?? 'Cannot draw');
   };
 
   const handleRematch = async () => {
     setRematching(true);
-    const newId = await rematchWhot(gameId);
-    router.replace(`/games/whot?id=${newId}`);
+    try {
+      const newId = await rematchWhot(gameId);
+      router.replace(`/games/whot?id=${newId}`);
+    } catch (e) {
+      setRematching(false);
+    }
   };
 
   const copyCode = () => {
@@ -261,271 +227,268 @@ function WhotInner() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const statusText = () => {
-    if (game.status === 'waiting') return 'Waiting for partner…';
-    if (game.status === 'finished') {
-      if (iWon) return 'You won! 🎉';
-      return `${oppName} won`;
-    }
-    if (game.pendingPickup > 0) {
-      return isMyTurn
-        ? `Pick ${game.pendingPickup} or counter!`
-        : `${oppName} must pick ${game.pendingPickup}`;
-    }
-    if (game.calledSuit) {
-      return isMyTurn
-        ? `Play a ${game.calledSuit} or Whot!`
-        : `${oppName} called ${game.calledSuit}`;
-    }
-    return isMyTurn ? 'Your turn' : `${oppName}'s turn`;
-  };
-
   return (
-    <>
-      <style>{`
-        .whot-page { padding-bottom: 90px; min-height: 100vh; }
-        .whot-header { padding: 44px 20px 12px; display: flex; align-items: center; justify-content: space-between; }
-        .whot-code-bar { margin: 0 16px 10px; background: rgba(255,255,255,0.6); backdrop-filter: blur(8px); border-radius: 14px; padding: 10px 16px; border: 1px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: space-between; }
-        .whot-status-bar { margin: 0 16px 10px; background: rgba(255,255,255,0.6); backdrop-filter: blur(8px); border-radius: 14px; padding: 11px 16px; border: 1px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: space-between; }
-        .whot-status-txt { font-size: 13px; color: #7A5C7A; }
-        .w-badge { font-size: 10px; font-weight: 500; padding: 4px 10px; border-radius: 100px; display: flex; align-items: center; gap: 5px; }
-        .w-badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.7; }
-        .w-badge-turn { background: rgba(232,160,160,0.2); color: #B06060; }
-        .w-badge-wait { background: rgba(201,184,216,0.25); color: #7A6A8A; }
-        .w-badge-win  { background: rgba(168,213,162,0.25); color: #5A7A56; }
-        .w-badge-lose { background: rgba(201,184,216,0.2); color: #7A6A8A; }
-        .w-badge-pick { background: rgba(232,207,160,0.3); color: #9A7040; }
-
-        .whot-players { display: flex; gap: 8px; margin: 0 16px 10px; }
-        .w-player { flex: 1; background: rgba(255,255,255,0.55); border-radius: 16px; padding: 10px 12px; border: 1.5px solid rgba(255,255,255,0.7); display: flex; align-items: center; gap: 8px; transition: border-color 0.2s; }
-        .w-player.active { border-color: rgba(232,160,160,0.45); background: rgba(255,255,255,0.8); }
-        .w-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255,255,255,0.8); flex-shrink: 0; }
-        .w-avatar-fb { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#F2C4CE,#C9B8D8); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond',serif; font-size: 14px; color: #3D2B3D; flex-shrink: 0; border: 1.5px solid rgba(255,255,255,0.8); }
-        .w-player-info { flex: 1; min-width: 0; }
-        .w-player-lbl { font-size: 10px; color: rgba(122,92,122,0.5); letter-spacing: 0.06em; }
-        .w-player-name { font-family: 'Cormorant Garamond', serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; font-size: 13px; color: #3D2B3D; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .w-card-count { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 100px; background: rgba(201,184,216,0.2); color: #7A6A8A; white-space: nowrap; }
-        .last-card-badge { background: rgba(232,160,160,0.2); color: #B06060; animation: pulse 1.5s ease-in-out infinite; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-
-        .whot-table { margin: 0 16px 10px; background: rgba(255,255,255,0.62); backdrop-filter: blur(12px); border-radius: 20px; padding: 16px; border: 1px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; gap: 20px; }
-        .whot-deck-pile { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
-        .whot-deck-back { width: 64px; height: 96px; border-radius: 10px; background: linear-gradient(135deg, #E8A0A0, #C9B8D8); display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(255,255,255,0.6); transition: transform 0.15s; }
-        .whot-deck-back:hover { transform: scale(1.04); }
-        .pile-label { font-size: 10px; color: rgba(122,92,122,0.5); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; }
-        .whot-vs { font-family: 'Cormorant Garamond',serif; font-size: 13px; font-style: italic; color: rgba(122,92,122,0.4); }
-        .called-suit-pill { margin-top: 6px; font-size: 10px; font-weight: 500; padding: 3px 10px; border-radius: 100px; }
-
-        .whot-hand { padding: 0 16px 10px; }
-        .hand-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(122,92,122,0.55); font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-        .hand-label::after { content: ''; flex: 1; height: 0.5px; background: linear-gradient(90deg, rgba(201,184,216,0.5), transparent); }
-        .hand-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
-        .hand-scroll::-webkit-scrollbar { display: none; }
-
-        .whot-actions { display: flex; gap: 8px; padding: 0 16px; }
-        .btn-play-card { flex: 1; padding: 14px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-family: 'DM Sans',sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s; letter-spacing: 0.04em; box-shadow: 0 4px 16px rgba(232,160,160,0.3); }
-        .btn-play-card:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,160,160,0.4); }
-        .btn-play-card:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
-        .btn-draw { padding: 14px 20px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.35); background: transparent; font-family: 'DM Sans',sans-serif; font-size: 13px; color: #7A5C7A; cursor: pointer; transition: all 0.2s; white-space: nowrap; font-weight: 500; }
-        .btn-draw:hover:not(:disabled) { background: rgba(232,160,160,0.1); }
-        .btn-draw:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        .action-error { font-size: 12px; color: #c0706a; text-align: center; margin: 6px 16px 0; animation: fadeIn 0.2s ease; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
-
-        .whot-finished { margin: 0 16px; background: rgba(255,255,255,0.65); border-radius: 20px; padding: 24px 20px; border: 1px solid rgba(255,255,255,0.8); text-align: center; }
-        .finished-title { font-family: 'Cormorant Garamond', serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; font-size: 26px; font-weight: 300; font-style: italic; color: #3D2B3D; margin-bottom: 6px; }
-        .finished-sub { font-size: 12px; color: rgba(122,92,122,0.6); margin-bottom: 20px; }
-        .btn-rematch { width: 100%; padding: 14px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-family: 'DM Sans',sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 8px; transition: all 0.25s; box-shadow: 0 4px 16px rgba(232,160,160,0.3); }
-        .btn-rematch:hover:not(:disabled) { transform: translateY(-2px); }
-        .btn-rematch:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-new-game { width: 100%; padding: 12px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.35); background: transparent; font-family: 'DM Sans',sans-serif; font-size: 13px; color: #7A5C7A; cursor: pointer; transition: all 0.2s; }
-        .btn-new-game:hover { background: rgba(232,160,160,0.08); }
-
-        .whot-waiting { margin: 0 16px; background: rgba(255,255,255,0.6); border-radius: 20px; padding: 32px 20px; border: 1px solid rgba(255,255,255,0.8); text-align: center; }
-        .waiting-title { font-family: 'Cormorant Garamond',serif; font-size: 20px; font-weight: 300; font-style: italic; color: #7A5C7A; margin-bottom: 8px; }
-        .waiting-code { font-family: 'Cormorant Garamond',serif; font-size: 32px; letter-spacing: 0.2em; color: #3D2B3D; cursor: pointer; }
-
-        .spinner-sm { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .whot-code-lbl { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(122,92,122,0.5); margin-bottom: 2px; }
-        .whot-code-val { font-family: 'Cormorant Garamond',serif; font-size: 16px; letter-spacing: 0.12em; color: #3D2B3D; }
-        .whot-copy-btn { padding: 5px 12px; border-radius: 100px; background: rgba(232,160,160,0.15); border: 1px solid rgba(232,160,160,0.3); font-size: 11px; color: #B06060; cursor: pointer; font-weight: 500; font-family: 'DM Sans',sans-serif; }
-      `}</style>
+    <div className="min-h-screen bg-[#FFF8F2] flex flex-col pb-32">
+      {/* Header */}
+      <div className="px-6 pt-12 pb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-[10px] uppercase tracking-widest text-indigo-400 font-bold mb-1">Whot Battle</h2>
+          <h1 className="font-serif text-3xl italic text-romantic-dark">Habibty Whot</h1>
+        </div>
+        <Link href="/games" className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 transition-transform active:scale-90">
+          <ChevronLeft className="w-5 h-5 text-gray-400" />
+        </Link>
+      </div>
 
       {showSuitPicker && <SuitPicker onPick={handleSuitPick} />}
 
-      <div className="app-container whot-page">
-        <div className="whot-header">
-          <div>
-            <p className="home-label">Games</p>
-            <h1 className="home-title">Naija <em>Whot</em></h1>
+      {game.status === 'waiting' ? (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 animate-in fade-in zoom-in duration-500">
+          <div className="w-full max-w-sm bg-white/70 backdrop-blur-xl rounded-[40px] p-10 border border-white text-center shadow-xl">
+            <div className="w-20 h-20 bg-indigo-50 rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-inner">
+              <Clock className="w-10 h-10 text-indigo-400 animate-pulse" />
+            </div>
+            <h2 className="font-serif text-2xl italic text-romantic-dark mb-3">Wait for Partner</h2>
+            <p className="text-sm text-gray-500 mb-10 leading-relaxed">The game is ready. Share your code with your partner to start the fun!</p>
+            
+            <div 
+              onClick={copyCode}
+              className="group relative bg-[#F7E8EE]/40 border-2 border-indigo-100 rounded-2xl py-6 cursor-pointer overflow-hidden transition-all hover:border-indigo-300"
+            >
+              <span className="font-serif text-4xl tracking-widest text-romantic-dark block mb-2">{gameId}</span>
+              <div className="flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">
+                {copied ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <Share2 className="w-3 h-3 text-indigo-400" />}
+                {copied ? 'Copied' : 'Tap to Copy Code'}
+              </div>
+              {copied && <div className="absolute inset-0 bg-green-500/10 backdrop-blur-[2px] pointer-events-none" />}
+            </div>
           </div>
-          <Link href="/games" className="back-btn" style={{ marginBottom: 0 }}>← Back</Link>
         </div>
-
-        {game.status === 'waiting' ? (
-          <div className="whot-waiting">
-            <p className="waiting-title">Waiting for your partner…</p>
-            <p style={{ fontSize: 12, color: 'rgba(122,92,122,0.5)', marginBottom: 16 }}>Share this code</p>
-            <div className="waiting-code" onClick={copyCode}>{gameId}</div>
-            <p style={{ fontSize: 11, color: '#B06060', marginTop: 8 }}>{copied ? 'Copied!' : 'Tap to copy'}</p>
+      ) : (
+        <div className="flex-1 flex flex-col px-4 gap-6">
+          {/* Top Zone: Opponent */}
+          <div className={`
+            p-5 rounded-[28px] flex items-center gap-4 transition-all duration-500 border-2
+            ${!isMyTurn ? 'bg-white border-indigo-200 shadow-xl scale-100' : 'bg-white/50 border-white/50 opacity-80 scale-95 origin-top'}
+          `}>
+             <div className="relative">
+               {oppPhoto 
+                 ? <img src={oppPhoto} className="w-14 h-14 rounded-2xl object-cover ring-2 ring-white shadow-md" referrerPolicy="no-referrer" />
+                 : <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-xl font-serif text-indigo-400 shadow-inner">
+                    {Array.from(oppName)[0]?.toUpperCase()}
+                   </div>
+               }
+               {!isMyTurn && <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-4 border-white animate-pulse" />}
+             </div>
+             <div className="flex-1">
+               <div className="flex items-center justify-between mb-1">
+                 <h3 className="text-sm font-bold text-gray-700 tracking-tight capitalize">{oppName}</h3>
+                 {!isMyTurn && <span className="text-[9px] font-bold bg-green-500 text-white px-2 py-0.5 rounded-full uppercase tracking-widest">Active</span>}
+               </div>
+               <div className="flex items-center gap-2">
+                 <div className="flex gap-0.5">
+                   {[...Array(Math.min(5, oppHandCount))].map((_, i) => (
+                     <div key={i} className="w-2 h-3 bg-indigo-100 rounded-sm border border-indigo-200" />
+                   ))}
+                   {oppHandCount > 5 && <span className="text-[10px] text-indigo-300 font-bold ml-1">+{oppHandCount - 5}</span>}
+                 </div>
+                 <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">({oppHandCount} Cards)</span>
+                 {oppHasLastCard && <span className="bg-rose-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded uppercase animate-bounce ml-auto">Last Card!</span>}
+               </div>
+             </div>
           </div>
-        ) : (
-          <>
-            {/* Code bar */}
-            <div className="whot-code-bar">
-              <div>
-                <div className="whot-code-lbl">Game code</div>
-                <div className="whot-code-val">{gameId}</div>
+
+          {/* Center Zone: Game Table */}
+          <div className="flex-1 flex items-center justify-center gap-10 relative">
+            {/* Draw Pile (Deck) */}
+            <div 
+              onClick={isMyTurn ? handleDraw : undefined}
+              className={`group flex flex-col items-center gap-3 transition-transform ${isMyTurn ? 'cursor-pointer active:scale-95' : 'opacity-50'}`}
+            >
+              <span className="text-[10px] uppercase tracking-widest font-black text-gray-300">Deck</span>
+              <div className="relative">
+                {/* Visual Stack Effect */}
+                <div className="absolute -right-1.5 -bottom-1.5 w-20 h-28 bg-[#FFF8F2] border border-gray-200 rounded-2xl shadow-sm -rotate-3" />
+                <div className="absolute -right-0.5 -bottom-0.5 w-20 h-28 bg-white border border-gray-200 rounded-2xl shadow-sm rotate-2" />
+                <div className={`
+                  w-20 h-28 rounded-2xl flex flex-col items-center justify-center gap-1 border-2 transition-all
+                  bg-gradient-to-br from-indigo-500 to-romantic-purple shadow-xl z-10 
+                  ${isMyTurn ? 'border-white group-hover:-translate-y-2' : 'border-indigo-100'}
+                `}>
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-1">
+                    <span className="font-serif text-3xl italic text-white leading-none">W</span>
+                  </div>
+                  <span className="text-white/80 text-[10px] font-bold uppercase tracking-widest italic">{game.deckCount} Left</span>
+                </div>
               </div>
-              <button className="whot-copy-btn" onClick={copyCode}>{copied ? 'Copied!' : 'Share'}</button>
+              {isMyTurn && game.pendingPickup > 0 && (
+                <div className="absolute -bottom-8 bg-rose-500 text-white text-[10px] font-black px-4 py-1 rounded-full shadow-lg shadow-rose-500/30 whitespace-nowrap animate-bounce">
+                  + {game.pendingPickup} PENDING!
+                </div>
+              )}
             </div>
 
-            {/* Status */}
-            <div className="whot-status-bar">
-              <span className="whot-status-txt">{statusText()}</span>
-              <span className={`w-badge ${
-                game.status === 'finished'
-                  ? iWon ? 'w-badge-win' : 'w-badge-lose'
-                  : game.pendingPickup > 0 ? 'w-badge-pick'
-                  : isMyTurn ? 'w-badge-turn' : 'w-badge-wait'
-              }`}>
-                <span className="w-badge-dot" />
-                {game.status === 'finished'
-                  ? iWon ? 'Winner!' : 'Game over'
-                  : game.pendingPickup > 0 ? `Pick ${game.pendingPickup}`
-                  : isMyTurn ? 'Your turn' : 'Their turn'}
-              </span>
+            <div className="flex flex-col items-center justify-center gap-3">
+               <div className="w-8 h-8 rounded-full bg-indigo-50/50 flex items-center justify-center">
+                 <div className="w-0.5 h-full bg-indigo-100 rotate-45 transform" />
+               </div>
             </div>
 
-            {/* Players */}
-            <div className="whot-players">
-              <div className={`w-player ${isMyTurn && game.status === 'playing' ? 'active' : ''}`}>
-                {myPhoto
-                  ? <img src={myPhoto} className="w-avatar" referrerPolicy="no-referrer" alt={myName} />
-                  : <div className="w-avatar-fb">{Array.from(myName)[0]?.toUpperCase()}</div>}
-                <div className="w-player-info">
-                  <div className="w-player-lbl">You</div>
-                  <div className="w-player-name">{myName}</div>
-                </div>
-                <span className={`w-card-count ${hasLastCard ? 'last-card-badge' : ''}`}>
-                  {hasLastCard ? 'Last card!' : `${myHand.length} cards`}
-                </span>
-              </div>
-              <div className={`w-player ${!isMyTurn && game.status === 'playing' ? 'active' : ''}`}>
-                {oppPhoto
-                  ? <img src={oppPhoto} className="w-avatar" referrerPolicy="no-referrer" alt={oppName} />
-                  : <div className="w-avatar-fb">{Array.from(oppName)[0]?.toUpperCase()}</div>}
-                <div className="w-player-info">
-                  <div className="w-player-lbl">Partner</div>
-                  <div className="w-player-name">{oppName}</div>
-                </div>
-                <span className={`w-card-count ${oppHasLastCard ? 'last-card-badge' : ''}`}>
-                  {oppHasLastCard ? 'Last card!' : `${opponentHandCount} cards`}
-                </span>
-              </div>
-            </div>
-
-            {/* Table */}
-            <div className="whot-table">
-              {/* Draw pile */}
-              <div className="whot-deck-pile" onClick={isMyTurn ? handleDraw : undefined}>
-                <div className="whot-deck-back">
-                  <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: 'white', fontStyle: 'italic' }}>W</span>
-                </div>
-                <span className="pile-label">{game.deckCount} left</span>
-                {isMyTurn && game.status === 'playing' && (
-                  <span style={{ fontSize: 10, color: '#B06060', fontWeight: 500 }}>
-                    {game.pendingPickup > 0 ? `Draw ${game.pendingPickup}` : 'Draw'}
-                  </span>
-                )}
-              </div>
-
-              <div className="whot-vs">vs</div>
-
-              {/* Top card */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                <Card card={game.topCard} />
+            {/* Top Played Card */}
+            <div className="flex flex-col items-center gap-3">
+              <span className="text-[10px] uppercase tracking-widest font-black text-gray-300">Played</span>
+              <div className="relative">
+                <Card card={game.topCard} large />
                 {game.calledSuit && (
-                  <div className="called-suit-pill" style={{
-                    background: SUIT_BG[game.calledSuit],
-                    color: SUIT_COLOR[game.calledSuit],
-                    border: `1px solid ${SUIT_COLOR[game.calledSuit]}`,
-                  }}>
-                    {SUIT_SYMBOL[game.calledSuit]} {game.calledSuit}
+                  <div className="absolute -top-4 -right-4 bg-indigo-600 text-white rounded-full p-3 shadow-xl border-2 border-white animate-in zoom-in spin-in-12 duration-500">
+                    <span className="text-xl block leading-none">{SUIT_SYMBOL[game.calledSuit]}</span>
                   </div>
                 )}
-                <span className="pile-label">Top card</span>
               </div>
             </div>
 
-            {/* My hand */}
-            {game.status === 'playing' && (
-              <>
-                <div className="whot-hand">
-                  <div className="hand-label">Your hand</div>
-                  <div className="hand-scroll">
-                    {myHand.map(card => (
-                      <Card
-                        key={card.id}
-                        card={card}
-                        playable={isMyTurn && canPlay(card, game.topCard, game.calledSuit, game.pendingPickup)}
-                        selected={selectedCard?.id === card.id}
-                        onClick={() => handleCardTap(card)}
-                      />
-                    ))}
-                  </div>
-                </div>
+            {/* Floating Turn Indicator Overlay */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20">
+               {isMyTurn ? (
+                 <div className="bg-indigo-600 text-white px-6 py-2 rounded-full shadow-2xl flex items-center gap-3 animate-in fade-in zoom-in duration-300">
+                    <Zap className="w-4 h-4 fill-white animate-pulse" />
+                    <span className="text-xs font-black uppercase tracking-widest">It's Your Turn!</span>
+                 </div>
+               ) : game.status === 'playing' ? (
+                 <div className="bg-white/80 backdrop-blur border border-indigo-100 text-indigo-400 px-6 py-2 rounded-full shadow-lg flex items-center gap-3">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-xs font-black uppercase tracking-widest">Waiting for Partner</span>
+                 </div>
+               ) : null}
+            </div>
+          </div>
 
-                <div className="whot-actions">
-                  <button
-                    className="btn-play-card"
-                    onClick={handlePlay}
-                    disabled={!selectedCard || !isMyTurn}
-                  >
-                    {selectedCard ? `Play ${SUIT_SYMBOL[selectedCard.suit]} ${cardLabel(selectedCard)}` : 'Select a card'}
-                  </button>
-                  <button
-                    className="btn-draw"
-                    onClick={handleDraw}
-                    disabled={!isMyTurn}
-                  >
-                    {game.pendingPickup > 0 ? `Pick ${game.pendingPickup}` : 'Draw'}
-                  </button>
-                </div>
-                {actionError && <p className="action-error">{actionError}</p>}
-              </>
-            )}
+          {/* Action Error Toast (Inline) */}
+          {actionError && (
+             <div className="mx-auto bg-rose-50 border border-rose-100 text-rose-500 px-4 py-2 rounded-2xl text-[11px] font-bold flex items-center gap-2 animate-in slide-in-from-bottom duration-300">
+                <Info className="w-3.5 h-3.5" /> {actionError}
+             </div>
+          )}
 
-            {/* Finished */}
-            {game.status === 'finished' && (
-              <div className="whot-finished">
-                <p className="finished-title">{iWon ? 'You won! 🎉' : `${oppName} won`}</p>
-                <p className="finished-sub">{iWon ? 'Well played habibi' : 'Better luck next round'}</p>
-                <button className="btn-rematch" onClick={handleRematch} disabled={rematching}>
-                  {rematching ? <span className="spinner-sm" /> : 'Rematch'}
+          {/* Bottom Zone: Player Hand */}
+          <div className="flex flex-col gap-4 mt-auto">
+            <div className="flex items-center justify-between opacity-50">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                Your Hand ({myHand.length})
+              </span>
+              {hasLastCard && <span className="text-[10px] font-black text-rose-500 uppercase italic underline underline-offset-4 animate-pulse">Check Up!</span>}
+            </div>
+            
+            <div className="overflow-x-auto overflow-y-visible pb-12 -mx-4 px-4 no-scrollbar scroll-smooth">
+               <div className="flex items-end gap-2 pr-10">
+                 {myHand.map((card, i) => (
+                   <div 
+                    key={card.id}
+                    className="flex-shrink-0"
+                    style={{ 
+                      zIndex: selectedCard?.id === card.id ? 50 : 10 + i,
+                      marginLeft: i === 0 ? 0 : '-3.5rem' 
+                    }}
+                   >
+                     <Card 
+                       card={card}
+                       playable={isMyTurn && canPlay(card, game.topCard, game.calledSuit, game.pendingPickup)}
+                       selected={selectedCard?.id === card.id}
+                       onClick={() => handleCardTap(card)}
+                       disabled={!isMyTurn || game.status !== 'playing'}
+                     />
+                   </div>
+                 ))}
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Actions Strip */}
+      {game.status === 'playing' && (
+        <div className="fixed bottom-[84px] left-0 right-0 px-6 z-40 pointer-events-none">
+          <div className="max-w-md mx-auto flex gap-4 pointer-events-auto">
+            <button
+              onClick={handlePlay}
+              disabled={!selectedCard || !isMyTurn}
+              className={`
+                flex-[2] py-5 rounded-[22px] font-black text-xs uppercase tracking-widest text-white
+                transition-all active:scale-95 disabled:opacity-30 disabled:grayscale disabled:scale-100
+                shadow-[0_12px_30px_-10px_rgba(79,70,229,0.5)]
+                ${selectedCard ? 'bg-indigo-600 border-b-4 border-indigo-800' : 'bg-gray-400'}
+              `}
+            >
+              {selectedCard ? `Play This Card` : 'Pick a card to play'}
+            </button>
+            <button
+              onClick={handleDraw}
+              disabled={!isMyTurn}
+              className={`
+                flex-1 py-5 rounded-[22px] font-black text-xs uppercase tracking-widest
+                transition-all active:scale-95 disabled:opacity-30
+                border-2 border-indigo-200 bg-white text-indigo-600
+              `}
+            >
+              Draw
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Finish Screen Overlay */}
+      {game.status === 'finished' && (
+        <div className="fixed inset-0 bg-romantic-dark/80 backdrop-blur-xl z-[150] flex items-center justify-center p-8 animate-in fade-in duration-700">
+           <div className="w-full max-w-sm bg-white rounded-[40px] px-10 py-14 text-center shadow-3xl transform animate-in slide-in-from-bottom duration-500">
+              <div className="w-24 h-24 rounded-[32px] bg-indigo-50 flex items-center justify-center mx-auto mb-8 relative">
+                 <Trophy className={`w-12 h-12 ${iWon ? 'text-yellow-500 animate-bounce' : 'text-gray-300'}`} />
+                 {iWon && <div className="absolute inset-0 rounded-[32px] animate-ping ring-4 ring-yellow-400 opacity-20" />}
+              </div>
+              <h2 className="font-serif text-3xl italic text-romantic-dark mb-2">
+                {iWon ? 'Champion! 🎉' : 'Heartbreak 💔'}
+              </h2>
+              <p className="text-gray-500 text-sm mb-12 leading-relaxed italic font-serif">
+                {iWon 
+                  ? 'Victory is yours, my lovely! Well played and gracefully won.'
+                  : `Alas, ${oppName} took the glory this time. Rematch?`}
+              </p>
+              
+              <div className="space-y-4">
+                <button 
+                  onClick={handleRematch} 
+                  disabled={rematching}
+                  className="w-full py-5 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-200"
+                >
+                  {rematching ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : 'Start Rematch'}
                 </button>
-                <Link href="/games" className="btn-new-game" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
-                  Back to games
+                <Link href="/games" className="block w-full py-5 rounded-2xl border-2 border-gray-100 text-gray-500 font-bold text-xs uppercase tracking-widest transition-colors hover:bg-gray-50">
+                  Back to Lobby
                 </Link>
               </div>
-            )}
-          </>
-        )}
+           </div>
+        </div>
+      )}
 
-        <BottomNav activeTab="games" />
-      </div>
-    </>
+      <BottomNav activeTab="games" />
+
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+    </div>
   );
 }
 
 export default function WhotPage() {
   return (
     <Suspense fallback={
-      <div className="app-container">
-        <div className="loading-state"><div className="loading-spinner" /></div>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-500 rounded-full animate-spin" />
       </div>
     }>
       <WhotInner />
