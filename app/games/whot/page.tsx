@@ -2,8 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import {
   WhotCard, WhotGameState, Suit, PlayerHand,
@@ -12,7 +11,7 @@ import {
   subscribeToWhotGame, playCard, drawCard, rematchWhot,
   canPlay, getEffectLabel, SUIT_SYMBOL, SUIT_COLOR, SUIT_BG, cardLabel,
 } from '@/lib/whot';
-import { onSnapshot, doc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import BottomNav from '@/components/BottomNav';
 import Link from 'next/link';
 
@@ -165,7 +164,7 @@ function WhotInner() {
 
   useEffect(() => {
     if (!auth) return;
-    const unsub = onAuthStateChanged(auth, u => {
+    const unsub = onAuthStateChanged(auth, (u) => {
       if (!u) { router.replace('/auth'); return; }
       setUid(u.uid);
     });
@@ -180,7 +179,7 @@ function WhotInner() {
 
   useEffect(() => {
     if (!gameId || !uid) return;
-    const unsub = onSnapshot(doc(db, 'games', gameId, 'hands', uid), snap => {
+    const unsub = onSnapshot(doc(db, 'games', gameId.toUpperCase(), 'hands', uid), snap => {
       if (snap.exists()) {
         setMyHand((snap.data() as PlayerHand).cards);
       }

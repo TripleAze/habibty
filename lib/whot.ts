@@ -208,8 +208,8 @@ export async function playCard(
   card: WhotCard,
   calledSuit?: Suit  // required when playing a Whot card
 ): Promise<{ ok: boolean; error?: string }> {
-  const ref = doc(db, 'games', gameId);
-  const handRef = doc(db, 'games', gameId, 'hands', uid);
+  const ref = doc(db, 'games', gameId.toUpperCase());
+  const handRef = doc(db, 'games', gameId.toUpperCase(), 'hands', uid);
   
   const [snap, handSnap] = await Promise.all([getDoc(ref), getDoc(handRef)]);
   
@@ -314,8 +314,8 @@ export async function drawCard(
   gameId: string,
   uid: string
 ): Promise<{ ok: boolean; error?: string }> {
-  const ref = doc(db, 'games', gameId);
-  const handRef = doc(db, 'games', gameId, 'hands', uid);
+  const ref = doc(db, 'games', gameId.toUpperCase());
+  const handRef = doc(db, 'games', gameId.toUpperCase(), 'hands', uid);
   
   const [snap, handSnap] = await Promise.all([getDoc(ref), getDoc(handRef)]);
   if (!snap.exists()) return { ok: false, error: 'Game not found.' };
@@ -422,7 +422,7 @@ export function subscribeToWhotGame(
   gameId: string,
   cb: (state: WhotGameState) => void
 ): () => void {
-  return onSnapshot(doc(db, 'games', gameId), snap => {
+  return onSnapshot(doc(db, 'games', gameId.toUpperCase()), snap => {
     if (snap.exists()) cb({ id: snap.id, ...snap.data() } as WhotGameState);
   });
 }
