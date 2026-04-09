@@ -27,7 +27,7 @@
 
 html, body {
   height: 100%;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
   background: var(--cream);
   color: var(--ink);
   overflow-x: hidden;
@@ -100,7 +100,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Cormorant Garamond', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", serif;
   font-size: 22px;
   font-weight: 400;
   color: var(--ink);

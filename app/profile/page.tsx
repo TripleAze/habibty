@@ -607,6 +607,14 @@ export default function ProfilePage() {
           border: none;
         }
 
+        .profile-hint {
+          font-size: 11px;
+          color: rgba(122,92,122,0.45);
+          line-height: 1.6;
+          font-family: 'Cormorant Garamond', serif;
+          font-style: italic;
+        }
+
         .mt-2 { margin-top: 8px; }
 
         .signout-confirm p {
