@@ -30,6 +30,7 @@ export default function ProfilePage() {
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showUnpairConfirm, setShowUnpairConfirm] = useState(false);
   const [unpairing, setUnpairing] = useState(false);
+  const [unpaired, setUnpaired] = useState(false);
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -160,10 +161,13 @@ export default function ProfilePage() {
     try {
       const res = await unpairPartner(auth.currentUser.uid, partnerId);
       if (res.ok) {
-        setPartnerId('');
-        setPartnerName('');
-        setShowUnpairConfirm(false);
-        showToast('Successfully unpaired 💔');
+        setUnpaired(true);
+        setTimeout(() => {
+          setPartnerId('');
+          setPartnerName('');
+          setShowUnpairConfirm(false);
+          setUnpaired(false);
+        }, 2000);
       } else {
         showToast(res.error || 'Failed to unpair');
       }
@@ -273,11 +277,11 @@ export default function ProfilePage() {
                 ) : (
                   <div className="unpair-confirm-inline">
                     <button 
-                      className="btn-unpair-confirm" 
+                      className={`btn-unpair-confirm ${unpaired ? 'success' : ''}`} 
                       onClick={handleUnpair}
-                      disabled={unpairing}
+                      disabled={unpairing || unpaired}
                     >
-                      {unpairing ? 'Breaking code...' : 'Yes, unpair'}
+                      {unpairing ? 'Breaking link...' : unpaired ? 'Unpaired 💔' : 'Yes, unpair'}
                     </button>
                     <button 
                       className="btn-unpair-cancel" 
@@ -599,6 +603,11 @@ export default function ProfilePage() {
           background: #B06060;
           color: white;
           border: none;
+          transition: all 0.2s;
+        }
+
+        .btn-unpair-confirm.success {
+          background: #A8D5A2;
         }
         
         .btn-unpair-cancel {
