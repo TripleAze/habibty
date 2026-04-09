@@ -7,6 +7,7 @@ import { signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { uploadMedia } from '@/lib/imagekit';
+import { unpairPartner } from '@/lib/pair';
 import BottomNav from '@/components/BottomNav';
 
 export default function ProfilePage() {
@@ -18,6 +19,7 @@ export default function ProfilePage() {
   const [email, setEmail] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [partnerName, setPartnerName] = useState('');
+  const [partnerId, setPartnerId] = useState('');
   
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -26,6 +28,8 @@ export default function ProfilePage() {
   const [toast, setToast] = useState('');
   const [checking, setChecking] = useState(true);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showUnpairConfirm, setShowUnpairConfirm] = useState(false);
+  const [unpairing, setUnpairing] = useState(false);
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -58,10 +62,14 @@ export default function ProfilePage() {
           }
 
           if (data.partnerId) {
+            setPartnerId(data.partnerId);
             const partnerSnap = await getDoc(doc(db, 'users', data.partnerId));
             if (partnerSnap.exists()) {
               setPartnerName(partnerSnap.data().displayName || 'your partner');
             }
+          } else {
+            setPartnerId('');
+            setPartnerName('');
           }
         } else {
           hasLoadedRef.current = true;
@@ -143,6 +151,27 @@ export default function ProfilePage() {
       setUploading(false);
       setPhotoSaved(true);
       setTimeout(() => setPhotoSaved(false), 3000);
+    }
+  };
+  
+  const handleUnpair = async () => {
+    if (!auth?.currentUser || !partnerId) return;
+    setUnpairing(true);
+    try {
+      const res = await unpairPartner(auth.currentUser.uid, partnerId);
+      if (res.ok) {
+        setPartnerId('');
+        setPartnerName('');
+        setShowUnpairConfirm(false);
+        showToast('Successfully unpaired 💔');
+      } else {
+        showToast(res.error || 'Failed to unpair');
+      }
+    } catch (err) {
+      console.error('Unpair error:', err);
+      showToast('Something went wrong 😢');
+    } finally {
+      setUnpairing(false);
     }
   };
 
@@ -229,12 +258,41 @@ export default function ProfilePage() {
               <span className="profile-value">
                 {partnerName ? `Paired with ${partnerName} 💖` : 'Searching for love...'}
               </span>
-              {!partnerName && (
+              {!partnerName ? (
                 <Link href="/pair" className="profile-action">
                   Pair now →
                 </Link>
+              ) : (
+                !showUnpairConfirm ? (
+                  <button 
+                    className="profile-action unpair-trigger" 
+                    onClick={() => setShowUnpairConfirm(true)}
+                  >
+                    Unpair
+                  </button>
+                ) : (
+                  <div className="unpair-confirm-inline">
+                    <button 
+                      className="btn-unpair-confirm" 
+                      onClick={handleUnpair}
+                      disabled={unpairing}
+                    >
+                      {unpairing ? 'Breaking code...' : 'Yes, unpair'}
+                    </button>
+                    <button 
+                      className="btn-unpair-cancel" 
+                      onClick={() => setShowUnpairConfirm(false)}
+                      disabled={unpairing}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )
               )}
             </div>
+            {partnerName && !showUnpairConfirm && (
+              <span className="profile-hint mt-2">Break the link to pair with someone else. Memories are kept hidden.</span>
+            )}
           </div>
         </div>
 
@@ -505,6 +563,51 @@ export default function ProfilePage() {
           background: rgba(232, 160, 160, 0.05);
           border-color: rgba(232, 160, 160, 0.5);
         }
+
+        .profile-action {
+          font-size: 13px;
+          color: #E8A0A0;
+          text-decoration: none;
+          font-weight: 600;
+          cursor: pointer;
+          background: none;
+          border: none;
+          padding: 0;
+        }
+        
+        .profile-action.unpair-trigger {
+          color: #B06060;
+          opacity: 0.6;
+        }
+
+        .unpair-confirm-inline {
+          display: flex;
+          gap: 12px;
+          margin-top: 4px;
+        }
+
+        .btn-unpair-confirm, .btn-unpair-cancel {
+          padding: 6px 12px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          font-family: 'DM Sans', sans-serif;
+        }
+
+        .btn-unpair-confirm {
+          background: #B06060;
+          color: white;
+          border: none;
+        }
+        
+        .btn-unpair-cancel {
+          background: #eee;
+          color: #666;
+          border: none;
+        }
+
+        .mt-2 { margin-top: 8px; }
 
         .signout-confirm p {
           font-size: 14px;
