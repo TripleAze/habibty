@@ -41,7 +41,7 @@ service cloud.firestore {
       );
 
       // Private hands — only the owner can read their own hand.
-      // During the join phase (status='waiting'), the joining player can write both hands
+      // During the join phase (status='waiting'), the joining player can write both to hands
       // because the batch atomically sets up the initial deal before status flips to 'playing'.
       match /hands/{userId} {
         allow read: if request.auth != null && request.auth.uid == userId;
