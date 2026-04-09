@@ -231,9 +231,6 @@ export async function playCard(
 
   const newHand = myHand.filter((_, i) => i !== cardIdx);
   const opponent = g.players.find(p => p !== uid)!;
-  const oppHandRef = doc(db, 'games', gameId, 'hands', opponent);
-  const oppHandSnap = await getDoc(oppHandRef);
-  let opponentHand = oppHandSnap.exists() ? (oppHandSnap.data() as PlayerHand).cards : [];
 
   const effect = getSpecialEffect(card);
 
@@ -247,6 +244,7 @@ export async function playCard(
       status: 'finished',
       winner: uid,
       lastCardUids: [],
+      [`handCounts.${uid}`]: 0,
     });
     batch.update(handRef, { cards: newHand });
     await batch.commit();
@@ -266,10 +264,9 @@ export async function playCard(
   let newDeckCount = g.deckCount;
   let nextDeckIndex = g.nextDeckIndex;
 
-  // For General Market (effect === 'general-market'), the opponent draws 1.
-  // This is tricky because the opponent's hand is private.
-  // We'll handle it by fetching the next card and adding it to their hand doc.
-  
+  // Use existing public count as default — no need to read opponent's private hand
+  let opponentHandCount = g.handCounts[opponent] ?? 0;
+
   const batch = writeBatch(db);
 
   if (effect === 'pick2') {
@@ -279,12 +276,16 @@ export async function playCard(
   } else if (effect === 'skip') {
     nextTurn = uid;
   } else if (effect === 'general-market' && newDeckCount > 0) {
+    // Only here do we need to modify (write) the opponent's hand
+    const oppHandRef = doc(db, 'games', gameId.toUpperCase(), 'hands', opponent);
     const deckCardRef = doc(db, 'games', gameId.toUpperCase(), 'deck', nextDeckIndex.toString());
-    const cardSnap = await getDoc(deckCardRef);
-    if (cardSnap.exists()) {
+    const [oppHandSnap, cardSnap] = await Promise.all([getDoc(oppHandRef), getDoc(deckCardRef)]);
+    if (cardSnap.exists() && oppHandSnap.exists()) {
       const drawnCard = cardSnap.data() as WhotCard;
-      opponentHand.push(drawnCard);
-      batch.update(oppHandRef, { cards: opponentHand });
+      const opponentHand = (oppHandSnap.data() as PlayerHand).cards;
+      const updatedOppHand = [...opponentHand, drawnCard];
+      opponentHandCount = updatedOppHand.length;
+      batch.update(oppHandRef, { cards: updatedOppHand });
       newDeckCount--;
       nextDeckIndex++;
     }
@@ -301,7 +302,7 @@ export async function playCard(
     deckCount: newDeckCount,
     nextDeckIndex: nextDeckIndex,
     [`handCounts.${uid}`]: newHand.length,
-    [`handCounts.${opponent}`]: opponentHand.length,
+    [`handCounts.${opponent}`]: opponentHandCount,
   });
   
   batch.update(handRef, { cards: newHand });
