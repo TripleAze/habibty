@@ -276,16 +276,14 @@ export async function playCard(
   } else if (effect === 'skip') {
     nextTurn = uid;
   } else if (effect === 'general-market' && newDeckCount > 0) {
-    // Only here do we need to modify (write) the opponent's hand
+    // We use arrayUnion for a 'blind write' so we don't have to read the opponent's hand doc
     const oppHandRef = doc(db, 'games', gameId.toUpperCase(), 'hands', opponent);
     const deckCardRef = doc(db, 'games', gameId.toUpperCase(), 'deck', nextDeckIndex.toString());
-    const [oppHandSnap, cardSnap] = await Promise.all([getDoc(oppHandRef), getDoc(deckCardRef)]);
-    if (cardSnap.exists() && oppHandSnap.exists()) {
+    const cardSnap = await getDoc(deckCardRef);
+    if (cardSnap.exists()) {
       const drawnCard = cardSnap.data() as WhotCard;
-      const opponentHand = (oppHandSnap.data() as PlayerHand).cards;
-      const updatedOppHand = [...opponentHand, drawnCard];
-      opponentHandCount = updatedOppHand.length;
-      batch.update(oppHandRef, { cards: updatedOppHand });
+      batch.update(oppHandRef, { cards: arrayUnion(drawnCard) });
+      opponentHandCount = (g.handCounts[opponent] ?? 0) + 1;
       newDeckCount--;
       nextDeckIndex++;
     }
