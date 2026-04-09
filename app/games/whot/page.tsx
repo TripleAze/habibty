@@ -303,7 +303,7 @@ function WhotInner() {
         .w-avatar-fb { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#F2C4CE,#C9B8D8); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond',serif; font-size: 14px; color: #3D2B3D; flex-shrink: 0; border: 1.5px solid rgba(255,255,255,0.8); }
         .w-player-info { flex: 1; min-width: 0; }
         .w-player-lbl { font-size: 10px; color: rgba(122,92,122,0.5); letter-spacing: 0.06em; }
-        .w-player-name { font-family: 'Cormorant Garamond',serif; font-size: 13px; color: #3D2B3D; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .w-player-name { font-family: 'Cormorant Garamond', serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; font-size: 13px; color: #3D2B3D; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .w-card-count { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 100px; background: rgba(201,184,216,0.2); color: #7A6A8A; white-space: nowrap; }
         .last-card-badge { background: rgba(232,160,160,0.2); color: #B06060; animation: pulse 1.5s ease-in-out infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
@@ -334,7 +334,7 @@ function WhotInner() {
         @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
 
         .whot-finished { margin: 0 16px; background: rgba(255,255,255,0.65); border-radius: 20px; padding: 24px 20px; border: 1px solid rgba(255,255,255,0.8); text-align: center; }
-        .finished-title { font-family: 'Cormorant Garamond',serif; font-size: 26px; font-weight: 300; font-style: italic; color: #3D2B3D; margin-bottom: 6px; }
+        .finished-title { font-family: 'Cormorant Garamond', serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; font-size: 26px; font-weight: 300; font-style: italic; color: #3D2B3D; margin-bottom: 6px; }
         .finished-sub { font-size: 12px; color: rgba(122,92,122,0.6); margin-bottom: 20px; }
         .btn-rematch { width: 100%; padding: 14px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-family: 'DM Sans',sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 8px; transition: all 0.25s; box-shadow: 0 4px 16px rgba(232,160,160,0.3); }
         .btn-rematch:hover:not(:disabled) { transform: translateY(-2px); }
@@ -405,7 +405,7 @@ function WhotInner() {
               <div className={`w-player ${isMyTurn && game.status === 'playing' ? 'active' : ''}`}>
                 {myPhoto
                   ? <img src={myPhoto} className="w-avatar" referrerPolicy="no-referrer" alt={myName} />
-                  : <div className="w-avatar-fb">{myName[0]?.toUpperCase()}</div>}
+                  : <div className="w-avatar-fb">{Array.from(myName)[0]?.toUpperCase()}</div>}
                 <div className="w-player-info">
                   <div className="w-player-lbl">You</div>
                   <div className="w-player-name">{myName}</div>
@@ -417,7 +417,7 @@ function WhotInner() {
               <div className={`w-player ${!isMyTurn && game.status === 'playing' ? 'active' : ''}`}>
                 {oppPhoto
                   ? <img src={oppPhoto} className="w-avatar" referrerPolicy="no-referrer" alt={oppName} />
-                  : <div className="w-avatar-fb">{oppName[0]?.toUpperCase()}</div>}
+                  : <div className="w-avatar-fb">{Array.from(oppName)[0]?.toUpperCase()}</div>}
                 <div className="w-player-info">
                   <div className="w-player-lbl">Partner</div>
                   <div className="w-player-name">{oppName}</div>
