@@ -85,6 +85,7 @@ export default function GamesPage() {
       name: 'Tic Tac Toe',
       desc: 'Classic 3×3 board game',
       symbol: '✕ ○',
+      icon: undefined as string | undefined,
       color: '#E8A0A0',
       bg: 'rgba(232,160,160,0.12)',
       border: 'rgba(232,160,160,0.3)',
@@ -94,6 +95,7 @@ export default function GamesPage() {
       name: 'Naija Whot',
       desc: 'Nigerian shedding card game',
       symbol: '★ ●',
+      icon: '/whot-icon.png',
       color: '#C9B8D8',
       bg: 'rgba(201,184,216,0.12)',
       border: 'rgba(201,184,216,0.3)',
@@ -153,8 +155,11 @@ export default function GamesPage() {
         {games.map(g => (
           <div key={g.type} className="game-card">
             <div className="game-card-header">
-              <div className="game-icon" style={{ background: g.bg, color: g.color, border: `1px solid ${g.border}` }}>
-                {g.symbol}
+              <div className="game-icon" style={{ background: g.bg, color: g.color, border: `1px solid ${g.border}`, overflow: 'hidden', padding: 0 }}>
+                {g.icon
+                  ? <img src={g.icon} alt={g.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 14 }} />
+                  : g.symbol
+                }
               </div>
               <div>
                 <div className="game-name">{g.name}</div>
