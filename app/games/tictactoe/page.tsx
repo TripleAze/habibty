@@ -324,17 +324,3 @@ export default function TicTacToePage() {
     </Suspense>
   );
 }
-
-// Need to re-export TTTSkeleton for suspense fallback
-function TTTSkeleton() {
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-      <div style={{ width: 160, height: 24, borderRadius: 8, background: 'rgba(255,255,255,0.4)' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, width: 260 }}>
-        {Array(9).fill(0).map((_,i) => (
-          <div key={i} style={{ aspectRatio: '1', borderRadius: 14, background: 'rgba(255,255,255,0.4)' }} />
-        ))}
-      </div>
-    </div>
-  );
-}

@@ -99,21 +99,6 @@ function WhotCardView({
   );
 }
 
-// ── SKELETON ──────────────────────────────────────────────
-function WhotSkeleton() {
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-      <div style={{ width: 140, height: 22, borderRadius: 8, background: 'rgba(255,255,255,0.4)' }} />
-      <div style={{ display: 'flex', gap: 12 }}>
-        {[0,1].map(i => <div key={i} style={{ width: 70, height: 100, borderRadius: 12, background: 'rgba(255,255,255,0.4)' }} />)}
-      </div>
-      <div style={{ display: 'flex', gap: 6 }}>
-        {[0,1,2,3,4].map(i => <div key={i} style={{ width: 50, height: 76, borderRadius: 10, background: 'rgba(255,255,255,0.3)' }} />)}
-      </div>
-    </div>
-  );
-}
-
 // ── MAIN ──────────────────────────────────────────────────
 function WhotInner() {
   const searchParams = useSearchParams();

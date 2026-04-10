@@ -8,6 +8,10 @@ import {
   Suit, WhotCard, WhotGameState, PlayerHand, SpecialEffect,
 } from '@/types';
 
+export type {
+  Suit, WhotCard, WhotGameState, PlayerHand, SpecialEffect,
+};
+
 // ─── DECK DEFINITION ─────────────────────────────────────
 
 const SUIT_VALUES: Record<Exclude<Suit, 'whot'>, number[]> = {
