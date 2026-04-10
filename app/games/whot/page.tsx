@@ -7,7 +7,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import {
   WhotCard, WhotGameState, Suit,
-  subscribeToWhotGame, playCard, drawCard, rematchWhot,
+  subscribeToWhotGame, subscribeToWhotHand, playCard, drawCard, rematchWhot,
   canPlay, getEffectLabel, SUIT_SYMBOL, SUIT_COLOR, SUIT_BG, cardLabel,
 } from '@/lib/whot';
 
@@ -107,6 +107,7 @@ function WhotInner() {
 
   const [uid, setUid] = useState('');
   const [game, setGame] = useState<WhotGameState | null>(null);
+  const [myHand, setMyHand] = useState<WhotCard[]>([]);
   const [selected, setSelected] = useState<WhotCard | null>(null);
   const [showSuitPicker, setShowSuitPicker] = useState(false);
   const [showExit, setShowExit] = useState(false);
@@ -126,6 +127,13 @@ function WhotInner() {
     return () => unsub();
   }, [gameId]);
 
+  // Subscribe to own hand
+  useEffect(() => {
+    if (!gameId || !uid) return;
+    const unsub = subscribeToWhotHand(gameId, uid, setMyHand);
+    return () => unsub();
+  }, [gameId, uid]);
+
   // Lock scroll
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -141,9 +149,8 @@ function WhotInner() {
 
   if (!game || !uid) return <WhotSkeleton />;
 
-  const myHand: WhotCard[] = game.hands?.[uid] ?? [];
   const opponent = game.players?.find(p => p !== uid) ?? '';
-  const oppHand: WhotCard[] = game.hands?.[opponent] ?? [];
+  const oppHandCount = game.handCounts?.[opponent] ?? 0;
   const isMyTurn = game.turn === uid && game.status === 'playing';
   const myName = game.playerNames?.[uid] ?? 'You';
   const oppName = game.playerNames?.[opponent] ?? 'Partner';
@@ -335,7 +342,7 @@ function WhotInner() {
             <div className="whot-players">
               {[
                 { u: uid, name: 'You', photo: myPhoto, active: isMyTurn, lc: hasLastCard, count: myHand.length },
-                { u: opponent, name: oppName, photo: oppPhoto, active: !isMyTurn, lc: oppLastCard, count: oppHand.length },
+                { u: opponent, name: oppName, photo: oppPhoto, active: !isMyTurn, lc: oppLastCard, count: oppHandCount },
               ].map(p => (
                 <div key={p.u} className={`whot-player ${p.active && game.status === 'playing' ? 'active' : ''}`}>
                   {p.photo
@@ -351,11 +358,11 @@ function WhotInner() {
 
             {/* Opponent card backs */}
             <div className="whot-opp-hand">
-              {Array(Math.min(oppHand.length, 14)).fill(0).map((_, i) => (
-                <div key={i} className="card-back-sm" style={{ marginRight: i < Math.min(oppHand.length, 14) - 1 ? -10 : 0 }} />
+              {Array(Math.min(oppHandCount, 14)).fill(0).map((_, i) => (
+                <div key={i} className="card-back-sm" style={{ marginRight: i < Math.min(oppHandCount, 14) - 1 ? -10 : 0 }} />
               ))}
-              {oppHand.length > 14 && (
-                <span style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)', marginLeft: 8 }}>+{oppHand.length - 14}</span>
+              {oppHandCount > 14 && (
+                <span style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)', marginLeft: 8 }}>+{oppHandCount - 14}</span>
               )}
             </div>
 
@@ -365,7 +372,7 @@ function WhotInner() {
                 <div className="deck-back">
                   <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: 'white', fontStyle: 'italic' }}>W</span>
                 </div>
-                <span className="pile-lbl">{game.deck?.length ?? 0} cards</span>
+                <span className="pile-lbl">{game.deckCount ?? 0} cards</span>
                 {isMyTurn && <span style={{ fontSize: 10, color: '#B06060', fontWeight: 500 }}>{game.pendingPickup > 0 ? `Draw ${game.pendingPickup}` : 'Tap to draw'}</span>}
               </div>
 

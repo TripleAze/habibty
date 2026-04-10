@@ -430,6 +430,19 @@ export function subscribeToWhotGame(
   });
 }
 
+export function subscribeToWhotHand(
+  gameId: string,
+  uid: string,
+  cb: (cards: WhotCard[]) => void
+): () => void {
+  return onSnapshot(doc(db, 'games', gameId.toUpperCase(), 'hands', uid), snap => {
+    if (snap.exists()) {
+      const data = snap.data() as PlayerHand;
+      cb(data.cards);
+    }
+  });
+}
+
 // ─── DISPLAY HELPERS ─────────────────────────────────────
 
 export const SUIT_SYMBOL: Record<Suit, string> = {
