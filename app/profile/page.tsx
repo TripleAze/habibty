@@ -10,75 +10,71 @@ import { uploadMedia } from '@/lib/imagekit';
 import { unpairPartner } from '@/lib/pair';
 import BottomNav from '@/components/BottomNav';
 
+function SkeletonRow() {
+  return (
+    <div style={{
+      height: 16, borderRadius: 8,
+      background: 'linear-gradient(90deg, rgba(232,160,160,0.12) 25%, rgba(232,160,160,0.22) 50%, rgba(232,160,160,0.12) 75%)',
+      backgroundSize: '200% 100%',
+      animation: 'shimmer 1.4s infinite',
+      marginBottom: 8,
+    }} />
+  );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
+  const [uid, setUid] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [editName, setEditName] = useState('');
   const [photoURL, setPhotoURL] = useState('');
   const [email, setEmail] = useState('');
   const [inviteCode, setInviteCode] = useState('');
   const [partnerName, setPartnerName] = useState('');
   const [partnerId, setPartnerId] = useState('');
-  
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [showInviteCode, setShowInviteCode] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [photoSaved, setPhotoSaved] = useState(false);
   const [toast, setToast] = useState('');
   const [checking, setChecking] = useState(true);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showUnpairConfirm, setShowUnpairConfirm] = useState(false);
   const [unpairing, setUnpairing] = useState(false);
-  const [unpaired, setUnpaired] = useState(false);
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!auth) { setChecking(false); return; }
     const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.replace('/auth');
-        return;
-      }
-      
+      if (!user) { router.replace('/auth'); return; }
+      setUid(user.uid);
       setEmail(user.email || '');
-      
-      // Only set initial display name if we haven't loaded data yet
       if (!hasLoadedRef.current) {
         setDisplayName(user.displayName || '');
         setPhotoURL(user.photoURL || '');
       }
-
       try {
-        const userSnap = await getDoc(doc(db, 'users', user.uid));
-        if (userSnap.exists()) {
-          const data = userSnap.data();
-          setInviteCode(data.inviteCode || '');
-          
-          // Initial population check
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists()) {
+          const d = snap.data();
+          setInviteCode(d.inviteCode || '');
           if (!hasLoadedRef.current) {
-            if (data.displayName) setDisplayName(data.displayName);
-            if (data.photoURL) setPhotoURL(data.photoURL);
+            if (d.displayName) setDisplayName(d.displayName);
+            if (d.photoURL) setPhotoURL(d.photoURL);
             hasLoadedRef.current = true;
           }
-
-          if (data.partnerId) {
-            setPartnerId(data.partnerId);
-            const partnerSnap = await getDoc(doc(db, 'users', data.partnerId));
-            if (partnerSnap.exists()) {
-              setPartnerName(partnerSnap.data().displayName || 'your partner');
-            }
+          if (d.partnerId) {
+            setPartnerId(d.partnerId);
+            const ps = await getDoc(doc(db, 'users', d.partnerId));
+            if (ps.exists()) setPartnerName(ps.data().displayName || 'your partner');
           } else {
-            setPartnerId('');
-            setPartnerName('');
+            setPartnerId(''); setPartnerName('');
           }
-        } else {
-          hasLoadedRef.current = true;
-        }
-      } catch (err) {
-        console.error('Error loading profile data:', err);
-      }
-      
+        } else { hasLoadedRef.current = true; }
+      } catch (err) { console.error(err); }
       setChecking(false);
     });
     return () => unsub();
@@ -86,595 +82,366 @@ export default function ProfilePage() {
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(''), 3000);
+    setTimeout(() => setToast(''), 2500);
   }, []);
 
-  const handleSave = async () => {
-    if (!auth?.currentUser) return;
+  const handleSaveName = async () => {
+    if (!auth?.currentUser || !editName.trim()) return;
     setSaving(true);
     try {
-      await updateProfile(auth.currentUser, {
-        displayName: displayName.trim(),
-        photoURL: photoURL
-      });
-
-      await setDoc(doc(db, 'users', auth.currentUser.uid), {
-        displayName: displayName.trim(),
-        photoURL: photoURL
-      }, { merge: true });
-
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } catch (err) {
-      console.error('Save error:', err);
-      showToast('Failed to save changes 😢');
-    } finally {
-      setSaving(false);
-    }
+      await updateProfile(auth.currentUser, { displayName: editName.trim() });
+      await setDoc(doc(db, 'users', auth.currentUser.uid), { displayName: editName.trim() }, { merge: true });
+      setDisplayName(editName.trim());
+      setIsEditingName(false);
+      showToast('Name updated ✨');
+    } catch { showToast('Failed to save'); }
+    finally { setSaving(false); }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !auth?.currentUser) return;
-
     setUploading(true);
     try {
-      showToast('Uploading photo... 📤');
-      const response = await uploadMedia(
-        file, 
-        `profile_${auth.currentUser.uid}`, 
-        'little-letters'
-      );
-      
-      if (response.url) {
-        // Apply ImageKit transformation for a square, optimized profile pic
-        // Added a timestamp v parameter to bust cache when image is updated
-        const optimizedUrl = `${response.url}?tr=w-200,h-200,fo-auto&v=${Date.now()}`;
-
-        // Auto-save the new URL so it doesn't disappear on reload
-        await updateProfile(auth.currentUser, {
-          photoURL: optimizedUrl
-        });
-
-        await setDoc(doc(db, 'users', auth.currentUser.uid), {
-          photoURL: optimizedUrl
-        }, { merge: true });
-
-        setPhotoURL(optimizedUrl);
-        showToast('Photo updated & saved! 📸');
-      } else {
-        throw new Error('Upload successful but no URL returned');
+      const res = await uploadMedia(file, `profile_${auth.currentUser.uid}`, 'little-letters');
+      if (res.url) {
+        const url = `${res.url}?tr=w-200,h-200,fo-auto&v=${Date.now()}`;
+        await updateProfile(auth.currentUser, { photoURL: url });
+        await setDoc(doc(db, 'users', auth.currentUser.uid), { photoURL: url }, { merge: true });
+        setPhotoURL(url);
+        showToast('Photo updated 📸');
       }
-    } catch (err) {
-      console.error('Upload error:', err);
-      showToast('Upload failed 😢');
-    } finally {
-      setUploading(false);
-      setPhotoSaved(true);
-      setTimeout(() => setPhotoSaved(false), 3000);
-    }
+    } catch { showToast('Upload failed 😢'); }
+    finally { setUploading(false); }
   };
-  
+
   const handleUnpair = async () => {
     if (!auth?.currentUser || !partnerId) return;
     setUnpairing(true);
     try {
       const res = await unpairPartner(auth.currentUser.uid, partnerId);
       if (res.ok) {
-        setUnpaired(true);
-        setTimeout(() => {
-          setPartnerId('');
-          setPartnerName('');
-          setShowUnpairConfirm(false);
-          setUnpaired(false);
-        }, 2000);
-      } else {
-        showToast(res.error || 'Failed to unpair');
-      }
-    } catch (err) {
-      console.error('Unpair error:', err);
-      showToast('Something went wrong 😢');
-    } finally {
-      setUnpairing(false);
-    }
+        setPartnerId(''); setPartnerName(''); setShowUnpairConfirm(false);
+        showToast('Unpaired 💔');
+      } else showToast(res.error || 'Failed to unpair');
+    } catch { showToast('Something went wrong'); }
+    finally { setUnpairing(false); }
   };
 
   const handleSignOut = useCallback(async () => {
     if (!auth) return;
-    try {
-      await signOut(auth);
-      router.replace('/');
-    } catch (err) {
-      console.error('Sign out error:', err);
-    }
+    await signOut(auth);
+    router.replace('/');
   }, [router]);
 
   const copyCode = useCallback(() => {
     navigator.clipboard.writeText(inviteCode);
-    showToast('Code copied! 📋');
+    showToast('Code copied 📋');
   }, [inviteCode, showToast]);
 
-  if (checking) {
-    return (
-      <div className="app-container">
-        <div className="loading-state">
-          <div className="loading-spinner" />
-          <p>Loading profile... </p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="app-container">
-      <div className="home-header">
-        <p className="home-label">Settings</p>
-        <h1 className="home-title">Your Profile</h1>
-      </div>
-
-      <div className="profile-content">
-        <div className="profile-avatar-section">
-          <div className="avatar-wrapper" onClick={() => fileInputRef.current?.click()}>
-            {photoURL ? (
-              <img src={photoURL} alt="Avatar" className="profile-img" />
-            ) : (
-              <div className="avatar-placeholder">
-                <span>{displayName?.charAt(0) || 'H'}</span>
-              </div>
-            )}
-            <div className={`avatar-edit-overlay ${uploading ? 'uploading' : photoSaved ? 'saved' : ''}`}>
-              <span>{uploading ? 'Uploading...' : photoSaved ? 'Saved! ✨' : 'Edit'}</span>
-            </div>
-          </div>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            style={{ display: 'none' }} 
-            accept="image/*"
-          />
-        </div>
-
-        <div className="profile-card">
-          <div className="profile-section">
-            <label className="profile-label">What should your partner call you?</label>
-            <input 
-              type="text"
-              className="profile-input"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Your display name"
-            />
-            <button 
-              className={`btn-save ${saved ? 'saved' : ''}`} 
-              onClick={handleSave} 
-              disabled={saving || saved}
-            >
-              {saving ? 'Saving...' : saved ? 'Saved! ✨' : 'Save Changes'}
-            </button>
-          </div>
-        </div>
-
-        <div className="profile-card">
-          <div className="profile-section">
-            <span className="profile-label">Partner connection</span>
-            <div className="partner-status">
-              <span className="profile-value">
-                {partnerName ? `Paired with ${partnerName} 💖` : 'Searching for love...'}
-              </span>
-              {!partnerName ? (
-                <Link href="/pair" className="profile-action">
-                  Pair now →
-                </Link>
-              ) : (
-                !showUnpairConfirm ? (
-                  <button 
-                    className="profile-action unpair-trigger" 
-                    onClick={() => setShowUnpairConfirm(true)}
-                  >
-                    Unpair
-                  </button>
-                ) : (
-                  <div className="unpair-confirm-inline">
-                    <button 
-                      className={`btn-unpair-confirm ${unpaired ? 'success' : ''}`} 
-                      onClick={handleUnpair}
-                      disabled={unpairing || unpaired}
-                    >
-                      {unpairing ? 'Breaking link...' : unpaired ? 'Unpaired 💔' : 'Yes, unpair'}
-                    </button>
-                    <button 
-                      className="btn-unpair-cancel" 
-                      onClick={() => setShowUnpairConfirm(false)}
-                      disabled={unpairing}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )
-              )}
-            </div>
-            {partnerName && !showUnpairConfirm && (
-              <span className="profile-hint mt-2">Break the link to pair with someone else. Memories are kept hidden.</span>
-            )}
-          </div>
-        </div>
-
-        <div className="profile-card">
-          <div className="profile-section">
-            <span className="profile-label">Your invite code</span>
-            <div className="code-display">
-              <span className="code-text">{inviteCode || '---'}</span>
-              <button className="code-copy" onClick={copyCode} type="button">
-                Copy
-              </button>
-            </div>
-            <span className="profile-hint">Tap code to copy and send to your partner</span>
-          </div>
-        </div>
-
-        <div className="profile-card transparent">
-          <div className="profile-section">
-            <span className="profile-label">Account email</span>
-            <span className="profile-value small">{email}</span>
-          </div>
-        </div>
-
-        <div className="profile-card logout-card">
-          <div className="profile-section">
-            {!showSignOutConfirm ? (
-              <button
-                className="btn-signout"
-                onClick={() => setShowSignOutConfirm(true)}
-                type="button"
-              >
-                Sign out
-              </button>
-            ) : (
-              <div className="signout-confirm">
-                <p>Are you sure you want to sign out?</p>
-                <div className="signout-actions">
-                  <button
-                    className="btn-cancel"
-                    onClick={() => setShowSignOutConfirm(false)}
-                    type="button"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="btn-confirm"
-                    onClick={handleSignOut}
-                    type="button"
-                  >
-                    Sign out
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {toast && <div className={`toast ${toast ? 'show' : ''}`}>{toast}</div>}
-
-      <BottomNav activeTab="profile" />
-
+  // ── SKELETON ──────────────────────────────────────────
+  if (checking) return (
+    <>
       <style>{`
-        .profile-content {
-          padding: 0 20px 100px;
-        }
-        
-        .profile-avatar-section {
-          display: flex;
-          justify-content: center;
-          margin: 10px 0 30px;
-        }
-        
-        .avatar-wrapper {
-          width: 100px;
-          height: 100px;
-          border-radius: 50%;
-          position: relative;
-          cursor: pointer;
-          overflow: hidden;
-          background: #fff;
-          box-shadow: 0 8px 24px rgba(232, 160, 160, 0.2);
-          border: 3px solid #fff;
-        }
-        
-        .profile-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        
-        .avatar-placeholder {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #FFDEE9 0%, #B5FFFC 100%);
-          font-size: 32px;
-          color: #fff;
-          font-weight: bold;
-        }
-        
-        .avatar-edit-overlay {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 30%;
-          background: rgba(0,0,0,0.4);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #fff;
-          font-size: 10px;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          backdrop-filter: blur(4px);
-          transition: all 0.3s;
-        }
-
-        .avatar-edit-overlay.uploading {
-          height: 100%;
-          background: rgba(0,0,0,0.6);
-          font-size: 11px;
-        }
-
-        .avatar-edit-overlay.saved {
-          height: 100%;
-          background: rgba(168, 213, 162, 0.8);
-          font-size: 11px;
-        }
-
-        .profile-card {
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border-radius: 24px;
-          padding: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.8);
-          margin-bottom: 20px;
-        }
-        
-        .profile-card.transparent {
-          background: transparent;
-          border: none;
-          padding: 10px 24px;
-        }
-
-        .profile-section {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .profile-label {
-          font-size: 12px;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: #7A5C7A;
-          font-weight: 600;
-          opacity: 0.6;
-        }
-
-        .profile-input {
-          background: rgba(255,255,255,0.8);
-          border: 1px solid rgba(232, 160, 160, 0.2);
-          border-radius: 14px;
-          padding: 14px 18px;
-          font-size: 16px;
-          color: #3D2B3D;
-          font-family: 'DM Sans', sans-serif;
-          outline: none;
-          transition: border-color 0.2s;
-        }
-        
-        .profile-input:focus {
-          border-color: #E8A0A0;
-        }
-
-        .btn-save {
-          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
-          color: white;
-          border: none;
-          padding: 14px;
-          border-radius: 14px;
-          font-weight: 600;
-          font-size: 14px;
-          cursor: pointer;
-          transition: transform 0.2s, box-shadow 0.2s;
-          box-shadow: 0 4px 12px rgba(232, 160, 160, 0.3);
-        }
-        
-        .btn-save:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(232, 160, 160, 0.4);
-        }
-        
-        .btn-save:disabled {
-          opacity: 0.85;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .btn-save.saved {
-          background: linear-gradient(135deg, #A8D5A2, #94C5A5);
-          box-shadow: 0 4px 12px rgba(168, 213, 162, 0.3);
-        }
-
-        .profile-value {
-          font-size: 16px;
-          color: #3D2B3D;
-          font-weight: 500;
-        }
-        
-        .profile-value.small {
-          font-size: 14px;
-          opacity: 0.8;
-        }
-
-        .partner-status {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .code-display {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .code-text {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 24px;
-          letter-spacing: 0.1em;
-          color: #3D2B3D;
-          background: rgba(247, 232, 238, 0.5);
-          padding: 8px 16px;
-          border-radius: 12px;
-          border: 1px solid rgba(232, 160, 160, 0.2);
-        }
-        .code-copy {
-          padding: 10px 18px;
-          background: rgba(232, 160, 160, 0.1);
-          border: 1px solid rgba(232, 160, 160, 0.2);
-          border-radius: 12px;
-          font-size: 13px;
-          color: #7A5C7A;
-          cursor: pointer;
-          font-weight: 600;
-          font-family: 'DM Sans', sans-serif;
-        }
-
-        .btn-signout {
-          width: 100%;
-          padding: 14px;
-          background: transparent;
-          border: 1.5px solid rgba(232, 160, 160, 0.3);
-          border-radius: 16px;
-          color: #B06060;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        .btn-signout:hover {
-          background: rgba(232, 160, 160, 0.05);
-          border-color: rgba(232, 160, 160, 0.5);
-        }
-
-        .profile-action {
-          font-size: 13px;
-          color: #E8A0A0;
-          text-decoration: none;
-          font-weight: 600;
-          cursor: pointer;
-          background: none;
-          border: none;
-          padding: 0;
-        }
-        
-        .profile-action.unpair-trigger {
-          color: #B06060;
-          opacity: 0.6;
-        }
-
-        .unpair-confirm-inline {
-          display: flex;
-          gap: 12px;
-          margin-top: 4px;
-        }
-
-        .btn-unpair-confirm, .btn-unpair-cancel {
-          padding: 6px 12px;
-          border-radius: 8px;
-          font-size: 11px;
-          font-weight: 600;
-          cursor: pointer;
-          font-family: 'DM Sans', sans-serif;
-        }
-
-        .btn-unpair-confirm {
-          background: #B06060;
-          color: white;
-          border: none;
-          transition: all 0.2s;
-        }
-
-        .btn-unpair-confirm.success {
-          background: #A8D5A2;
-        }
-        
-        .btn-unpair-cancel {
-          background: #eee;
-          color: #666;
-          border: none;
-        }
-
-        .profile-hint {
-          font-size: 11px;
-          color: rgba(122,92,122,0.45);
-          line-height: 1.6;
-          font-family: 'Cormorant Garamond', serif;
-          font-style: italic;
-        }
-
-        .mt-2 { margin-top: 8px; }
-
-        .signout-confirm p {
-          font-size: 14px;
-          color: #3D2B3D;
-          text-align: center;
-          margin-bottom: 16px;
-        }
-        .signout-actions {
-          display: flex;
-          gap: 12px;
-        }
-        .btn-cancel, .btn-confirm {
-          flex: 1;
-          padding: 12px;
-          border-radius: 12px;
-          font-weight: 600;
-          cursor: pointer;
-          font-family: 'DM Sans', sans-serif;
-        }
-        .btn-cancel {
-          background: #eee;
-          border: none;
-          color: #666;
-        }
-        .btn-confirm {
-          background: #FAD0DC;
-          border: none;
-          color: #B06060;
-        }
-
-        .toast {
-          position: fixed;
-          bottom: 100px;
-          left: 50%;
-          transform: translateX(-50%) translateY(20px);
-          background: rgba(0,0,0,0.8);
-          color: white;
-          padding: 12px 24px;
-          border-radius: 30px;
-          font-size: 14px;
-          opacity: 0;
-          transition: all 0.3s;
-          pointer-events: none;
-          z-index: 1000;
-        }
-        .toast.show {
-          opacity: 1;
-          transform: translateX(-50%) translateY(0);
+        @keyframes shimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
         }
       `}</style>
-    </div>
+      <div className="app-container">
+        <div style={{ padding: '52px 24px 20px' }}>
+          <div style={{ height: 10, width: 60, borderRadius: 6, background: 'rgba(232,160,160,0.2)', marginBottom: 10 }} />
+          <div style={{ height: 28, width: 160, borderRadius: 8, background: 'rgba(232,160,160,0.15)' }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 24px' }}>
+          <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(232,160,160,0.15)' }} />
+        </div>
+        <div style={{ padding: '0 20px' }}>
+          {[1,2,3].map(i => (
+            <div key={i} style={{ background: 'rgba(255,255,255,0.5)', borderRadius: 20, padding: '16px 20px', marginBottom: 10 }}>
+              <SkeletonRow />
+              <div style={{ height: 12, width: '60%', borderRadius: 6, background: 'rgba(232,160,160,0.1)' }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <>
+      <style>{`
+        @keyframes shimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .pf-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 18px;
+          background: rgba(255,255,255,0.68);
+          backdrop-filter: blur(12px);
+          border-radius: 16px;
+          border: 1px solid rgba(255,255,255,0.8);
+          margin-bottom: 8px;
+        }
+        .pf-row-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .pf-row-lbl { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(122,92,122,0.5); font-weight: 500; }
+        .pf-row-val { font-size: 15px; color: #3D2B3D; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        .pf-row-action { font-size: 12px; font-weight: 500; color: #E8A0A0; cursor: pointer; background: none; border: none; padding: 4px 10px; border-radius: 100px; background: rgba(232,160,160,0.12); flex-shrink: 0; font-family: 'DM Sans', sans-serif; transition: background 0.2s; }
+        .pf-row-action:hover { background: rgba(232,160,160,0.22); }
+        .pf-row-action.danger { color: #B06060; background: rgba(176,96,96,0.08); }
+        .pf-row-action.danger:hover { background: rgba(176,96,96,0.15); }
+
+        .pf-edit-panel {
+          margin-bottom: 8px;
+          animation: slideDown 0.2s ease;
+        }
+        .pf-edit-row {
+          display: flex;
+          gap: 8px;
+          padding: 12px 16px;
+          background: rgba(255,255,255,0.8);
+          border-radius: 16px;
+          border: 1.5px solid rgba(232,160,160,0.3);
+        }
+        .pf-edit-input {
+          flex: 1;
+          border: none;
+          background: transparent;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 15px;
+          color: #3D2B3D;
+          outline: none;
+        }
+        .pf-save-btn {
+          padding: 8px 16px;
+          border-radius: 100px;
+          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
+          border: none;
+          color: white;
+          font-size: 12px;
+          font-weight: 500;
+          cursor: pointer;
+          font-family: 'DM Sans', sans-serif;
+          white-space: nowrap;
+        }
+        .pf-save-btn:disabled { opacity: 0.6; }
+        .pf-cancel-btn {
+          padding: 8px 12px;
+          border-radius: 100px;
+          background: transparent;
+          border: none;
+          color: rgba(122,92,122,0.6);
+          font-size: 12px;
+          cursor: pointer;
+          font-family: 'DM Sans', sans-serif;
+        }
+
+        .pf-code-panel {
+          margin-bottom: 8px;
+          animation: slideDown 0.2s ease;
+        }
+        .pf-code-inner {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 16px;
+          background: rgba(247,232,238,0.5);
+          border-radius: 14px;
+          border: 1px solid rgba(232,160,160,0.25);
+        }
+        .pf-code-val {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 22px;
+          letter-spacing: 0.18em;
+          color: #3D2B3D;
+          flex: 1;
+        }
+        .pf-code-copy {
+          padding: 6px 14px;
+          border-radius: 100px;
+          background: rgba(232,160,160,0.15);
+          border: 1px solid rgba(232,160,160,0.3);
+          font-size: 11px;
+          color: #B06060;
+          cursor: pointer;
+          font-weight: 500;
+          font-family: 'DM Sans', sans-serif;
+        }
+        .pf-hint { font-size: 10px; color: rgba(122,92,122,0.4); margin: 4px 0 0 4px; font-style: italic; font-family: 'Cormorant Garamond', serif; }
+
+        .pf-section-gap { height: 8px; }
+        .pf-section-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(122,92,122,0.4); font-weight: 500; padding: 0 4px; margin-bottom: 6px; }
+
+        .pf-signout {
+          width: 100%;
+          padding: 14px;
+          border-radius: 100px;
+          background: transparent;
+          border: 1.5px solid rgba(232,160,160,0.3);
+          color: #B06060;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          font-family: 'DM Sans', sans-serif;
+          transition: all 0.2s;
+          margin-top: 4px;
+        }
+        .pf-signout:hover { background: rgba(232,160,160,0.06); }
+
+        .pf-confirm-row { display: flex; gap: 8px; margin-top: 8px; }
+        .pf-confirm-yes { flex: 1; padding: 12px; border-radius: 100px; background: rgba(176,96,96,0.1); border: 1px solid rgba(176,96,96,0.25); color: #B06060; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+        .pf-confirm-no  { flex: 1; padding: 12px; border-radius: 100px; background: rgba(255,255,255,0.6); border: 1px solid rgba(201,184,216,0.3); color: #7A5C7A; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+        .avatar-wrap { position: relative; width: 80px; height: 80px; border-radius: 50%; cursor: pointer; overflow: hidden; border: 2.5px solid white; box-shadow: 0 4px 16px rgba(232,160,160,0.25); }
+        .avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .avatar-fb { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#F2C4CE,#C9B8D8); font-family: 'Cormorant Garamond',serif; font-size: 28px; color: #3D2B3D; }
+        .avatar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+        .avatar-wrap:hover .avatar-overlay { opacity: 1; }
+        .avatar-overlay span { font-size: 10px; color: white; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; font-family: 'DM Sans', sans-serif; }
+        .avatar-uploading { opacity: 1 !important; background: rgba(0,0,0,0.5) !important; }
+      `}</style>
+
+      <div className="app-container">
+        <div className="home-header">
+          <div className="home-header-left">
+            <p className="home-label">Settings</p>
+            <h1 className="home-title">Your <em>profile</em></h1>
+          </div>
+        </div>
+
+        <div style={{ padding: '0 20px 100px' }}>
+
+          {/* Avatar */}
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '4px 0 24px' }}>
+            <div className="avatar-wrap" onClick={() => fileInputRef.current?.click()}>
+              {photoURL
+                ? <img src={photoURL} className="avatar-img" alt="avatar" referrerPolicy="no-referrer" />
+                : <div className="avatar-fb">{displayName?.[0]?.toUpperCase() || 'H'}</div>}
+              <div className={`avatar-overlay ${uploading ? 'avatar-uploading' : ''}`}>
+                <span>{uploading ? 'Uploading…' : 'Edit'}</span>
+              </div>
+            </div>
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/*" />
+          </div>
+
+          {/* Name */}
+          <div className="pf-section-label">Account</div>
+
+          {isEditingName ? (
+            <div className="pf-edit-panel">
+              <div className="pf-edit-row">
+                <input
+                  className="pf-edit-input"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSaveName()}
+                  placeholder="Display name"
+                  autoFocus
+                />
+                <button className="pf-cancel-btn" onClick={() => setIsEditingName(false)}>Cancel</button>
+                <button className="pf-save-btn" onClick={handleSaveName} disabled={saving}>
+                  {saving ? '…' : 'Save'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="pf-row">
+              <div className="pf-row-left">
+                <span className="pf-row-lbl">Display name</span>
+                <span className="pf-row-val">{displayName || '—'}</span>
+              </div>
+              <button className="pf-row-action" onClick={() => { setEditName(displayName); setIsEditingName(true); }}>Edit</button>
+            </div>
+          )}
+
+          <div className="pf-row">
+            <div className="pf-row-left">
+              <span className="pf-row-lbl">Email</span>
+              <span className="pf-row-val" style={{ fontSize: 13, opacity: 0.7 }}>{email}</span>
+            </div>
+          </div>
+
+          <div className="pf-section-gap" />
+
+          {/* Partner */}
+          <div className="pf-section-label">Partner</div>
+
+          <div className="pf-row">
+            <div className="pf-row-left">
+              <span className="pf-row-lbl">Paired with</span>
+              <span className="pf-row-val">{partnerName || 'No partner yet'}</span>
+            </div>
+            {partnerName
+              ? <button className="pf-row-action danger" onClick={() => setShowUnpairConfirm(true)}>Unpair</button>
+              : <Link href="/pair" className="pf-row-action" style={{ textDecoration: 'none' }}>Pair now</Link>}
+          </div>
+
+          {showUnpairConfirm && (
+            <div style={{ animation: 'slideDown 0.2s ease', marginBottom: 8 }}>
+              <p style={{ fontSize: 12, color: 'rgba(122,92,122,0.7)', textAlign: 'center', marginBottom: 6 }}>
+                This will disconnect you from {partnerName}. Are you sure?
+              </p>
+              <div className="pf-confirm-row">
+                <button className="pf-confirm-yes" onClick={handleUnpair} disabled={unpairing}>
+                  {unpairing ? 'Unpairing…' : 'Yes, unpair'}
+                </button>
+                <button className="pf-confirm-no" onClick={() => setShowUnpairConfirm(false)}>Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {/* Invite code */}
+          <div className="pf-row" style={{ cursor: 'pointer' }} onClick={() => setShowInviteCode(p => !p)}>
+            <div className="pf-row-left">
+              <span className="pf-row-lbl">Invite code</span>
+              <span className="pf-row-val" style={{ fontSize: 13 }}>
+                {showInviteCode ? inviteCode : '• • • • • •'}
+              </span>
+            </div>
+            <button className="pf-row-action">{showInviteCode ? 'Hide' : 'Show'}</button>
+          </div>
+
+          {showInviteCode && (
+            <div className="pf-code-panel">
+              <div className="pf-code-inner">
+                <span className="pf-code-val">{inviteCode}</span>
+                <button className="pf-code-copy" onClick={copyCode}>Copy</button>
+              </div>
+              <p className="pf-hint">Share this with your partner to connect</p>
+            </div>
+          )}
+
+          <div className="pf-section-gap" />
+
+          {/* Sign out */}
+          <div className="pf-section-label">Account</div>
+
+          {!showSignOutConfirm ? (
+            <button className="pf-signout" onClick={() => setShowSignOutConfirm(true)}>Sign out</button>
+          ) : (
+            <div style={{ animation: 'slideDown 0.2s ease' }}>
+              <p style={{ fontSize: 13, color: '#7A5C7A', textAlign: 'center', marginBottom: 8 }}>
+                Sign out of habibty?
+              </p>
+              <div className="pf-confirm-row">
+                <button className="pf-confirm-yes" onClick={handleSignOut}>Sign out</button>
+                <button className="pf-confirm-no" onClick={() => setShowSignOutConfirm(false)}>Cancel</button>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {toast && <div className={`toast ${toast ? 'show' : ''}`}>{toast}</div>}
+        <BottomNav activeTab="profile" />
+      </div>
+    </>
   );
 }

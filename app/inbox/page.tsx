@@ -77,17 +77,21 @@ export default function InboxPage() {
 
     const q = query(
       collection(db, 'messages'),
-      where('receiverId', '==', currentUserId),
-      where('senderId', '==', partnerId)
+      where('receiverId', '==', currentUserId)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Message[];
-      data.sort((a, b) => b.createdAt - a.createdAt);
-      setMessages(data);
+      const data = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Message[];
+
+      // Filter to only show messages from the active partner
+      const filtered = data.filter(m => m.senderId === partnerId);
+      
+      filtered.sort((a, b) => b.createdAt - a.createdAt);
+      setMessages(filtered);
       setLoading(false);
     }, (error) => {
       console.error('Snapshot failed:', error);

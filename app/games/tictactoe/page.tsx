@@ -4,12 +4,57 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import {
-  makeMove, subscribeToGame, rematch, joinGame, GameState, getWinningCells,
-} from '@/lib/games';
-import BottomNav from '@/components/BottomNav';
-import Link from 'next/link';
+import { makeMove, subscribeToGame, rematch, GameState, getWinningCells } from '@/lib/games';
 
+// ── EXIT SHEET ────────────────────────────────────────────
+function ExitSheet({
+  onResume, onMessages, onLeave,
+}: { onResume: () => void; onMessages: () => void; onLeave: () => void }) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 300,
+      background: 'rgba(61,43,61,0.55)', backdropFilter: 'blur(10px)',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: 'white', borderRadius: '24px 24px 0 0',
+        width: '100%', maxWidth: 480, padding: '28px 24px 40px',
+        animation: 'slideUp 0.3s ease',
+      }}>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(201,184,216,0.4)', margin: '0 auto 24px' }} />
+        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 300, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', marginBottom: 6 }}>Leave game?</p>
+        <p style={{ fontSize: 12, color: 'rgba(122,92,122,0.6)', textAlign: 'center', marginBottom: 24 }}>Your game is saved — you can come back anytime</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <button onClick={onResume} style={{ padding: '14px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+            Resume game
+          </button>
+          <button onClick={onMessages} style={{ padding: '14px', borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(232,160,160,0.35)', color: '#7A5C7A', fontSize: 14, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+            Open messages
+          </button>
+          <button onClick={onLeave} style={{ padding: '14px', borderRadius: 100, background: 'transparent', border: 'none', color: '#B06060', fontSize: 13, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+            Leave game
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── SKELETON ──────────────────────────────────────────────
+function TTTSkeleton() {
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+      <div style={{ width: 160, height: 24, borderRadius: 8, background: 'rgba(255,255,255,0.4)' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, width: 260 }}>
+        {Array(9).fill(0).map((_,i) => (
+          <div key={i} style={{ aspectRatio: 1, borderRadius: 14, background: 'rgba(255,255,255,0.4)' }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── MAIN ──────────────────────────────────────────────────
 function TicTacToeInner() {
   const searchParams = useSearchParams();
   const gameId = searchParams.get('id') ?? '';
@@ -17,15 +62,13 @@ function TicTacToeInner() {
 
   const [uid, setUid] = useState('');
   const [game, setGame] = useState<GameState | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [showExit, setShowExit] = useState(false);
   const [rematching, setRematching] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!auth) return;
-    const unsub = onAuthStateChanged(auth, u => {
-      if (!u) { router.replace('/auth'); return; }
-      setUid(u.uid);
-    });
+    const unsub = onAuthStateChanged(auth, u => { if (!u) router.replace('/auth'); else setUid(u.uid); });
     return () => unsub();
   }, [router]);
 
@@ -35,29 +78,25 @@ function TicTacToeInner() {
     return () => unsub();
   }, [gameId]);
 
-  const mySymbol = game?.symbols?.[uid] ?? '';
-  const isMyTurn = game?.turn === uid && game?.status === 'playing';
-  const opponentUid = game?.players?.find(p => p !== uid) ?? '';
-  const opponentName = game?.playerNames?.[opponentUid] ?? 'Partner';
-  const myName = game?.playerNames?.[uid] ?? 'You';
-  const opponentPhoto = game?.playerPhotos?.[opponentUid] ?? '';
-  const myPhoto = game?.playerPhotos?.[uid] ?? '';
+  // Lock body scroll while in game
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
 
-  const winCells = game?.winner ? getWinningCells(game.board) : [];
-  const winCellSet = new Set(winCells);
+  if (!game || !uid) return <TTTSkeleton />;
 
-  const iWon = game?.winner === uid;
-  const iLost = game?.winner && game.winner !== uid;
+  const mySymbol = game.symbols?.[uid] ?? '';
+  const isMyTurn = game.turn === uid && game.status === 'playing';
+  const opponentUid = game.players?.find(p => p !== uid) ?? '';
+  const opponentName = game.playerNames?.[opponentUid] ?? 'Partner';
+  const myName = game.playerNames?.[uid] ?? 'You';
+  const myPhoto = game.playerPhotos?.[uid];
+  const oppPhoto = game.playerPhotos?.[opponentUid];
+  const iWon = game.winner === uid;
+  const iLost = game.winner && game.winner !== uid;
 
-  const statusText = () => {
-    if (!game) return '';
-    if (game.status === 'waiting') return 'Waiting for your partner…';
-    if (game.status === 'finished') {
-      if (game.isDraw) return "It's a draw!";
-      return iWon ? 'You won! 🎉' : `${opponentName} won`;
-    }
-    return isMyTurn ? 'Your turn' : `${opponentName}'s turn`;
-  };
+  const winCells = new Set(game.winner ? getWinningCells(game.board) : []);
 
   const handleCell = (i: number) => {
     if (!isMyTurn || !game || game.board[i] || game.status !== 'playing') return;
@@ -66,411 +105,173 @@ function TicTacToeInner() {
 
   const handleRematch = async () => {
     setRematching(true);
-    const newId = await rematch(gameId, uid);
+    const { rematch: rm } = await import('@/lib/games');
+    const newId = await rm(gameId, uid);
     router.replace(`/games/tictactoe?id=${newId}`);
   };
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(gameId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const copyCode = () => { navigator.clipboard.writeText(gameId); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
-  const cellClass = (i: number) => {
-    const val = game?.board[i] ?? '';
-    const classes = ['ttt-cell'];
-    if (!val) {
-      classes.push('ttt-cell-empty');
-      if (isMyTurn && game?.status === 'playing') classes.push('ttt-cell-hover');
-    } else {
-      classes.push(val === 'X' ? 'ttt-cell-x' : 'ttt-cell-o');
-    }
-    if (winCellSet.has(i)) classes.push('ttt-cell-win');
-    return classes.join(' ');
+  const statusMsg = () => {
+    if (game.status === 'waiting') return 'Waiting for partner…';
+    if (game.status === 'finished') return iWon ? 'You won! 🎉' : game.isDraw ? "It's a draw!" : `${opponentName} won`;
+    return isMyTurn ? 'Your turn' : `${opponentName}'s turn`;
   };
 
   return (
     <>
       <style>{`
-        .ttt-container { padding-bottom: 100px; }
-
-        .ttt-header {
-          padding: 48px 24px 16px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .ttt-game-code {
-          margin: 0 16px 12px;
-          background: rgba(255,255,255,0.6);
-          backdrop-filter: blur(8px);
-          border-radius: 14px;
-          padding: 11px 16px;
-          border: 1px solid rgba(255,255,255,0.8);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-        .ttt-code-label {
-          font-size: 10px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: rgba(122,92,122,0.5);
-          margin-bottom: 2px;
-        }
-        .ttt-code-value {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 18px;
-          letter-spacing: 0.15em;
-          color: #3D2B3D;
-        }
-        .ttt-copy-btn {
-          padding: 6px 14px;
-          border-radius: 100px;
-          background: rgba(232,160,160,0.15);
-          border: 1px solid rgba(232,160,160,0.3);
-          font-size: 11px;
-          color: #B06060;
-          cursor: pointer;
-          font-weight: 500;
+        @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        @keyframes popIn { from{transform:scale(0.6);opacity:0} to{transform:scale(1);opacity:1} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .ttt-screen {
+          position: fixed; inset: 0; overflow: hidden;
+          background: linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%);
+          display: flex; flex-direction: column;
           font-family: 'DM Sans', sans-serif;
-          transition: all 0.2s;
         }
-        .ttt-copy-btn:hover { background: rgba(232,160,160,0.25); }
-
-        .ttt-status {
-          margin: 0 16px 12px;
-          background: rgba(255,255,255,0.6);
+        .ttt-topbar {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 48px 20px 12px; flex-shrink: 0;
+        }
+        .ttt-exit-btn {
+          width: 36px; height: 36px; border-radius: 50%;
+          background: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.8);
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; font-size: 14px; color: #7A5C7A;
           backdrop-filter: blur(8px);
-          border-radius: 14px;
-          padding: 12px 16px;
-          border: 1px solid rgba(255,255,255,0.8);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
         }
-        .ttt-status-text {
-          font-size: 13px;
-          color: var(--soft-ink);
-        }
-        .ttt-status-badge {
-          font-size: 10px;
-          font-weight: 500;
-          padding: 4px 10px;
+        .ttt-title { font-family: 'Cormorant Garamond',serif; font-size: 22px; font-weight: 300; color: #3D2B3D; }
+        .ttt-title em { font-style: italic; color: #7A5C7A; }
+
+        .ttt-status-pill {
+          margin: 0 20px 12px;
+          padding: 10px 16px;
+          background: rgba(255,255,255,0.65);
+          backdrop-filter: blur(8px);
           border-radius: 100px;
-          display: flex;
-          align-items: center;
-          gap: 5px;
+          border: 1px solid rgba(255,255,255,0.8);
+          display: flex; align-items: center; justify-content: space-between;
+          flex-shrink: 0;
         }
-        .badge-your-turn { background: rgba(232,160,160,0.2); color: #B06060; }
-        .badge-their-turn { background: rgba(201,184,216,0.25); color: #7A6A8A; }
-        .badge-waiting { background: rgba(201,184,216,0.2); color: #7A6A8A; }
-        .badge-won { background: rgba(168,213,162,0.25); color: #5A7A56; }
-        .badge-lost { background: rgba(201,184,216,0.2); color: #7A6A8A; }
+        .ttt-status-txt { font-size: 13px; color: #7A5C7A; }
+        .ttt-badge { font-size: 10px; font-weight: 500; padding: 4px 10px; border-radius: 100px; display: flex; align-items: center; gap: 4px; }
+        .ttt-badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+        .badge-mine { background: rgba(232,160,160,0.2); color: #B06060; animation: pulse 2s infinite; }
+        .badge-theirs { background: rgba(201,184,216,0.25); color: #7A6A8A; }
+        .badge-win { background: rgba(168,213,162,0.25); color: #5A7A56; }
         .badge-draw { background: rgba(212,169,106,0.2); color: #9A7040; }
-        .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.7; }
 
         .ttt-players {
-          display: flex;
-          gap: 8px;
-          margin: 0 16px 12px;
+          display: flex; gap: 8px; margin: 0 20px 12px; flex-shrink: 0;
         }
         .ttt-player {
-          flex: 1;
-          background: rgba(255,255,255,0.55);
-          border-radius: 16px;
-          padding: 12px;
-          border: 1.5px solid rgba(255,255,255,0.7);
-          display: flex;
-          align-items: center;
-          gap: 10px;
+          flex: 1; display: flex; align-items: center; gap: 8px;
+          background: rgba(255,255,255,0.55); border-radius: 14px;
+          padding: 10px 12px; border: 1.5px solid rgba(255,255,255,0.7);
           transition: border-color 0.2s;
         }
-        .ttt-player.active-player {
-          border-color: rgba(232,160,160,0.45);
-          background: rgba(255,255,255,0.75);
-        }
-        .ttt-player-avatar {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          object-fit: cover;
-          border: 1.5px solid rgba(255,255,255,0.8);
-          flex-shrink: 0;
-        }
-        .ttt-player-avatar-fallback {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #F2C4CE, #C9B8D8);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 16px;
-          color: #3D2B3D;
-          flex-shrink: 0;
-          border: 1.5px solid rgba(255,255,255,0.8);
-        }
-        .ttt-player-info { flex: 1; min-width: 0; }
-        .ttt-player-label { font-size: 10px; color: rgba(122,92,122,0.55); letter-spacing: 0.08em; margin-bottom: 1px; }
-        .ttt-player-name {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 14px;
-          color: #3D2B3D;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        .ttt-symbol-badge {
-          font-size: 10px;
-          font-weight: 500;
-          padding: 3px 8px;
-          border-radius: 100px;
-          flex-shrink: 0;
-        }
+        .ttt-player.active { border-color: rgba(232,160,160,0.5); background: rgba(255,255,255,0.8); }
+        .ttt-pav { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1.5px solid rgba(255,255,255,0.8); }
+        .ttt-pav-fb { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#F2C4CE,#C9B8D8); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond',serif; font-size: 15px; color: #3D2B3D; flex-shrink: 0; }
+        .ttt-pname { font-size: 13px; color: #3D2B3D; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ttt-sym { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 100px; }
         .sym-x { background: rgba(232,160,160,0.2); color: #B06060; }
         .sym-o { background: rgba(201,184,216,0.25); color: #7A6A8A; }
 
         .ttt-board-wrap {
-          margin: 0 16px;
-          background: rgba(255,255,255,0.62);
-          backdrop-filter: blur(12px);
-          border-radius: 20px;
-          padding: 16px;
-          border: 1px solid rgba(255,255,255,0.8);
+          flex: 1; display: flex; align-items: center; justify-content: center;
+          padding: 0 20px; min-height: 0;
         }
         .ttt-board {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
+          display: grid; grid-template-columns: repeat(3,1fr);
+          gap: 10px; width: 100%; max-width: 320px;
         }
         .ttt-cell {
-          aspect-ratio: 1;
-          border-radius: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 36px;
-          font-weight: 300;
-          border: 1.5px solid rgba(232,160,160,0.2);
-          background: rgba(255,255,255,0.5);
-          transition: all 0.18s ease;
-          cursor: default;
-          user-select: none;
+          aspect-ratio: 1; border-radius: 16px;
+          background: rgba(255,255,255,0.65); backdrop-filter: blur(8px);
+          border: 1.5px solid rgba(255,255,255,0.8);
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Cormorant Garamond',serif; font-size: 40px; font-weight: 300;
+          cursor: default; user-select: none; transition: all 0.18s ease;
         }
-        .ttt-cell-empty { color: transparent; }
-        .ttt-cell-hover { cursor: pointer; }
-        .ttt-cell-hover:hover {
-          background: rgba(232,160,160,0.08);
-          border-color: rgba(232,160,160,0.35);
-        }
-        .ttt-cell-x {
-          color: #E8A0A0;
-          background: rgba(232,160,160,0.12);
-          border-color: rgba(232,160,160,0.35);
-        }
-        .ttt-cell-o {
-          color: #C9B8D8;
-          background: rgba(201,184,216,0.15);
-          border-color: rgba(201,184,216,0.4);
-        }
-        .ttt-cell-win {
-          background: rgba(232,160,160,0.22) !important;
-          border-color: #E8A0A0 !important;
-        }
-
-        .ttt-waiting {
-          margin: 0 16px;
-          background: rgba(255,255,255,0.55);
-          border-radius: 20px;
-          padding: 32px 20px;
-          border: 1px solid rgba(255,255,255,0.7);
-          text-align: center;
-        }
-        .ttt-waiting-title {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 20px;
-          font-weight: 300;
-          font-style: italic;
-          color: var(--soft-ink);
-          margin-bottom: 8px;
-        }
-        .ttt-waiting-sub {
-          font-size: 12px;
-          color: rgba(122,92,122,0.55);
-          margin-bottom: 20px;
-        }
-        .ttt-share-code {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          background: rgba(247,232,238,0.6);
-          border: 1px solid rgba(232,160,160,0.3);
-          border-radius: 14px;
-          padding: 12px 20px;
-          cursor: pointer;
-        }
-        .ttt-share-code-val {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 28px;
-          letter-spacing: 0.2em;
-          color: #3D2B3D;
-        }
+        .ttt-cell.playable { cursor: pointer; }
+        .ttt-cell.playable:hover { background: rgba(232,160,160,0.1); border-color: rgba(232,160,160,0.4); }
+        .ttt-cell.x { color: #E8A0A0; background: rgba(232,160,160,0.12); border-color: rgba(232,160,160,0.4); animation: popIn 0.25s ease; }
+        .ttt-cell.o { color: #C9B8D8; background: rgba(201,184,216,0.15); border-color: rgba(201,184,216,0.5); animation: popIn 0.25s ease; }
+        .ttt-cell.win { background: rgba(232,160,160,0.25) !important; border-color: #E8A0A0 !important; }
 
         .ttt-actions {
-          margin: 12px 16px 0;
-          display: flex;
-          gap: 8px;
+          padding: 12px 20px 32px; flex-shrink: 0; display: flex; gap: 8px;
         }
-        .btn-rematch {
-          flex: 1;
-          padding: 14px;
-          border-radius: 100px;
-          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
-          border: none;
-          color: white;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.25s;
-          box-shadow: 0 4px 16px rgba(232,160,160,0.3);
-          letter-spacing: 0.04em;
-        }
-        .btn-rematch:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(232,160,160,0.4);
-        }
-        .btn-rematch:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-new-game {
-          padding: 14px 18px;
-          border-radius: 100px;
-          border: 1.5px solid rgba(232,160,160,0.35);
-          background: transparent;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          color: var(--soft-ink);
-          cursor: pointer;
-          transition: all 0.2s;
-          white-space: nowrap;
-        }
-        .btn-new-game:hover { background: rgba(232,160,160,0.08); }
+        .ttt-btn-main { flex: 1; padding: 14px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'DM Sans',sans-serif; }
+        .ttt-btn-sec { padding: 14px 18px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.35); background: transparent; color: #7A5C7A; font-size: 13px; cursor: pointer; font-family: 'DM Sans',sans-serif; white-space: nowrap; }
 
-        .pulse {
-          animation: pulse 2s ease-in-out infinite;
-        }
-        @keyframes pulse {
-          0%,100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
+        .ttt-code-row { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 20px 8px; flex-shrink: 0; }
+        .ttt-code-val { font-family: 'Cormorant Garamond',serif; font-size: 15px; letter-spacing: 0.12em; color: rgba(61,43,61,0.5); }
+        .ttt-code-copy { font-size: 11px; color: rgba(122,92,122,0.5); background: none; border: none; cursor: pointer; font-family: 'DM Sans',sans-serif; }
 
-        .spinner-sm {
-          width: 14px; height: 14px;
-          border: 2px solid rgba(255,255,255,0.4);
-          border-top-color: #fff;
-          border-radius: 50%;
-          animation: spin 0.7s linear infinite;
-          display: inline-block;
+        .ttt-waiting-center {
+          flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .ttt-waiting-code { font-family: 'Cormorant Garamond',serif; font-size: 36px; letter-spacing: 0.2em; color: #3D2B3D; cursor: pointer; }
       `}</style>
 
-      <div className="app-container ttt-container">
-        <div className="ttt-header">
+      {showExit && (
+        <ExitSheet
+          onResume={() => setShowExit(false)}
+          onMessages={() => router.push('/inbox')}
+          onLeave={() => router.push('/games')}
+        />
+      )}
+
+      <div className="ttt-screen">
+        {/* Top bar */}
+        <div className="ttt-topbar">
           <div>
-            <p className="home-label">Games</p>
-            <h1 className="home-title">Tic <em>Tac</em> Toe</h1>
+            <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
+            <h1 className="ttt-title">Tic <em>Tac</em> Toe</h1>
           </div>
-          <Link href="/games" className="back-btn" style={{ marginBottom: 0 }}>← Back</Link>
+          <button className="ttt-exit-btn" onClick={() => setShowExit(true)}>✕</button>
         </div>
 
-        {!game ? (
-          <div className="loading-state"><div className="loading-spinner" /></div>
-        ) : game.status === 'waiting' ? (
-          /* ── WAITING LOBBY ── */
-          <>
-            <div className="ttt-waiting">
-              <p className="ttt-waiting-title">Waiting for your partner…</p>
-              <p className="ttt-waiting-sub">Share this code so they can join</p>
-              <div className="ttt-share-code" onClick={copyCode}>
-                <span className="ttt-share-code-val">{gameId}</span>
-                <span style={{ fontSize: 11, color: '#B06060', fontWeight: 500 }}>
-                  {copied ? 'Copied!' : 'Tap to copy'}
-                </span>
-              </div>
-            </div>
-          </>
+        {game.status === 'waiting' ? (
+          <div className="ttt-waiting-center">
+            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontStyle: 'italic', color: '#7A5C7A' }}>Share this code with your partner</p>
+            <div className="ttt-waiting-code" onClick={copyCode}>{gameId}</div>
+            <p style={{ fontSize: 11, color: '#B06060' }}>{copied ? 'Copied!' : 'Tap to copy'}</p>
+          </div>
         ) : (
-          /* ── ACTIVE GAME ── */
           <>
-            {/* Game code */}
-            <div className="ttt-game-code">
-              <div>
-                <div className="ttt-code-label">Game code</div>
-                <div className="ttt-code-value">{gameId}</div>
-              </div>
-              <button className="ttt-copy-btn" onClick={copyCode}>
-                {copied ? 'Copied!' : 'Share'}
-              </button>
-            </div>
-
             {/* Status */}
-            <div className="ttt-status">
-              <span className="ttt-status-text">{statusText()}</span>
-              <span className={`ttt-status-badge ${
+            <div className="ttt-status-pill">
+              <span className="ttt-status-txt">{statusMsg()}</span>
+              <span className={`ttt-badge ${
                 game.status === 'finished'
-                  ? iWon ? 'badge-won' : iLost ? 'badge-lost' : 'badge-draw'
-                  : isMyTurn ? 'badge-your-turn' : 'badge-their-turn'
+                  ? iWon ? 'badge-win' : game.isDraw ? 'badge-draw' : 'badge-theirs'
+                  : isMyTurn ? 'badge-mine' : 'badge-theirs'
               }`}>
-                <span className="badge-dot" />
-                {game.status === 'finished'
-                  ? iWon ? 'Winner!' : iLost ? 'Better luck next time' : 'Draw'
-                  : isMyTurn ? 'Your turn' : 'Their turn'}
+                <span className="ttt-badge-dot" />
+                {game.status === 'finished' ? (iWon ? 'Winner!' : game.isDraw ? 'Draw' : 'Lost') : isMyTurn ? 'Your turn' : 'Their turn'}
               </span>
             </div>
 
             {/* Players */}
             <div className="ttt-players">
-              {/* Me */}
-              <div className={`ttt-player ${isMyTurn && game.status === 'playing' ? 'active-player' : ''}`}>
-                {myPhoto ? (
-                  <img src={myPhoto} alt={myName} className="ttt-player-avatar" referrerPolicy="no-referrer" />
-                ) : (
-                  <div className="ttt-player-avatar-fallback">
-                    {myName[0]?.toUpperCase() ?? 'Y'}
-                  </div>
-                )}
-                <div className="ttt-player-info">
-                  <div className="ttt-player-label">You</div>
-                  <div className="ttt-player-name">{myName}</div>
-                </div>
-                <span className={`ttt-symbol-badge ${mySymbol === 'X' ? 'sym-x' : 'sym-o'}`}>
-                  {mySymbol}
-                </span>
-              </div>
-
-              {/* Opponent */}
-              <div className={`ttt-player ${!isMyTurn && game.status === 'playing' ? 'active-player' : ''}`}>
-                {opponentPhoto ? (
-                  <img src={opponentPhoto} alt={opponentName} className="ttt-player-avatar" referrerPolicy="no-referrer" />
-                ) : (
-                  <div className="ttt-player-avatar-fallback">
-                    {opponentName[0]?.toUpperCase() ?? '?'}
-                  </div>
-                )}
-                <div className="ttt-player-info">
-                  <div className="ttt-player-label">Partner</div>
-                  <div className="ttt-player-name">{opponentName}</div>
-                </div>
-                {game.symbols[opponentUid] && (
-                  <span className={`ttt-symbol-badge ${game.symbols[opponentUid] === 'X' ? 'sym-x' : 'sym-o'}`}>
-                    {game.symbols[opponentUid]}
+              {[
+                { u: uid, name: myName, photo: myPhoto, active: isMyTurn },
+                { u: opponentUid, name: opponentName, photo: oppPhoto, active: !isMyTurn },
+              ].map(p => (
+                <div key={p.u} className={`ttt-player ${p.active && game.status === 'playing' ? 'active' : ''}`}>
+                  {p.photo
+                    ? <img src={p.photo} className="ttt-pav" referrerPolicy="no-referrer" alt={p.name} />
+                    : <div className="ttt-pav-fb">{p.name[0]?.toUpperCase()}</div>}
+                  <span className="ttt-pname">{p.u === uid ? 'You' : p.name}</span>
+                  <span className={`ttt-sym ${game.symbols?.[p.u] === 'X' ? 'sym-x' : 'sym-o'}`}>
+                    {game.symbols?.[p.u] || '?'}
                   </span>
-                )}
-              </div>
+                </div>
+              ))}
             </div>
 
             {/* Board */}
@@ -479,34 +280,38 @@ function TicTacToeInner() {
                 {game.board.map((val, i) => (
                   <div
                     key={i}
-                    className={cellClass(i)}
+                    className={[
+                      'ttt-cell',
+                      val === 'X' ? 'x' : val === 'O' ? 'o' : '',
+                      winCells.has(i) ? 'win' : '',
+                      !val && isMyTurn && game.status === 'playing' ? 'playable' : '',
+                    ].filter(Boolean).join(' ')}
                     onClick={() => handleCell(i)}
                   >
-                    {val || ''}
+                    {val}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Post-game actions */}
+            {/* Code row */}
+            <div className="ttt-code-row">
+              <span className="ttt-code-val">{gameId}</span>
+              <button className="ttt-code-copy" onClick={copyCode}>{copied ? 'Copied' : 'Copy code'}</button>
+            </div>
+
+            {/* Actions */}
             {game.status === 'finished' && (
               <div className="ttt-actions">
-                <button
-                  className="btn-rematch"
-                  onClick={handleRematch}
-                  disabled={rematching}
-                >
-                  {rematching ? <span className="spinner-sm" /> : 'Rematch'}
+                <button className="ttt-btn-main" onClick={handleRematch} disabled={rematching}>
+                  {rematching ? 'Starting…' : 'Rematch'}
                 </button>
-                <Link href="/games" className="btn-new-game">
-                  New game
-                </Link>
+                <button className="ttt-btn-sec" onClick={() => router.push('/games')}>Games</button>
               </div>
             )}
+            {game.status === 'playing' && <div style={{ height: 32 }} />}
           </>
         )}
-
-        <BottomNav activeTab="games" />
       </div>
     </>
   );
@@ -514,12 +319,22 @@ function TicTacToeInner() {
 
 export default function TicTacToePage() {
   return (
-    <Suspense fallback={
-      <div className="app-container">
-        <div className="loading-state"><div className="loading-spinner" /></div>
-      </div>
-    }>
+    <Suspense fallback={<TTTSkeleton />}>
       <TicTacToeInner />
     </Suspense>
+  );
+}
+
+// Need to re-export TTTSkeleton for suspense fallback
+function TTTSkeleton() {
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+      <div style={{ width: 160, height: 24, borderRadius: 8, background: 'rgba(255,255,255,0.4)' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, width: 260 }}>
+        {Array(9).fill(0).map((_,i) => (
+          <div key={i} style={{ aspectRatio: '1', borderRadius: 14, background: 'rgba(255,255,255,0.4)' }} />
+        ))}
+      </div>
+    </div>
   );
 }

@@ -33,16 +33,18 @@ export async function getMessages(): Promise<Message[]> {
 
     const q = query(
       collection(db, MESSAGES_COLLECTION),
-      where('receiverId', '==', currentUserId),
-      where('senderId', '==', partnerId)
+      where('receiverId', '==', currentUserId)
     );
     const snapshot = await getDocs(q);
-    const data = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Message[];
+    const data = snapshot.docs
+      .map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Message[];
     
-    return data.sort((a, b) => b.createdAt - a.createdAt);
+    // Filter by partnerId in JS for reliability/no-index needed
+    const filtered = data.filter(m => m.senderId === partnerId);
+    return filtered.sort((a, b) => b.createdAt - a.createdAt);
   } catch (error) {
     console.error('Error fetching messages:', error);
     return localMessages;
@@ -66,16 +68,18 @@ export async function getSentMessages(): Promise<Message[]> {
 
     const q = query(
       collection(db, MESSAGES_COLLECTION),
-      where('senderId', '==', currentUserId),
-      where('receiverId', '==', partnerId)
+      where('senderId', '==', currentUserId)
     );
     const snapshot = await getDocs(q);
-    const data = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Message[];
+    const data = snapshot.docs
+      .map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Message[];
     
-    return data.sort((a, b) => b.createdAt - a.createdAt);
+    // Filter by partnerId in JS for reliability/no-index needed
+    const filtered = data.filter(m => m.receiverId === partnerId);
+    return filtered.sort((a, b) => b.createdAt - a.createdAt);
   } catch (error) {
     console.error('Error fetching sent messages:', error);
     return localMessages;
