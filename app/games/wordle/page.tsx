@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, getDoc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -463,7 +463,7 @@ function WordleInner() {
         {/* Category hint */}
         <div style={{ padding: '0 20px 8px', textAlign: 'center' }}>
           <p style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 600, marginBottom: 4 }}>Category</p>
-          <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, fontStyle: 'italic', color: '#3D2B3D' }}>{game?.hints.category}</p>
+          <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, fontStyle: 'italic', color: '#3D2B3D' }}>{game?.hints?.category}</p>
         </div>
 
         {/* Hint banner */}
@@ -491,7 +491,7 @@ function WordleInner() {
                       ? (currentGuess[colIndex] || '')
                       : (attempt[colIndex] || '');
                     const state = states?.[colIndex];
-                    const isRevealing = isCurrentRow && letter && !attempt[colIndex];
+                    const isRevealing = !!(isCurrentRow && letter && !attempt[colIndex]);
 
                     return (
                       <Tile
