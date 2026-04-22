@@ -99,7 +99,7 @@ export default function InboxPage() {
     });
 
     return () => unsubscribe();
-  }, [currentUserId]);
+  }, [currentUserId, partnerId]);
 
   const handleOpenMessage = useCallback((message: Message) => {
     setSelectedMessage(message);

@@ -18,11 +18,21 @@ service cloud.firestore {
     }
 
     match /messages/{messageId} {
-      allow read: if request.auth != null &&
+      // Allow fetching a single message if you are the sender or receiver
+      allow get: if request.auth != null &&
         (request.auth.uid == resource.data.receiverId || 
          request.auth.uid == resource.data.senderId);
+      
+      // Allow querying messages where you are either the sender or receiver
+      allow list: if request.auth != null &&
+        (request.auth.uid == resource.data.receiverId || 
+         request.auth.uid == resource.data.senderId);
+
       allow create: if request.auth != null &&
-        request.auth.uid == request.resource.data.senderId;
+        request.auth.uid == request.resource.data.senderId &&
+        request.resource.data.receiverId is string &&
+        request.resource.data.senderId is string;
+
       allow update: if request.auth != null &&
         (request.auth.uid == resource.data.receiverId || 
          request.auth.uid == resource.data.senderId);
