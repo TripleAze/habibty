@@ -8,7 +8,17 @@ export default function BottomNav({ activeTab }: BottomNavProps) {
   const fill   = (tab: string) => activeTab === tab ? '#E8A0A0' : '#C0A0B0';
 
   return (
-    <nav className="bottom-nav">
+    <nav className="bottom-nav group">
+      {/* Desktop Logo Header */}
+      <div className="hidden lg:flex items-center gap-4 px-6 pb-8 pt-4 w-full">
+        <div className="nav-icon shrink-0">
+          <span className="text-xl">🤍</span>
+        </div>
+        <span className="font-serif italic text-2xl text-[var(--ink)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-100 whitespace-nowrap">
+          Habibty
+        </span>
+      </div>
+
       <Link href="/inbox" className={`nav-item ${activeTab === 'inbox' ? 'active' : ''}`}>
         <div className="nav-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke('inbox')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

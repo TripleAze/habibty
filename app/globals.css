@@ -860,6 +860,93 @@ html, body {
 ::-webkit-scrollbar-thumb { background: rgba(232, 160, 160, 0.3); border-radius: 2px; }
 
 /* ─── RESPONSIVE ──────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .app-container {
+    padding-bottom: 40px;
+    padding-left: 80px; /* Collapsed sidebar width */
+    transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .app-container.sidebar-expanded {
+    padding-left: 260px; /* Expanded sidebar width */
+  }
+
+  /* Desktop Sidebar */
+  .bottom-nav {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: 80px;
+    height: 100vh;
+    flex-direction: column;
+    padding: 32px 0;
+    border-top: none;
+    border-right: 0.5px solid rgba(232, 160, 160, 0.3);
+    background: rgba(255, 248, 242, 0.65);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    align-items: flex-start;
+    overflow: hidden;
+    z-index: 100;
+  }
+
+  .bottom-nav:hover {
+    width: 260px;
+  }
+
+  .nav-item {
+    flex: none;
+    flex-direction: row;
+    width: 100%;
+    padding: 16px 26px;
+    gap: 16px;
+    justify-content: flex-start;
+  }
+
+  .nav-icon {
+    flex-shrink: 0;
+  }
+
+  .nav-label {
+    font-size: 15px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+  }
+
+  .bottom-nav:hover .nav-label {
+    opacity: 1;
+    transition-delay: 0.1s;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .form-body {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 32px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 24px;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(232, 160, 160, 0.2);
+  }
+}
+
+@media (min-width: 1440px) {
+  .cards-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 @media (max-width: 480px) {
   .cards-grid { grid-template-columns: 1fr; }
   .home-title { font-size: 28px; }
