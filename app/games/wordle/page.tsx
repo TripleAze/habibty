@@ -170,9 +170,10 @@ function HintBanner({
   word,
 }: {
   hintLevel: number;
-  hints: GameState['hints'];
+  hints?: GameState['hints'];
   word?: string;
 }) {
+  if (!hints || hintLevel === 0) return null;
   if (hintLevel === 0) return null;
 
   return (
