@@ -154,6 +154,27 @@ function TruthOrDareInner() {
   // Auth/Loading states
   if (!uid) return <Skeleton />;
 
+  const handleCreate = async () => {
+    const newId = await generateGameId();
+    const user = auth?.currentUser;
+    const startPlayer = uid;
+    await setDoc(doc(db, 'games', newId), {
+      type: 'truthordare',
+      creatorUid: uid,
+      players: [uid],
+      playerNames: { [uid]: user?.displayName || 'You' },
+      playerPhotos: user?.photoURL ? { [uid]: user.photoURL } : {},
+      currentTurn: startPlayer,
+      currentPrompt: null,
+      promptType: null,
+      status: 'waiting',
+      skipsLeft: { [uid]: MAX_SKIPS },
+      history: [],
+      createdAt: serverTimestamp(),
+    });
+    router.replace(`/games/truth-or-dare?id=${newId}`);
+  };
+
   // No game ID in URL - show landing/create screen
   if (!gameId && !game) {
     return (
@@ -190,27 +211,6 @@ function TruthOrDareInner() {
   const isMyTurn = game.currentTurn === uid;
   const mySkipsLeft = game.skipsLeft[uid] || MAX_SKIPS;
   const oppSkipsLeft = game.skipsLeft[opponentUid] || MAX_SKIPS;
-
-  const handleCreate = async () => {
-    const newId = await generateGameId();
-    const user = auth?.currentUser;
-    const startPlayer = uid;
-    await setDoc(doc(db, 'games', newId), {
-      type: 'truthordare',
-      creatorUid: uid,
-      players: [uid],
-      playerNames: { [uid]: user?.displayName || 'You' },
-      playerPhotos: user?.photoURL ? { [uid]: user.photoURL } : {},
-      currentTurn: startPlayer,
-      currentPrompt: null,
-      promptType: null,
-      status: 'waiting',
-      skipsLeft: { [uid]: MAX_SKIPS },
-      history: [],
-      createdAt: serverTimestamp(),
-    });
-    router.replace(`/games/truth-or-dare?id=${newId}`);
-  };
 
   const handleJoin = async () => {
     if (!gameId) return;

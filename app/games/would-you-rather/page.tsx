@@ -82,6 +82,26 @@ function WouldYouRatherInner() {
   // Auth/Loading states
   if (!uid) return <Skeleton />;
 
+  const handleCreate = async () => {
+    const newId = await generateGameId();
+    const user = auth?.currentUser;
+    await setDoc(doc(db, 'games', newId), {
+      type: 'wouldyourather',
+      creatorUid: uid,
+      players: [uid],
+      playerNames: { [uid]: user?.displayName || 'You' },
+      playerPhotos: user?.photoURL ? { [uid]: user.photoURL } : {},
+      questionIndex: 0,
+      responses: {},
+      revealed: false,
+      readyForNext: [],
+      status: 'waiting',
+      score: { matches: 0, total: 0 },
+      createdAt: serverTimestamp(),
+    });
+    router.replace(`/games/would-you-rather?id=${newId}`);
+  };
+
   // No game ID in URL - show landing/create screen
   if (!gameId && !game) {
     return (
@@ -120,26 +140,6 @@ function WouldYouRatherInner() {
   const allReadyForNext = game.readyForNext?.length === 2;
 
   const currentQuestion = WOULD_YOU_RATHER_QUESTIONS[game.questionIndex % WOULD_YOU_RATHER_QUESTIONS.length];
-
-  const handleCreate = async () => {
-    const newId = await generateGameId();
-    const user = auth?.currentUser;
-    await setDoc(doc(db, 'games', newId), {
-      type: 'wouldyourather',
-      creatorUid: uid,
-      players: [uid],
-      playerNames: { [uid]: user?.displayName || 'You' },
-      playerPhotos: user?.photoURL ? { [uid]: user.photoURL } : {},
-      questionIndex: 0,
-      responses: {},
-      revealed: false,
-      readyForNext: [],
-      status: 'waiting',
-      score: { matches: 0, total: 0 },
-      createdAt: serverTimestamp(),
-    });
-    router.replace(`/games/would-you-rather?id=${newId}`);
-  };
 
   const handleJoin = async () => {
     if (!gameId) return;
