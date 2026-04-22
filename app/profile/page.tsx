@@ -169,279 +169,165 @@ export default function ProfilePage() {
   );
 
   return (
-    <>
-      <style>{`
-        @keyframes shimmer {
-          0%   { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-8px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .pf-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 14px 18px;
-          background: rgba(255,255,255,0.68);
-          backdrop-filter: blur(12px);
-          border-radius: 16px;
-          border: 1px solid rgba(255,255,255,0.8);
-          margin-bottom: 8px;
-        }
-        .pf-row-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-        .pf-row-lbl { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(122,92,122,0.5); font-weight: 500; }
-        .pf-row-val { font-size: 15px; color: #3D2B3D; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-        .pf-row-action { font-size: 12px; font-weight: 500; color: #E8A0A0; cursor: pointer; background: none; border: none; padding: 4px 10px; border-radius: 100px; background: rgba(232,160,160,0.12); flex-shrink: 0; font-family: 'DM Sans', sans-serif; transition: background 0.2s; }
-        .pf-row-action:hover { background: rgba(232,160,160,0.22); }
-        .pf-row-action.danger { color: #B06060; background: rgba(176,96,96,0.08); }
-        .pf-row-action.danger:hover { background: rgba(176,96,96,0.15); }
-
-        .pf-edit-panel {
-          margin-bottom: 8px;
-          animation: slideDown 0.2s ease;
-        }
-        .pf-edit-row {
-          display: flex;
-          gap: 8px;
-          padding: 12px 16px;
-          background: rgba(255,255,255,0.8);
-          border-radius: 16px;
-          border: 1.5px solid rgba(232,160,160,0.3);
-        }
-        .pf-edit-input {
-          flex: 1;
-          border: none;
-          background: transparent;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 15px;
-          color: #3D2B3D;
-          outline: none;
-        }
-        .pf-save-btn {
-          padding: 8px 16px;
-          border-radius: 100px;
-          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
-          border: none;
-          color: white;
-          font-size: 12px;
-          font-weight: 500;
-          cursor: pointer;
-          font-family: 'DM Sans', sans-serif;
-          white-space: nowrap;
-        }
-        .pf-save-btn:disabled { opacity: 0.6; }
-        .pf-cancel-btn {
-          padding: 8px 12px;
-          border-radius: 100px;
-          background: transparent;
-          border: none;
-          color: rgba(122,92,122,0.6);
-          font-size: 12px;
-          cursor: pointer;
-          font-family: 'DM Sans', sans-serif;
-        }
-
-        .pf-code-panel {
-          margin-bottom: 8px;
-          animation: slideDown 0.2s ease;
-        }
-        .pf-code-inner {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 12px 16px;
-          background: rgba(247,232,238,0.5);
-          border-radius: 14px;
-          border: 1px solid rgba(232,160,160,0.25);
-        }
-        .pf-code-val {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 22px;
-          letter-spacing: 0.18em;
-          color: #3D2B3D;
-          flex: 1;
-        }
-        .pf-code-copy {
-          padding: 6px 14px;
-          border-radius: 100px;
-          background: rgba(232,160,160,0.15);
-          border: 1px solid rgba(232,160,160,0.3);
-          font-size: 11px;
-          color: #B06060;
-          cursor: pointer;
-          font-weight: 500;
-          font-family: 'DM Sans', sans-serif;
-        }
-        .pf-hint { font-size: 10px; color: rgba(122,92,122,0.4); margin: 4px 0 0 4px; font-style: italic; font-family: 'Cormorant Garamond', serif; }
-
-        .pf-section-gap { height: 8px; }
-        .pf-section-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(122,92,122,0.4); font-weight: 500; padding: 0 4px; margin-bottom: 6px; }
-
-        .pf-signout {
-          width: 100%;
-          padding: 14px;
-          border-radius: 100px;
-          background: transparent;
-          border: 1.5px solid rgba(232,160,160,0.3);
-          color: #B06060;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          font-family: 'DM Sans', sans-serif;
-          transition: all 0.2s;
-          margin-top: 4px;
-        }
-        .pf-signout:hover { background: rgba(232,160,160,0.06); }
-
-        .pf-confirm-row { display: flex; gap: 8px; margin-top: 8px; }
-        .pf-confirm-yes { flex: 1; padding: 12px; border-radius: 100px; background: rgba(176,96,96,0.1); border: 1px solid rgba(176,96,96,0.25); color: #B06060; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; }
-        .pf-confirm-no  { flex: 1; padding: 12px; border-radius: 100px; background: rgba(255,255,255,0.6); border: 1px solid rgba(201,184,216,0.3); color: #7A5C7A; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
-
-        .avatar-wrap { position: relative; width: 80px; height: 80px; border-radius: 50%; cursor: pointer; overflow: hidden; border: 2.5px solid white; box-shadow: 0 4px 16px rgba(232,160,160,0.25); }
-        .avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .avatar-fb { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#F2C4CE,#C9B8D8); font-family: 'Cormorant Garamond',serif; font-size: 28px; color: #3D2B3D; }
-        .avatar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
-        .avatar-wrap:hover .avatar-overlay { opacity: 1; }
-        .avatar-overlay span { font-size: 10px; color: white; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; font-family: 'DM Sans', sans-serif; }
-        .avatar-uploading { opacity: 1 !important; background: rgba(0,0,0,0.5) !important; }
-      `}</style>
-
-      <div className="app-container">
-        <div className="home-header">
-          <div className="home-header-left">
-            <p className="home-label">Settings</p>
-            <h1 className="home-title">Your <em>profile</em></h1>
-          </div>
+    <div className="app-container">
+      <div className="home-header">
+        <div className="home-header-left">
+          <p className="home-label">Settings</p>
+          <h1 className="home-title">Your <em>profile</em></h1>
         </div>
+      </div>
 
-        <div style={{ padding: '0 20px 100px' }}>
-
-          {/* Avatar */}
-          <div style={{ display: 'flex', justifyContent: 'center', margin: '4px 0 24px' }}>
-            <div className="avatar-wrap" onClick={() => fileInputRef.current?.click()}>
-              {photoURL
-                ? <img src={photoURL} className="avatar-img" alt="avatar" referrerPolicy="no-referrer" />
-                : <div className="avatar-fb">{displayName?.[0]?.toUpperCase() || 'H'}</div>}
-              <div className={`avatar-overlay ${uploading ? 'avatar-uploading' : ''}`}>
-                <span>{uploading ? 'Uploading…' : 'Edit'}</span>
+      <div className="profile-section">
+        
+        {/* Avatar Section */}
+        <div className="flex flex-col items-center mb-10 animation-fade-in">
+          <div 
+            className="relative group cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-[#E8A0A0] to-[#C9B8D8] shadow-lg transition-transform duration-300 group-hover:scale-105">
+              <div className="w-full h-full rounded-full overflow-hidden border-4 border-white bg-white">
+                {photoURL ? (
+                  <img src={photoURL} className="w-full h-full object-cover" alt="avatar" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-50 text-3xl font-serif">
+                    {displayName?.[0]?.toUpperCase() || 'H'}
+                  </div>
+                )}
               </div>
             </div>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept="image/*" />
-          </div>
-
-          {/* Name */}
-          <div className="pf-section-label">Account</div>
-
-          {isEditingName ? (
-            <div className="pf-edit-panel">
-              <div className="pf-edit-row">
-                <input
-                  className="pf-edit-input"
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSaveName()}
-                  placeholder="Display name"
-                  autoFocus
-                />
-                <button className="pf-cancel-btn" onClick={() => setIsEditingName(false)}>Cancel</button>
-                <button className="pf-save-btn" onClick={handleSaveName} disabled={saving}>
-                  {saving ? '…' : 'Save'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="pf-row">
-              <div className="pf-row-left">
-                <span className="pf-row-lbl">Display name</span>
-                <span className="pf-row-val">{displayName || '—'}</span>
-              </div>
-              <button className="pf-row-action" onClick={() => { setEditName(displayName); setIsEditingName(true); }}>Edit</button>
-            </div>
-          )}
-
-          <div className="pf-row">
-            <div className="pf-row-left">
-              <span className="pf-row-lbl">Email</span>
-              <span className="pf-row-val" style={{ fontSize: 13, opacity: 0.7 }}>{email}</span>
-            </div>
-          </div>
-
-          <div className="pf-section-gap" />
-
-          {/* Partner */}
-          <div className="pf-section-label">Partner</div>
-
-          <div className="pf-row">
-            <div className="pf-row-left">
-              <span className="pf-row-lbl">Paired with</span>
-              <span className="pf-row-val">{partnerName || 'No partner yet'}</span>
-            </div>
-            {partnerName
-              ? <button className="pf-row-action danger" onClick={() => setShowUnpairConfirm(true)}>Unpair</button>
-              : <Link href="/pair" className="pf-row-action" style={{ textDecoration: 'none' }}>Pair now</Link>}
-          </div>
-
-          {showUnpairConfirm && (
-            <div style={{ animation: 'slideDown 0.2s ease', marginBottom: 8 }}>
-              <p style={{ fontSize: 12, color: 'rgba(122,92,122,0.7)', textAlign: 'center', marginBottom: 6 }}>
-                This will disconnect you from {partnerName}. Are you sure?
-              </p>
-              <div className="pf-confirm-row">
-                <button className="pf-confirm-yes" onClick={handleUnpair} disabled={unpairing}>
-                  {unpairing ? 'Unpairing…' : 'Yes, unpair'}
-                </button>
-                <button className="pf-confirm-no" onClick={() => setShowUnpairConfirm(false)}>Cancel</button>
-              </div>
-            </div>
-          )}
-
-          {/* Invite code */}
-          <div className="pf-row" style={{ cursor: 'pointer' }} onClick={() => setShowInviteCode(p => !p)}>
-            <div className="pf-row-left">
-              <span className="pf-row-lbl">Invite code</span>
-              <span className="pf-row-val" style={{ fontSize: 13 }}>
-                {showInviteCode ? inviteCode : '• • • • • •'}
+            <div className={`absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${uploading ? 'opacity-100' : ''}`}>
+              <span className="text-white text-xs font-medium tracking-widest uppercase">
+                {uploading ? 'Uploading...' : 'Change'}
               </span>
             </div>
-            <button className="pf-row-action">{showInviteCode ? 'Hide' : 'Show'}</button>
+            {/* Edit Icon Badge */}
+            <div className="absolute bottom-1 right-1 bg-white p-2 rounded-full shadow-md border border-gray-100">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#E8A0A0]">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+              </svg>
+            </div>
           </div>
-
-          {showInviteCode && (
-            <div className="pf-code-panel">
-              <div className="pf-code-inner">
-                <span className="pf-code-val">{inviteCode}</span>
-                <button className="pf-code-copy" onClick={copyCode}>Copy</button>
-              </div>
-              <p className="pf-hint">Share this with your partner to connect</p>
-            </div>
-          )}
-
-          <div className="pf-section-gap" />
-
-          {/* Sign out */}
-          <div className="pf-section-label">Account</div>
-
-          {!showSignOutConfirm ? (
-            <button className="pf-signout" onClick={() => setShowSignOutConfirm(true)}>Sign out</button>
-          ) : (
-            <div style={{ animation: 'slideDown 0.2s ease' }}>
-              <p style={{ fontSize: 13, color: '#7A5C7A', textAlign: 'center', marginBottom: 8 }}>
-                Sign out of habibty?
-              </p>
-              <div className="pf-confirm-row">
-                <button className="pf-confirm-yes" onClick={handleSignOut}>Sign out</button>
-                <button className="pf-confirm-no" onClick={() => setShowSignOutConfirm(false)}>Cancel</button>
-              </div>
-            </div>
-          )}
-
+          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
         </div>
 
-        {toast && <div className={`toast ${toast ? 'show' : ''}`}>{toast}</div>}
-        <BottomNav activeTab="profile" />
+        {/* Account Group */}
+        <div className="profile-card-group">
+          <div className="pf-section-label px-1">Account Info</div>
+          <div className="profile-card">
+            {isEditingName ? (
+              <div className="p-4 bg-white/40 animate-slide-down">
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 bg-white/60 border border-[#E8A0A0]/30 rounded-xl px-4 py-2 outline-none focus:border-[#E8A0A0] transition-colors font-medium text-sm"
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSaveName()}
+                    placeholder="Display name"
+                    autoFocus
+                  />
+                  <button className="px-4 py-2 text-xs font-medium text-gray-500" onClick={() => setIsEditingName(false)}>Cancel</button>
+                  <button className="px-5 py-2 rounded-full bg-gradient-to-r from-[#E8A0A0] to-[#C9B8D8] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50" onClick={handleSaveName} disabled={saving}>
+                    {saving ? '...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="profile-row">
+                <div className="profile-row-content">
+                  <span className="profile-row-label">Your Name</span>
+                  <span className="profile-row-value">{displayName || 'Anonymous Player'}</span>
+                </div>
+                <button className="text-xs font-bold text-[#E8A0A0] px-4 py-2 rounded-full bg-[#E8A0A0]/10 hover:bg-[#E8A0A0]/20 transition-colors" onClick={() => { setEditName(displayName); setIsEditingName(true); }}>Edit</button>
+              </div>
+            )}
+            <div className="profile-row">
+              <div className="profile-row-content">
+                <span className="profile-row-label">Email Address</span>
+                <span className="profile-row-value text-gray-400 font-normal">{email}</span>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Partnership Group */}
+        <div className="profile-card-group" style={{ animationDelay: '0.1s' }}>
+          <div className="pf-section-label px-1">Partnership</div>
+          <div className="profile-card">
+            <div className="profile-row">
+              <div className="profile-row-content">
+                <span className="profile-row-label">Paired With</span>
+                <span className="profile-row-value">{partnerName || 'Waiting for love...'}</span>
+              </div>
+              {partnerName ? (
+                <button className="text-xs font-bold text-red-400 px-4 py-2 rounded-full bg-red-50 hover:bg-red-100 transition-colors" onClick={() => setShowUnpairConfirm(true)}>Unpair</button>
+              ) : (
+                <Link href="/pair" className="text-xs font-bold text-[#E8A0A0] px-4 py-2 rounded-full bg-[#E8A0A0]/10 hover:bg-[#E8A0A0]/20 transition-all">Pair Now</Link>
+              )}
+            </div>
+            
+            {showUnpairConfirm && (
+              <div className="p-6 bg-red-50/50 border-y border-red-100 animate-slide-down">
+                <p className="text-xs text-red-900/60 text-center mb-4 leading-relaxed">
+                  Are you sure you want to disconnect from <strong>{partnerName}</strong>? <br/>This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button className="flex-1 py-3 rounded-xl bg-red-500 text-white text-xs font-bold shadow-sm active:scale-95 transition-transform disabled:opacity-50" onClick={handleUnpair} disabled={unpairing}>
+                    {unpairing ? 'Disconnecting...' : 'Yes, Unpair'}
+                  </button>
+                  <button className="flex-1 py-3 rounded-xl bg-white border border-gray-200 text-gray-500 text-xs font-medium active:scale-95 transition-transform" onClick={() => setShowUnpairConfirm(false)}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            <div className="profile-row cursor-pointer" onClick={() => setShowInviteCode(p => !p)}>
+              <div className="profile-row-content">
+                <span className="profile-row-label">Invite Code</span>
+                <span className="profile-row-value font-mono tracking-wider">
+                  {showInviteCode ? inviteCode : '••••••'}
+                </span>
+              </div>
+              <button className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-3 py-1.5 rounded-lg border border-gray-100">{showInviteCode ? 'Hide' : 'Show'}</button>
+            </div>
+
+            {showInviteCode && (
+              <div className="p-4 bg-gray-50/50 border-t border-gray-100 animate-slide-down">
+                <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                  <span className="flex-1 font-serif text-2xl tracking-[0.2em] text-center">{inviteCode}</span>
+                  <button className="px-4 py-2 rounded-lg bg-[#E8A0A0]/10 text-[#E8A0A0] text-xs font-bold hover:bg-[#E8A0A0]/20 transition-colors" onClick={copyCode}>Copy</button>
+                </div>
+                <p className="text-[10px] text-gray-400 text-center mt-3 italic font-serif">Share this code with your partner to connect your souls</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Security & System */}
+        <div className="profile-card-group" style={{ animationDelay: '0.2s' }}>
+          <div className="pf-section-label px-1">System</div>
+          <div className="profile-card">
+            {!showSignOutConfirm ? (
+              <button className="w-full flex items-center justify-center gap-2 p-5 text-red-400 hover:bg-red-50 transition-colors" onClick={() => setShowSignOutConfirm(true)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span className="text-sm font-semibold">Sign Out</span>
+              </button>
+            ) : (
+              <div className="p-6 bg-gray-50/50 animate-slide-down">
+                <p className="text-sm text-gray-500 text-center mb-4">Are you leaving us for now?</p>
+                <div className="flex gap-3">
+                  <button className="flex-1 py-3 rounded-xl bg-gray-900 text-white text-xs font-bold shadow-sm active:scale-95 transition-transform" onClick={handleSignOut}>Sign Out</button>
+                  <button className="flex-1 py-3 rounded-xl bg-white border border-gray-200 text-gray-400 text-xs font-medium active:scale-95 transition-transform" onClick={() => setShowSignOutConfirm(false)}>Cancel</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
       </div>
-    </>
+
+      {toast && <div className={`toast ${toast ? 'show' : ''}`}>{toast}</div>}
+      <BottomNav activeTab="profile" />
+    </div>
   );
 }
