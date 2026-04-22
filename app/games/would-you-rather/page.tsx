@@ -33,7 +33,7 @@ function Skeleton() {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
       <div style={{ width: 200, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.4)' }} />
-      <div style={{ display: 'flex', gap: 16, width: '100%', maxWidth: 600, paddingHorizontal: 20 }}>
+      <div style={{ display: 'flex', gap: 16, width: '100%', maxWidth: 600, padding: '0 20px' }}>
         <div style={{ flex: 1, aspectRatio: '3/4', borderRadius: 16, background: 'rgba(255,255,255,0.4)' }} />
         <div style={{ flex: 1, aspectRatio: '3/4', borderRadius: 16, background: 'rgba(255,255,255,0.4)' }} />
       </div>

@@ -382,7 +382,7 @@ function TruthOrDareInner() {
 
         {/* History button */}
         <div style={{ padding: '0 20px 16px', textAlign: 'center' }}>
-          <button onClick={() => setShowHistory(true)} style={{ fontSize: 12, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans',sans-serif', textDecoration: 'underline' }}>
+          <button onClick={() => setShowHistory(true)} style={{ fontSize: 12, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer', fontFamily: '"DM Sans",sans-serif', textDecoration: 'underline' }}>
             View round history ({game.history.length})
           </button>
         </div>
