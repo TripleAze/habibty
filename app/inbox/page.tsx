@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, query, where, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
-import { unlockDueMessages } from '@/lib/messages';
+import { unlockDueMessages, updateMessageStatus } from '@/lib/messages';
 import MessageCard from '@/components/MessageCard';
 import RevealModal from '@/components/RevealModal';
 import BottomNav from '@/components/BottomNav';
@@ -107,6 +107,11 @@ export default function InboxPage() {
   const handleOpenMessage = useCallback((message: Message) => {
     setSelectedMessage(message);
     setIsModalOpen(true);
+    
+    // Mark as opened in Firestore if it's currently just 'available'
+    if (message.status === 'available') {
+      updateMessageStatus(message.id, 'opened');
+    }
   }, []);
 
   const handleCloseModal = useCallback(() => {
