@@ -140,13 +140,47 @@ function TruthOrDareInner() {
   // Subscribe to game
   useEffect(() => {
     if (!gameId) return;
-    const unsub = onSnapshot(doc(db, 'games', gameId), (snap) => {
-      if (snap.exists()) setGame(snap.data() as GameState);
-    });
+    const unsub = onSnapshot(doc(db, 'games', gameId), 
+      (snap) => {
+        if (snap.exists()) setGame(snap.data() as GameState);
+      },
+      (error) => {
+        console.error("Firestore snapshot error:", error);
+      }
+    );
     return () => unsub();
   }, [gameId]);
 
-  if (!game || !uid) return <Skeleton />;
+  // Auth/Loading states
+  if (!uid) return <Skeleton />;
+
+  // No game ID in URL - show landing/create screen
+  if (!gameId && !game) {
+    return (
+      <>
+        {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
+        <GameScreen title="Truth or Dare" onExit={() => setShowExit(true)}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
+            <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(212,169,74,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '1px solid rgba(212,169,74,0.3)' }}>
+              🔥
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Truth or Dare</h2>
+              <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>Ready for some fun? Take turns choosing between deep truths and spicy dares!</p>
+            </div>
+            <button onClick={handleCreate} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#D4A94A,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(212,169,74,0.2)' }}>
+              Create New Game
+            </button>
+            <button onClick={() => router.push('/games')} style={{ fontSize: 13, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Back to Games
+            </button>
+          </div>
+        </GameScreen>
+      </>
+    );
+  }
+
+  if (!game) return <Skeleton />;
 
   const opponentUid = game.players.find(p => p !== uid) || '';
   const opponentName = game.playerNames[opponentUid] || 'Partner';

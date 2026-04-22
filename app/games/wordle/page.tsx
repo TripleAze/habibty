@@ -256,9 +256,14 @@ function WordleInner() {
   // Subscribe to game
   useEffect(() => {
     if (!gameId) return;
-    const unsub = onSnapshot(doc(db, 'games', gameId), (snap) => {
-      if (snap.exists()) setGame(snap.data() as GameState);
-    });
+    const unsub = onSnapshot(doc(db, 'games', gameId), 
+      (snap) => {
+        if (snap.exists()) setGame(snap.data() as GameState);
+      },
+      (error) => {
+        console.error("Firestore snapshot error:", error);
+      }
+    );
     return () => unsub();
   }, [gameId]);
 

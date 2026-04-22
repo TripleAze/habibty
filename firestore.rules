@@ -41,18 +41,23 @@ service cloud.firestore {
     // Games collection - 2 players only, restricted read/write
     match /games/{gameId} {
       // Allow read if you are a participant OR the game is waiting (so 2nd player can find it)
+      // Fallback: allow if you are the creator (handles initialization quirks)
       allow read: if request.auth != null && (
         resource.data.status == 'waiting' ||
-        request.auth.uid in resource.data.players
+        request.auth.uid in resource.data.players ||
+        request.auth.uid == resource.data.creatorUid
       );
+
       allow create: if request.auth != null;
+
       // Allow update if already a player, OR if you are joining as 2nd player
       allow update: if request.auth != null && (
-        request.auth.uid in resource.data.players ||
+        request.auth.uid in resource.data.get('players', []) ||
+        // Joining: status must be waiting, and current user must be adding themselves to players
         (resource.data.status == 'waiting' &&
-         resource.data.players.size() == 1 &&
+         resource.data.get('players', []).size() <= 1 &&
          request.resource.data.players.size() == 2 &&
-         request.resource.data.players.hasAll(resource.data.players) &&
+         request.resource.data.players.hasAll(resource.data.get('players', [])) &&
          request.auth.uid in request.resource.data.players)
       );
 

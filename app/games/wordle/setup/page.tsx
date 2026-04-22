@@ -83,6 +83,7 @@ export default function WordleSetupPage() {
         tileStates: [],
         hintLevel: 0,
         status: 'waiting',
+        players: [uid],
         playerNames: {
           [uid]: user?.displayName || 'Creator',
         },
