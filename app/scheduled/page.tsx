@@ -112,8 +112,7 @@ export default function ScheduledPage() {
 
     const q = query(
       collection(db, 'messages'),
-      where('senderId', '==', auth.currentUser.uid),
-      orderBy('createdAt', 'desc')
+      where('senderId', '==', auth.currentUser.uid)
     );
 
     const unsubSnap = onSnapshot(q, (snapshot) => {
@@ -121,6 +120,9 @@ export default function ScheduledPage() {
         id: doc.id,
         ...doc.data()
       })) as Message[];
+      
+      // Sort locally to avoid Firestore composite index requirement
+      data.sort((a, b) => b.createdAt - a.createdAt);
       
       setMessages(data);
       setLoading(false);
