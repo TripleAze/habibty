@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, query, where, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
+import { unlockDueMessages } from '@/lib/messages';
 import MessageCard from '@/components/MessageCard';
 import RevealModal from '@/components/RevealModal';
 import BottomNav from '@/components/BottomNav';
@@ -52,6 +53,8 @@ export default function InboxPage() {
               setPartnerName(p.displayName || 'your love');
               setPartnerPhoto(p.photoURL || null);
             }
+            // Trigger auto-unlock for messages receiver is waiting for
+            unlockDueMessages();
           } else {
             // Not paired yet — redirect to pair page
             router.replace('/pair');

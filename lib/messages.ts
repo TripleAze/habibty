@@ -143,23 +143,26 @@ export async function updateMessageStatus(
 }
 
 export async function unlockDueMessages(): Promise<void> {
+  const currentUserId = auth?.currentUser?.uid;
+  if (!currentUserId || !isFirebaseConfigured) return;
+
   try {
-    const messages = await getMessages();
+    const q = query(
+      collection(db, MESSAGES_COLLECTION),
+      where('receiverId', '==', currentUserId),
+      where('status', '==', 'locked')
+    );
+    
+    const snapshot = await getDocs(q);
     const now = Date.now();
 
-    const updates = messages
-      .filter((msg) => {
-        const scheduledTime = msg.scheduledFor
-          ? new Date(msg.scheduledFor).getTime()
-          : 0;
-        return (
-          msg.status === 'locked' &&
-          msg.deliveryType === 'scheduled' &&
-          msg.scheduledFor &&
-          scheduledTime <= now
-        );
+    const updates = snapshot.docs
+      .filter((doc) => {
+        const data = doc.data();
+        const scheduledTime = data.scheduledFor ? new Date(data.scheduledFor).getTime() : 0;
+        return data.deliveryType === 'scheduled' && data.scheduledFor && scheduledTime <= now;
       })
-      .map((msg) => updateMessageStatus(msg.id, 'available'));
+      .map((doc) => updateDoc(doc.ref, { status: 'available' }));
 
     await Promise.all(updates);
   } catch (error) {

@@ -4,13 +4,22 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import BottomNav from '@/components/BottomNav';
-import { getSentMessages } from '@/lib/messages';
+import { unlockDueMessages } from '@/lib/messages';
 import { Message, MessageStatus } from '@/types';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { ListSkeleton } from '@/components/skeleton';
 
-function getTimelineDotClass(status: MessageStatus): string {
+function getEffectiveStatus(message: Message, now: number): MessageStatus {
+  if (message.status === 'opened') return 'opened';
+  const scheduledTime = message.scheduledFor ? new Date(message.scheduledFor).getTime() : 0;
+  if (message.deliveryType === 'scheduled' && scheduledTime <= now) return 'available';
+  return message.status;
+}
+
+function getTimelineDotClass(message: Message, now: number): string {
+  const status = getEffectiveStatus(message, now);
   switch (status) {
     case 'opened':
       return 'opened';
@@ -21,7 +30,8 @@ function getTimelineDotClass(status: MessageStatus): string {
   }
 }
 
-function getBadgeClass(status: MessageStatus): string {
+function getBadgeClass(message: Message, now: number): string {
+  const status = getEffectiveStatus(message, now);
   switch (status) {
     case 'opened':
       return 'badge-opened';
@@ -32,25 +42,27 @@ function getBadgeClass(status: MessageStatus): string {
   }
 }
 
-function getBadgeLabel(status: MessageStatus, deliveryType: string): string {
+function getBadgeLabel(message: Message, now: number): string {
+  const status = getEffectiveStatus(message, now);
   switch (status) {
     case 'opened':
       return '✓ Opened';
     case 'available':
       return '💌 Delivered';
     default:
-      return deliveryType === 'scheduled' ? '⏰ Scheduled' : '⏰ Waiting';
+      return message.deliveryType === 'scheduled' ? '⏰ Scheduled' : '⏰ Waiting';
   }
 }
 
-function formatMeta(message: Message): string {
+function formatMeta(message: Message, now: number): string {
   const typeLabel = message.type === 'text' ? 'Text' : message.type === 'voice' ? 'Voice note' : 'Video';
+  const status = getEffectiveStatus(message, now);
 
-  if (message.status === 'available') {
+  if (status === 'available') {
     return `Delivered today · ${typeLabel}`;
   }
 
-  if (message.status === 'opened') {
+  if (status === 'opened') {
     const date = new Date(message.createdAt);
     const month = date.toLocaleString('en-US', { month: 'short' });
     const day = date.getDate();
@@ -72,28 +84,52 @@ export default function ScheduledPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(true);
+  const [now, setNow] = useState(Date.now());
+
+  // Tick every 30 seconds to update scheduled statuses locally
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!auth) { setChecking(false); return; }
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
       if (!user) {
         router.replace('/auth');
       } else {
         setChecking(false);
+        // Try unlocking messages for the user as receiver just in case
+        unlockDueMessages();
       }
     });
-    return () => unsub();
+    return () => unsubAuth();
   }, [router]);
 
+  // Real-time listener for sent messages
   useEffect(() => {
-    if (checking) return;
-    const loadMessages = async () => {
-      const msgs = await getSentMessages();
-      setMessages(msgs);
-      setLoading(false);
-    };
+    if (checking || !auth?.currentUser) return;
 
-    loadMessages();
+    const q = query(
+      collection(db, 'messages'),
+      where('senderId', '==', auth.currentUser.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubSnap = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Message[];
+      
+      setMessages(data);
+      setLoading(false);
+    }, (err) => {
+      console.error('Sent messages snapshot error:', err);
+      setLoading(false);
+    });
+
+    return () => unsubSnap();
   }, [checking]);
 
   if (checking) {
@@ -135,8 +171,8 @@ export default function ScheduledPage() {
                 {/* Timeline Point */}
                 <div 
                   className={`absolute left-4 top-6 w-4 h-4 rounded-full border-4 border-white shadow-sm z-10 transition-transform duration-300 hover:scale-150 ${
-                    message.status === 'opened' ? 'bg-[#E8A0A0]' : 
-                    message.status === 'available' ? 'bg-[#C9B8D8]' : 'bg-gray-200'
+                    getEffectiveStatus(message, now) === 'opened' ? 'bg-[#E8A0A0]' : 
+                    getEffectiveStatus(message, now) === 'available' ? 'bg-[#C9B8D8]' : 'bg-gray-200'
                   }`}
                 />
 
@@ -145,8 +181,8 @@ export default function ScheduledPage() {
                     <h3 className="font-serif text-xl text-[#3D2B3D] leading-tight flex items-center gap-2">
                       {message.title} {message.emoji}
                     </h3>
-                    <span className={`timeline-badge ${getBadgeClass(message.status)}`}>
-                      {getBadgeLabel(message.status, message.deliveryType)}
+                    <span className={`timeline-badge ${getBadgeClass(message, now)}`}>
+                      {getBadgeLabel(message, now)}
                     </span>
                   </div>
                   
@@ -154,15 +190,15 @@ export default function ScheduledPage() {
                     <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-lg">
                       {message.type === 'text' ? '📝' : message.type === 'voice' ? '🎙️' : '🎬'}
                     </div>
-                    <p className="font-medium tracking-wide uppercase opacity-80">{formatMeta(message)}</p>
+                    <p className="font-medium tracking-wide uppercase opacity-80">{formatMeta(message, now)}</p>
                   </div>
 
                   <div className="flex gap-2">
                     <div className="h-1 flex-1 bg-gray-50 rounded-full overflow-hidden">
                       <div 
                         className={`h-full transition-all duration-1000 ${
-                          message.status === 'opened' ? 'w-full bg-[#E8A0A0]' : 
-                          message.status === 'available' ? 'w-2/3 bg-[#C9B8D8]' : 'w-1/3 bg-gray-200'
+                          getEffectiveStatus(message, now) === 'opened' ? 'w-full bg-[#E8A0A0]' : 
+                          getEffectiveStatus(message, now) === 'available' ? 'w-2/3 bg-[#C9B8D8]' : 'w-1/3 bg-gray-200'
                         }`} 
                       />
                     </div>
