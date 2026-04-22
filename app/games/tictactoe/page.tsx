@@ -84,7 +84,56 @@ function TicTacToeInner() {
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  if (!game || !uid) return <TTTSkeleton />;
+  // Auth/Loading states
+  if (!uid) return <TTTSkeleton />;
+
+  // No game ID in URL - show landing/create screen
+  if (!gameId && !game) {
+    const handleCreateLocal = async () => {
+      const { createGame: cg } = await import('@/lib/games');
+      const user = auth?.currentUser;
+      const id = await cg(uid, user?.displayName || 'You', user?.photoURL || '');
+      router.push(`/games/tictactoe?id=${id}`);
+    };
+
+    return (
+      <>
+        {showExit && (
+          <ExitSheet
+            onResume={() => setShowExit(false)}
+            onMessages={() => router.push('/inbox')}
+            onLeave={() => router.push('/games')}
+          />
+        )}
+        <div className="ttt-screen">
+          <div className="ttt-topbar">
+            <div>
+              <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
+              <h1 className="ttt-title">Tic <em>Tac</em> Toe</h1>
+            </div>
+            <button className="ttt-exit-btn" onClick={() => router.push('/games')}>✕</button>
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
+            <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(232,160,160,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '1px solid rgba(232,160,160,0.3)' }}>
+              ✕
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Tic Tac Toe</h2>
+              <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>Classic 3×3 strategy. Play a quick game with your partner!</p>
+            </div>
+            <button onClick={handleCreateLocal} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(232,160,160,0.2)' }}>
+              Create New Game
+            </button>
+            <button onClick={() => router.push('/games')} style={{ fontSize: 13, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Back to Games
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (!game) return <TTTSkeleton />;
 
   const mySymbol = game.symbols?.[uid] ?? '';
   const isMyTurn = game.turn === uid && game.status === 'playing';
