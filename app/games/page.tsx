@@ -9,7 +9,7 @@ import { createGame, joinGame } from '@/lib/games';
 import { createWhotGame, joinWhotGame } from '@/lib/whot';
 import BottomNav from '@/components/BottomNav';
 
-type GameType = 'tictactoe' | 'whot';
+type GameType = 'tictactoe' | 'whot' | 'wordle' | 'truthordare' | 'rapidfire' | 'wouldyourather';
 
 export default function GamesPage() {
   const router = useRouter();
@@ -46,9 +46,18 @@ export default function GamesPage() {
       if (type === 'tictactoe') {
         const id = await createGame(uid, displayName, photoURL);
         router.push(`/games/tictactoe?id=${id}`);
-      } else {
+      } else if (type === 'whot') {
         const id = await createWhotGame(uid, displayName, photoURL);
         router.push(`/games/whot?id=${id}`);
+      } else if (type === 'wordle') {
+        // Wordle has a separate setup page
+        router.push(`/games/wordle/setup`);
+      } else if (type === 'truthordare') {
+        router.push(`/games/truth-or-dare`);
+      } else if (type === 'rapidfire') {
+        router.push(`/games/rapid-fire`);
+      } else if (type === 'wouldyourather') {
+        router.push(`/games/would-you-rather`);
       }
     } catch {
       setError('Could not create game. Try again.');
@@ -60,14 +69,71 @@ export default function GamesPage() {
     const code = joinCode.trim().toUpperCase();
     if (!code) { setError('Enter a game code'); return; }
     setLoading(true); setError('');
-    const result = type === 'tictactoe'
-      ? await joinGame(code, uid, displayName, photoURL)
-      : await joinWhotGame(code, uid, displayName, photoURL);
-    if (result.ok) {
-      router.push(`/games/${type}?id=${code}`);
-    } else {
-      setError(result.error || 'Could not join.');
+    try {
+      const gameRef = doc(db, 'games', code);
+      const snap = await getDoc(gameRef);
+
+      if (!snap.exists()) {
+        setError('Game not found');
+        setLoading(false);
+        return;
+      }
+
+      const data = snap.data();
+      const gameType = data.type as GameType;
+
+      // Check if player is already in the game
+      if (data.players?.includes(uid)) {
+        router.push(`/games/${getGamePath(gameType)}?id=${code}`);
+        return;
+      }
+
+      // Check if game is full
+      if (data.players?.length >= 2) {
+        setError('Game is full');
+        setLoading(false);
+        return;
+      }
+
+      // Join the game based on type
+      let result;
+      if (gameType === 'tictactoe') {
+        result = await joinGame(code, uid, displayName, photoURL);
+      } else if (gameType === 'whot') {
+        result = await joinWhotGame(code, uid, displayName, photoURL);
+      } else {
+        // Generic join for other games
+        const { updateDoc, arrayUnion } = await import('firebase/firestore');
+        await updateDoc(gameRef, {
+          players: arrayUnion(uid),
+          [`playerNames.${uid}`]: displayName,
+          ...(photoURL ? { [`playerPhotos.${uid}`]: photoURL } : {}),
+          status: gameType === 'wordle' ? 'playing' : 'active',
+        });
+        result = { ok: true };
+      }
+
+      if (result.ok) {
+        router.push(`/games/${getGamePath(gameType)}?id=${code}`);
+      } else {
+        setError(result.error || 'Could not join.');
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Join error:', err);
+      setError('Could not join game.');
       setLoading(false);
+    }
+  };
+
+  const getGamePath = (type: GameType): string => {
+    switch (type) {
+      case 'tictactoe': return 'tictactoe';
+      case 'whot': return 'whot';
+      case 'wordle': return 'wordle';
+      case 'truthordare': return 'truth-or-dare';
+      case 'rapidfire': return 'rapid-fire';
+      case 'wouldyourather': return 'would-you-rather';
     }
   };
 
@@ -79,26 +145,74 @@ export default function GamesPage() {
     </div>
   );
 
-  const games = [
+  const games: Array<{
+    type: GameType;
+    name: string;
+    desc: string;
+    symbol?: string;
+    icon?: string;
+    color: string;
+    bg: string;
+    border: string;
+    new?: boolean;
+  }> = [
     {
-      type: 'tictactoe' as GameType,
+      type: 'tictactoe',
       name: 'Tic Tac Toe',
       desc: 'Classic 3×3 board game',
       symbol: '✕ ○',
-      icon: undefined as string | undefined,
       color: '#E8A0A0',
       bg: 'rgba(232,160,160,0.12)',
       border: 'rgba(232,160,160,0.3)',
     },
     {
-      type: 'whot' as GameType,
+      type: 'whot',
       name: 'Naija Whot',
       desc: 'Nigerian shedding card game',
       symbol: '★ ●',
-      icon: '/whot-icon.png',
       color: '#C9B8D8',
       bg: 'rgba(201,184,216,0.12)',
       border: 'rgba(201,184,216,0.3)',
+    },
+    {
+      type: 'wordle',
+      name: 'Partner Wordle',
+      desc: 'Guess the 5-letter word',
+      symbol: '⬛⬛⬛',
+      color: '#68B88B',
+      bg: 'rgba(104,184,139,0.12)',
+      border: 'rgba(104,184,139,0.3)',
+      new: true,
+    },
+    {
+      type: 'truthordare',
+      name: 'Truth or Dare',
+      desc: 'Deep questions & dares',
+      symbol: '? !',
+      color: '#D4A94A',
+      bg: 'rgba(212,169,74,0.12)',
+      border: 'rgba(212,169,74,0.3)',
+      new: true,
+    },
+    {
+      type: 'rapidfire',
+      name: 'Rapid Fire',
+      desc: 'Quick questions, 60 seconds',
+      symbol: '⚡',
+      color: '#E8A0A0',
+      bg: 'rgba(232,160,160,0.12)',
+      border: 'rgba(232,160,160,0.3)',
+      new: true,
+    },
+    {
+      type: 'wouldyourather',
+      name: 'Would You Rather',
+      desc: 'Impossible choices together',
+      symbol: '🤔',
+      color: '#9B7EBD',
+      bg: 'rgba(155,126,189,0.12)',
+      border: 'rgba(155,126,189,0.3)',
+      new: true,
     },
   ];
 
@@ -122,6 +236,7 @@ export default function GamesPage() {
         .game-btns { display: flex; gap: 8px; }
         .btn-game-create { flex: 1; padding: 11px; border-radius: 100px; border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; letter-spacing: 0.03em; }
         .btn-game-join { padding: 11px 16px; border-radius: 100px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; cursor: pointer; transition: all 0.2s; background: transparent; white-space: nowrap; }
+        .new-badge { font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); color: white; margin-left: 6px; }
 
         .join-panel { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid rgba(201,184,216,0.3); }
         .join-row { display: flex; gap: 8px; }
@@ -132,12 +247,6 @@ export default function GamesPage() {
         .join-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
         .join-cancel { font-size: 11px; color: rgba(122,92,122,0.5); cursor: pointer; margin-top: 6px; text-align: center; display: block; }
         .lobby-error { font-size: 12px; color: #c0706a; margin-top: 8px; text-align: center; }
-
-        .coming-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 0 16px; }
-        .coming-card { padding: 16px 10px; background: rgba(255,255,255,0.35); border-radius: 16px; border: 1.5px dashed rgba(201,184,216,0.4); text-align: center; }
-        .coming-icon { font-size: 20px; opacity: 0.3; margin-bottom: 4px; display: block; }
-        .coming-lbl { font-size: 11px; color: rgba(122,92,122,0.4); }
-        .soon-lbl { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(122,92,122,0.4); text-align: center; margin: 14px 0 10px; }
       `}</style>
 
       <div className="app-container">
@@ -161,8 +270,11 @@ export default function GamesPage() {
                   : g.symbol
                 }
               </div>
-              <div>
-                <div className="game-name">{g.name}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div className="game-name">{g.name}</div>
+                  {g.new && <span className="new-badge">NEW</span>}
+                </div>
                 <div className="game-desc">{g.desc}</div>
               </div>
             </div>
@@ -195,7 +307,7 @@ export default function GamesPage() {
                   onClick={() => handleCreate(g.type)}
                   disabled={loading}
                 >
-                  Create game
+                  {g.type === 'wordle' ? 'Set up word' : 'Create game'}
                 </button>
                 <button
                   className="btn-game-join"
@@ -208,16 +320,6 @@ export default function GamesPage() {
             )}
           </div>
         ))}
-
-        <p className="soon-lbl">More games coming</p>
-        <div className="coming-grid">
-          {[{ icon: '♟', label: 'Chess' }, { icon: '🎯', label: 'Wordle' }, { icon: '🀄', label: 'More' }].map(g => (
-            <div key={g.label} className="coming-card">
-              <span className="coming-icon">{g.icon}</span>
-              <span className="coming-lbl">{g.label}</span>
-            </div>
-          ))}
-        </div>
 
         <BottomNav activeTab="games" />
       </div>
