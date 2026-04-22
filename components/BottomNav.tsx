@@ -14,7 +14,7 @@ export default function BottomNav({ activeTab }: BottomNavProps) {
         <div className="nav-icon shrink-0">
           <span className="text-xl">🤍</span>
         </div>
-        <span className="font-serif italic text-2xl text-[var(--ink)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-100 whitespace-nowrap">
+        <span className="font-serif italic text-2xl text-[var(--ink)] opacity-0 lg:opacity-100 transition-opacity duration-200 whitespace-nowrap">
           Habibty
         </span>
       </div>

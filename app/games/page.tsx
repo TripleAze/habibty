@@ -218,37 +218,6 @@ export default function GamesPage() {
 
   return (
     <>
-      <style>{`
-        .game-card {
-          background: rgba(255,255,255,0.65);
-          backdrop-filter: blur(12px);
-          border-radius: 20px;
-          padding: 20px;
-          border: 1px solid rgba(255,255,255,0.8);
-          margin: 0 16px 12px;
-          transition: transform 0.2s;
-        }
-        .game-card:hover { transform: translateY(-2px); }
-        .game-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
-        .game-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; flex-shrink: 0; letter-spacing: 0.04em; font-family: 'DM Sans', sans-serif; }
-        .game-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; color: #3D2B3D; margin-bottom: 2px; }
-        .game-desc { font-size: 11px; color: rgba(122,92,122,0.6); }
-        .game-btns { display: flex; gap: 8px; }
-        .btn-game-create { flex: 1; padding: 11px; border-radius: 100px; border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; letter-spacing: 0.03em; }
-        .btn-game-join { padding: 11px 16px; border-radius: 100px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400; cursor: pointer; transition: all 0.2s; background: transparent; white-space: nowrap; }
-        .new-badge { font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); color: white; margin-left: 6px; }
-
-        .join-panel { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid rgba(201,184,216,0.3); }
-        .join-row { display: flex; gap: 8px; }
-        .join-input { flex: 1; padding: 10px 14px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.3); background: rgba(255,255,255,0.7); font-family: 'DM Sans', sans-serif; font-size: 13px; color: #3D2B3D; outline: none; text-transform: uppercase; letter-spacing: 0.08em; transition: border-color 0.2s; }
-        .join-input::placeholder { text-transform: none; letter-spacing: 0; color: rgba(122,92,122,0.4); }
-        .join-input:focus { border-color: #E8A0A0; }
-        .join-confirm { padding: 10px 16px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.4); background: transparent; font-size: 13px; color: #B06060; cursor: pointer; font-weight: 500; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
-        .join-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
-        .join-cancel { font-size: 11px; color: rgba(122,92,122,0.5); cursor: pointer; margin-top: 6px; text-align: center; display: block; }
-        .lobby-error { font-size: 12px; color: #c0706a; margin-top: 8px; text-align: center; }
-      `}</style>
-
       <div className="app-container">
         <div className="home-header">
           <div className="home-header-left">
@@ -257,69 +226,72 @@ export default function GamesPage() {
           </div>
         </div>
 
-        <div style={{ margin: '0 16px 10px' }}>
-          <div className="section-label" style={{ padding: '0 4px' }}>Available games</div>
-        </div>
+        <div className="section-label">Available games</div>
 
-        {games.map(g => (
-          <div key={g.type} className="game-card">
-            <div className="game-card-header">
-              <div className="game-icon" style={{ background: g.bg, color: g.color, border: `1px solid ${g.border}`, overflow: 'hidden', padding: 0 }}>
-                {g.icon
-                  ? <img src={g.icon} alt={g.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 14 }} />
-                  : g.symbol
-                }
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <div className="game-name">{g.name}</div>
-                  {g.new && <span className="new-badge">NEW</span>}
+        <div className="games-grid">
+          {games.map((g, i) => (
+            <div 
+              key={g.type} 
+              className="game-card" 
+              style={{ animationDelay: `${i * 0.1}s` }}
+            >
+              <div className="game-card-header">
+                <div className="game-icon-wrap" style={{ background: g.bg, border: `1px solid ${g.border}` }}>
+                  {g.icon
+                    ? <img src={g.icon} alt={g.name} />
+                    : <span style={{ color: g.color, fontSize: '20px' }}>{g.symbol || g.name[0]}</span>
+                  }
                 </div>
-                <div className="game-desc">{g.desc}</div>
+                <div style={{ flex: 1 }}>
+                  <div className="game-name-row">
+                    <div className="game-name">{g.name}</div>
+                    {g.new && <span className="new-game-badge">NEW</span>}
+                  </div>
+                  <div className="game-desc">{g.desc}</div>
+                </div>
               </div>
-            </div>
 
-            {activeGame === g.type ? (
-              <div className="join-panel">
-                <div className="join-row">
-                  <input
-                    className="join-input"
-                    type="text"
-                    maxLength={6}
-                    placeholder="Enter game code"
-                    value={joinCode}
-                    onChange={e => { setJoinCode(e.target.value); setError(''); }}
-                    onKeyDown={e => e.key === 'Enter' && handleJoin(g.type)}
-                    autoFocus
-                  />
-                  <button className="join-confirm" onClick={() => handleJoin(g.type)} disabled={loading || !joinCode.trim()}>
+              {activeGame === g.type ? (
+                <div className="join-panel mt-auto">
+                  <div className="join-row">
+                    <input
+                      className="join-input"
+                      type="text"
+                      maxLength={6}
+                      placeholder="Enter code"
+                      value={joinCode}
+                      onChange={e => { setJoinCode(e.target.value); setError(''); }}
+                      onKeyDown={e => e.key === 'Enter' && handleJoin(g.type)}
+                      autoFocus
+                    />
+                    <button className="join-confirm" onClick={() => handleJoin(g.type)} disabled={loading || !joinCode.trim()}>
+                      Join
+                    </button>
+                  </div>
+                  {error && <p className="lobby-error">{error}</p>}
+                  <span className="join-cancel" onClick={resetGame}>Cancel</span>
+                </div>
+              ) : (
+                <div className="game-actions">
+                  <button
+                    className="btn-game btn-game-primary"
+                    onClick={() => handleCreate(g.type)}
+                    disabled={loading}
+                  >
+                    <span>{g.type === 'wordle' ? 'Set up word' : 'Create Game'}</span>
+                    <span>✨</span>
+                  </button>
+                  <button
+                    className="btn-game btn-game-secondary"
+                    onClick={() => { setActiveGame(g.type); setError(''); }}
+                  >
                     Join
                   </button>
                 </div>
-                {error && <p className="lobby-error">{error}</p>}
-                <span className="join-cancel" onClick={resetGame}>Cancel</span>
-              </div>
-            ) : (
-              <div className="game-btns">
-                <button
-                  className="btn-game-create"
-                  style={{ background: `linear-gradient(135deg, ${g.color}, #C9B8D8)`, color: 'white' }}
-                  onClick={() => handleCreate(g.type)}
-                  disabled={loading}
-                >
-                  {g.type === 'wordle' ? 'Set up word' : 'Create game'}
-                </button>
-                <button
-                  className="btn-game-join"
-                  style={{ border: `1.5px solid ${g.border}`, color: g.color }}
-                  onClick={() => { setActiveGame(g.type); setError(''); }}
-                >
-                  Join
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          ))}
+        </div>
 
         <BottomNav activeTab="games" />
       </div>

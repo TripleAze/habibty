@@ -863,14 +863,10 @@ html, body {
 @media (min-width: 1024px) {
   .app-container {
     padding-bottom: 40px;
-    padding-left: 80px; /* Collapsed sidebar width */
-    transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    max-width: 1400px;
+    padding-left: 260px; /* Fixed sidebar width */
+    max-width: 1600px;
     margin: 0 auto;
-  }
-
-  .app-container.sidebar-expanded {
-    padding-left: 260px; /* Expanded sidebar width */
+    min-height: 100vh;
   }
 
   /* Desktop Sidebar */
@@ -879,23 +875,19 @@ html, body {
     bottom: 0;
     left: 0;
     right: auto;
-    width: 80px;
+    width: 260px; /* Fixed width */
     height: 100vh;
     flex-direction: column;
     padding: 32px 0;
     border-top: none;
-    border-right: 0.5px solid rgba(232, 160, 160, 0.3);
-    background: rgba(255, 248, 242, 0.65);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid rgba(232, 160, 160, 0.2);
+    background: rgba(255, 253, 250, 0.85); /* Slightly warmer background */
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
     align-items: flex-start;
     overflow: hidden;
     z-index: 100;
-  }
-
-  .bottom-nav:hover {
-    width: 260px;
+    box-shadow: 10px 0 30px -15px rgba(232, 160, 160, 0.15);
   }
 
   .nav-item {
@@ -913,22 +905,24 @@ html, body {
 
   .nav-label {
     font-size: 15px;
-    opacity: 0;
-    transition: opacity 0.2s;
+    opacity: 1; /* Always visible on desktop */
     white-space: nowrap;
     display: flex;
     align-items: center;
-  }
-
-  .bottom-nav:hover .nav-label {
-    opacity: 1;
-    transition-delay: 0.1s;
+    font-weight: 500;
+    letter-spacing: 0.02em;
   }
 
   .cards-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 24px;
     padding: 0 40px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .messages-section {
+    padding: 0;
   }
 
   /* Center forms on desktop */
@@ -958,6 +952,7 @@ html, body {
     padding: 0 40px 12px;
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
   }
 
   .tab-bar {
@@ -1502,4 +1497,151 @@ html, body {
   color: var(--ink);
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+/* ─── GAMES UI ────────────────────────────────────────── */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  padding: 0 20px 40px;
+}
+
+@media (min-width: 1024px) {
+  .games-grid {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 32px;
+    padding: 0 40px 60px;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+}
+
+.game-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 28px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-shadow: 
+    0 4px 12px rgba(232, 160, 160, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.game-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    0 20px 40px -12px rgba(232, 160, 160, 0.25),
+    0 0 0 1.5px var(--rose) inset;
+}
+
+.game-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.game-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.game-icon-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.game-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.game-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.game-desc {
+  font-size: 13px;
+  color: var(--soft-ink);
+  opacity: 0.8;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.game-actions {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-game {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 100px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-game-primary {
+  background: linear-gradient(135deg, var(--rose), var(--lavender));
+  color: white;
+  box-shadow: 0 4px 15px rgba(232, 160, 160, 0.3);
+}
+
+.btn-game-primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(232, 160, 160, 0.45);
+}
+
+.btn-game-secondary {
+  background: var(--petal);
+  color: var(--soft-ink);
+  border: 1px solid rgba(232, 160, 160, 0.2);
+}
+
+.btn-game-secondary:hover {
+  background: white;
+  border-color: var(--rose);
+  color: var(--rose);
+}
+
+.new-game-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: linear-gradient(135deg, var(--gold), #f3d19e);
+  color: white;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(212, 169, 106, 0.3);
 }
