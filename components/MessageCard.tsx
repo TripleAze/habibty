@@ -18,6 +18,10 @@ export default function MessageCard({
       ? new Date(message.scheduledFor).getTime() > currentTime
       : message.status === 'locked';
 
+  // We allow opening the modal for specific lock types (like location) 
+  // so the user can see the unlock requirements.
+  const canOpenModal = !isDelayedLocked || message.unlockType === 'event';
+
   const getStatusLabel = () => {
     if (message.deliveryType === 'scheduled' && message.scheduledFor) {
       if (isDelayedLocked) {
@@ -28,23 +32,30 @@ export default function MessageCard({
       }
       return '✦ Available now';
     }
+    if (message.unlockType === 'event') return '📍 Location Lock';
     return isDelayedLocked ? '🔒 Anytime' : '✦ Open now';
   };
 
   return (
     <div
       className={`msg-card ${isDelayedLocked ? 'locked' : 'card-available'}`}
-      onClick={isDelayedLocked ? undefined : onClick}
-      style={{ cursor: isDelayedLocked ? 'not-allowed' : 'pointer' }}
+      onClick={canOpenModal ? onClick : undefined}
+      style={{ cursor: canOpenModal ? 'pointer' : 'not-allowed' }}
     >
-      <span className="card-icon">{message.emoji || '💌'}</span>
-      <p className="card-title">{message.title}</p>
+      <span className="card-icon">
+        {message.isSurprise && message.status !== 'opened' ? '🎁' : message.emoji || '💌'}
+      </span>
+      <p className="card-title">
+        {message.isSurprise && message.status !== 'opened' ? 'A surprise for you...' : message.title}
+      </p>
       <span
         className={`card-status ${isDelayedLocked ? 'status-locked' : 'status-available'}`}
       >
         {getStatusLabel()}
       </span>
-      {message.meta && <p className="card-meta">{message.meta}</p>}
+      {(message.meta && (!message.isSurprise || message.status === 'opened')) && (
+        <p className="card-meta">{message.meta}</p>
+      )}
     </div>
   );
 }

@@ -68,8 +68,9 @@ export default function PairPage() {
       }
 
       // Pair both users
-      await updateDoc(doc(db, 'users', uid), { partnerId });
-      await updateDoc(doc(db, 'users', partnerId), { partnerId: uid });
+      const pairedAt = Date.now();
+      await updateDoc(doc(db, 'users', uid), { partnerId, pairedAt });
+      await updateDoc(doc(db, 'users', partnerId), { partnerId: uid, pairedAt });
 
       setStatus('Paired! Taking you to your inbox 💌');
       setTimeout(() => router.replace('/inbox'), 1500);

@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { RevealModalProps } from '@/types';
+import { RevealModalProps, Reaction, Reply } from '@/types';
+import { getDistance } from '@/lib/location';
 import MediaPlayer from './MediaPlayer';
 import MessageActions from './MessageActions';
 
@@ -12,8 +13,10 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
   const [isPlaying, setIsPlaying] = useState(false);
   const [showCursor, setShowCursor] = useState(true);
   const [showActions, setShowActions] = useState(false);
-  const [reactions, setReactions] = useState<any[]>([]);
-  const [replies, setReplies] = useState<any[]>([]);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [replies, setReplies] = useState<Reply[]>([]);
+  const [isLocationLocked, setIsLocationLocked] = useState(false);
+  const [distanceToUnlock, setDistanceToUnlock] = useState<number | null>(null);
   const [userReaction, setUserReaction] = useState<any | undefined>();
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textScrollRef = useRef<HTMLDivElement>(null);
@@ -67,6 +70,42 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
     }
     return () => { stopTyping(); stopWave(); };
   }, [isOpen, message, typeText, stopTyping, stopWave]);
+
+  // Check location if locked by event
+  useEffect(() => {
+    if (!isOpen || !message || message.unlockType !== 'event' || !message.unlockLocation) {
+      setIsLocationLocked(false);
+      return;
+    }
+
+    const checkLocation = () => {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const dist = getDistance(
+          pos.coords.latitude, 
+          pos.coords.longitude, 
+          message.unlockLocation!.lat, 
+          message.unlockLocation!.lng
+        );
+        setDistanceToUnlock(Math.round(dist));
+        if (dist > message.unlockLocation!.radius) {
+          setIsLocationLocked(true);
+        } else {
+          setIsLocationLocked(false);
+          // Auto-start typing if location just unlocked
+          if (isLocationLocked && message.content && message.type === 'text') {
+            typeText(message.content);
+          }
+        }
+      }, (err) => {
+        console.error('Location error:', err);
+        setIsLocationLocked(true); // Fail-safe: stay locked if location denied
+      });
+    };
+
+    checkLocation();
+    const interval = setInterval(checkLocation, 10000); // Check every 10s
+    return () => clearInterval(interval);
+  }, [isOpen, message, isLocationLocked, typeText]);
 
   // Subscribe to reactions and replies
   useEffect(() => {
@@ -439,6 +478,82 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
 
           {/* Actions Panel — slides up after message is read */}
           <div className={`message-actions-wrapper ${showActions ? 'visible' : ''}`}>
+            {/* Location Lock Screen */}
+            {isLocationLocked && (
+              <div className="location-lock-overlay">
+                <div className="location-lock-content">
+                  <div className="location-lock-icon">📍</div>
+                  <h3 className="location-lock-title">A secret location awaits...</h3>
+                  <p className="location-lock-text">
+                    This message is locked until you are near <strong>{message.unlockLocation?.name || 'a specific spot'}</strong>.
+                  </p>
+                  <div className="location-distance-badge">
+                    {distanceToUnlock !== null ? `You are ${distanceToUnlock}m away` : 'Checking distance...'}
+                  </div>
+                  <button className="location-refresh-btn" onClick={() => window.location.reload()}>
+                    Refresh Location
+                  </button>
+                </div>
+                <style>{`
+                  .location-lock-overlay {
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(255, 255, 255, 0.95);
+                    backdrop-filter: blur(10px);
+                    z-index: 100;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 40px;
+                    text-align: center;
+                  }
+                  .location-lock-icon {
+                    font-size: 48px;
+                    margin-bottom: 20px;
+                    animation: bounce 2s infinite;
+                  }
+                  .location-lock-title {
+                    font-family: 'Cormorant Garamond', serif;
+                    font-size: 24px;
+                    font-style: italic;
+                    color: #3D2B3D;
+                    margin-bottom: 12px;
+                  }
+                  .location-lock-text {
+                    font-size: 14px;
+                    color: #7A5C7A;
+                    line-height: 1.6;
+                    margin-bottom: 20px;
+                  }
+                  .location-distance-badge {
+                    display: inline-block;
+                    padding: 8px 16px;
+                    background: #FAD0DC;
+                    border-radius: 20px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    color: #E8A0A0;
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                  }
+                  .location-refresh-btn {
+                    margin-top: 24px;
+                    background: none;
+                    border: 1px solid #E8A0A0;
+                    color: #E8A0A0;
+                    padding: 10px 20px;
+                    border-radius: 100px;
+                    font-size: 12px;
+                    cursor: pointer;
+                  }
+                  @keyframes bounce {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
+                  }
+                `}</style>
+              </div>
+            )}
+
             <div className="reveal-scroll-body" style={{ borderTop: '1px solid rgba(232,160,160,0.1)' }}>
               {/* Reactions Preview */}
               {reactions.length > 0 && (

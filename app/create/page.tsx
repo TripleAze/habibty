@@ -9,7 +9,7 @@ import { auth, db } from '@/lib/firebase';
 import BottomNav from '@/components/BottomNav';
 import MediaPlayer from '@/components/MediaPlayer';
 import { addMessage } from '@/lib/messages';
-import { MessageType, DeliveryType } from '@/types';
+import { MessageType, DeliveryType, UnlockConditionType, Message } from '@/types';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { MediaSkeleton } from '@/components/skeleton';
 
@@ -39,6 +39,9 @@ export default function CreatePage() {
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('immediate');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
+  const [isSurprise, setIsSurprise] = useState(false);
+  const [unlockType, setUnlockType] = useState<UnlockConditionType>('time');
+  const [unlockLocation, setUnlockLocation] = useState<Message['unlockLocation']>(undefined);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState('');
   // Media upload state
@@ -145,6 +148,8 @@ export default function CreatePage() {
             ? new Date(deliveryDate).toISOString()
             : null;
 
+        const finalUnlockType = deliveryType === 'scheduled' ? 'time' : unlockType;
+
         const emoji =
           type === 'text' ? '✍️' : type === 'voice' ? '🎙️' : '🎬';
 
@@ -153,9 +158,11 @@ export default function CreatePage() {
             title: title.trim(),
             content: content.trim(),
             type,
-            status: deliveryType === 'immediate' ? 'available' : 'locked',
+            status: (deliveryType === 'immediate' && unlockType === 'manual') ? 'available' : 'locked',
             deliveryType,
             scheduledFor,
+            unlockType: finalUnlockType,
+            unlockLocation,
             emoji,
             mediaUrl,
             isDelivered: deliveryType === 'immediate',
@@ -163,6 +170,7 @@ export default function CreatePage() {
             senderId: currentUserId,
             receiverId: partnerId,
             moods: selectedMoods,
+            isSurprise,
             meta:
               type === 'voice'
                 ? 'Voice note · 0:32'
@@ -328,26 +336,94 @@ export default function CreatePage() {
         )}
 
         <div className="form-group">
-          <label className="form-label">Delivery</label>
-          <select
-            className="form-select"
-            value={deliveryType}
-            onChange={(e) => setDeliveryType(e.target.value as DeliveryType)}
-          >
-            <option value="immediate">Immediately available</option>
-            <option value="scheduled">Schedule a date</option>
-          </select>
+          <label className="form-label">Delivery & Unlock</label>
+          <div className="flex gap-2 mb-3">
+            <button 
+              type="button"
+              className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${unlockType === 'manual' ? 'bg-[#E8A0A0] text-white shadow-md' : 'bg-white/40 text-gray-500 border border-gray-100'}`}
+              onClick={() => { setUnlockType('manual'); setDeliveryType('immediate'); }}
+            >
+              Anytime
+            </button>
+            <button 
+              type="button"
+              className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${deliveryType === 'scheduled' ? 'bg-[#E8A0A0] text-white shadow-md' : 'bg-white/40 text-gray-500 border border-gray-100'}`}
+              onClick={() => { setDeliveryType('scheduled'); setUnlockType('time'); }}
+            >
+              📅 Date
+            </button>
+            <button 
+              type="button"
+              className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${unlockType === 'event' ? 'bg-[#E8A0A0] text-white shadow-md' : 'bg-white/40 text-gray-500 border border-gray-100'}`}
+              onClick={() => { setUnlockType('event'); setDeliveryType('immediate'); }}
+            >
+              📍 Location
+            </button>
+          </div>
 
           {deliveryType === 'scheduled' && (
             <input
               type="datetime-local"
               className="form-input"
-              style={{ marginTop: '12px' }}
               value={deliveryDate}
               onChange={(e) => setDeliveryDate(e.target.value)}
               min={new Date().toISOString().slice(0, 16)}
             />
           )}
+
+          {unlockType === 'event' && (
+            <div className="animate-slide-down">
+              <div 
+                className="p-4 bg-white/60 border border-[#E8A0A0]/20 rounded-2xl flex flex-col gap-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-medium text-[#7A5C7A]">Unlock where?</span>
+                  {unlockLocation ? (
+                    <span className="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">✓ Location Set</span>
+                  ) : (
+                    <span className="text-[10px] text-gray-400">No area selected</span>
+                  )}
+                </div>
+                
+                <button 
+                  type="button"
+                  className="w-full py-3 bg-white border border-[#E8A0A0]/30 rounded-xl text-xs font-bold text-[#E8A0A0] hover:bg-[#E8A0A0]/10 transition-colors flex items-center justify-center gap-2"
+                  onClick={() => {
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                      setUnlockLocation({
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude,
+                        radius: 500, // 500m radius
+                        name: 'This current spot'
+                      });
+                      showToast('Location captured! 📍');
+                    }, () => showToast('Failed to get location 😢'));
+                  }}
+                >
+                  📍 Use my current location
+                </button>
+                <p className="text-[10px] text-gray-400 italic text-center">Your partner must be within 500m of this spot to open the letter.</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="form-group mb-6">
+          <label className="form-label">Special options</label>
+          <div 
+            className={`type-option ${isSurprise ? 'selected' : ''}`}
+            onClick={() => setIsSurprise(!isSurprise)}
+            style={{ width: '100%', padding: '16px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '12px', background: isSurprise ? 'rgba(232,160,160,0.1)' : 'rgba(255,255,255,0.4)', border: isSurprise ? '1px solid rgba(232,160,160,0.4)' : '1px solid rgba(232,160,160,0.15)', cursor: 'pointer' }}
+          >
+            <span style={{ fontSize: '20px' }}>🎁</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: 0, fontWeight: 600, fontSize: '14px', color: '#3D2B3D' }}>Surprise Mode</p>
+              <p style={{ margin: 0, fontSize: '11px', color: '#7A5C7A', opacity: 0.7 }}>Keep it a mystery until they click</p>
+            </div>
+            <div className={`w-10 h-5 rounded-full transition-all duration-300 relative ${isSurprise ? 'bg-[#E8A0A0]' : 'bg-gray-300'}`}>
+              <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${isSurprise ? 'translate-x-5' : ''}`} />
+            </div>
+          </div>
         </div>
 
         <div className="form-group">

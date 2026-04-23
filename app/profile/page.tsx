@@ -4,7 +4,18 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  getDocs, 
+  collection, 
+  query, 
+  where, 
+  getCountFromServer, 
+  or, 
+  and 
+} from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { uploadMedia } from '@/lib/imagekit';
 import { unpairPartner } from '@/lib/pair';
@@ -44,6 +55,9 @@ export default function ProfilePage() {
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showUnpairConfirm, setShowUnpairConfirm] = useState(false);
   const [unpairing, setUnpairing] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
+  const [gameCount, setGameCount] = useState(0);
+  const [pairedAt, setPairedAt] = useState<number | null>(null);
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -68,10 +82,36 @@ export default function ProfilePage() {
           }
           if (d.partnerId) {
             setPartnerId(d.partnerId);
+            setPairedAt(d.pairedAt || null);
             const ps = await getDoc(doc(db, 'users', d.partnerId));
             if (ps.exists()) setPartnerName(ps.data().displayName || 'your partner');
+
+            // Fetch Stats
+            const { collection, query, where, getCountFromServer, or, and } = await import('firebase/firestore');
+            
+            // Message Count
+            const msgQ = query(
+              collection(db, 'messages'),
+              or(
+                and(where('senderId', '==', user.uid), where('receiverId', '==', d.partnerId)),
+                and(where('senderId', '==', d.partnerId), where('receiverId', '==', user.uid))
+              )
+            );
+            const msgCountSnap = await getCountFromServer(msgQ);
+            setMessageCount(msgCountSnap.data().count);
+
+            // Game Count
+            const gameQ = query(
+              collection(db, 'games'),
+              where('players', 'array-contains', user.uid)
+            );
+            // We fetch and filter in JS if complex, but simple version:
+            const gameSnap = await getDocs(gameQ);
+            const sharedGames = gameSnap.docs.filter((doc: any) => doc.data().players?.includes(d.partnerId)).length;
+            setGameCount(sharedGames);
+
           } else {
-            setPartnerId(''); setPartnerName('');
+            setPartnerId(''); setPartnerName(''); setPairedAt(null);
           }
         } else { hasLoadedRef.current = true; }
       } catch (err) { console.error(err); }
@@ -307,6 +347,39 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+
+        {/* Relationship Stats */}
+        {partnerId && (
+          <div className="profile-card-group" style={{ animationDelay: '0.15s' }}>
+            <div className="pf-section-label px-1">Our Journey</div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 border border-[#E8A0A0]/20 flex flex-col items-center justify-center">
+                <span className="text-2xl font-serif text-[#3D2B3D]">{messageCount}</span>
+                <span className="text-[10px] uppercase tracking-wider text-gray-500 mt-1 font-medium">Letters Sent</span>
+              </div>
+              <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 border border-[#C9B8D8]/20 flex flex-col items-center justify-center">
+                <span className="text-2xl font-serif text-[#3D2B3D]">{gameCount}</span>
+                <span className="text-[10px] uppercase tracking-wider text-gray-500 mt-1 font-medium">Games Played</span>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#FAD0DC]/30 to-[#EDD5F0]/30 rounded-2xl p-5 border border-white/40 mb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center text-xl shadow-sm">
+                  🗓️
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#3D2B3D]">
+                    {pairedAt ? `${Math.floor((Date.now() - pairedAt) / (1000 * 60 * 60 * 24))} Days Together` : 'Starting Our Journey'}
+                  </h3>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    {pairedAt ? `Connected since ${new Date(pairedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Your future awaits...'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Security & System */}
         <div className="profile-card-group" style={{ animationDelay: '0.2s' }}>

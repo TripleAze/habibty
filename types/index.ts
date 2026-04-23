@@ -48,10 +48,26 @@ export interface Message {
   // Advanced unlock conditions
   unlockType?: UnlockConditionType;
   unlockCondition?: string;
+  unlockLocation?: {
+    lat: number;
+    lng: number;
+    radius: number;
+    name?: string;
+  };
   isUnlocked?: boolean;
   // Surprise mode
   isSurprise?: boolean;
   surpriseType?: 'message' | 'voice' | 'game' | 'combo';
+}
+
+export interface AppUser {
+  uid: string;
+  displayName?: string;
+  photoURL?: string;
+  email?: string;
+  inviteCode?: string;
+  partnerId?: string;
+  pairedAt?: number;
 }
 
 export interface MessageCardProps {
