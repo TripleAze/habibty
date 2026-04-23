@@ -79,7 +79,7 @@ export default function NotificationBell() {
             {unreadCount > 0 && <span className="text-[10px] text-[#E8A0A0] font-medium uppercase tracking-wider">New</span>}
           </div>
           
-          <div className="max-height-80 overflow-y-auto">
+          <div className="notification-list-container overflow-y-auto">
             {notifications.length > 0 ? (
               notifications.map((n) => (
                 <div 

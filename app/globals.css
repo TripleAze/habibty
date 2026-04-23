@@ -2037,5 +2037,12 @@ html, body {
     right: 16px !important;
     top: 5rem !important;
   }
+  .notification-list-container {
+    max-height: calc(100vh - 200px) !important;
+  }
+}
+
+.notification-list-container {
+  max-height: 400px;
 }
  
