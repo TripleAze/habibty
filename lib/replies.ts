@@ -33,15 +33,16 @@ export async function addReply(
     const userName = userData?.displayName || '';
     const userPhoto = userData?.photoURL || '';
 
-    const reply: Omit<Reply, 'id'> = {
+    const reply: any = {
       userId: currentUserId,
       userName,
       userPhoto,
       text,
       type,
-      mediaUrl,
       createdAt: Date.now(),
     };
+
+    if (mediaUrl) reply.mediaUrl = mediaUrl;
 
     const docRef = await addDoc(
       collection(db, 'messages', messageId, REPLIES_COLLECTION),

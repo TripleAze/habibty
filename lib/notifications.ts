@@ -39,11 +39,16 @@ export async function sendNotification(
 ): Promise<void> {
   try {
     const notifsRef = collection(db, NOTIFICATIONS_COLLECTION, toUid, 'items');
-    await addDoc(notifsRef, {
+    const data: any = {
       ...notification,
       read: false,
       createdAt: serverTimestamp(),
-    });
+    };
+
+    // Remove any undefined fields
+    Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
+
+    await addDoc(notifsRef, data);
   } catch (error) {
     console.error('Error sending notification:', error);
   }

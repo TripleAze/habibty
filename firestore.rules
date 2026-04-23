@@ -107,5 +107,20 @@ service cloud.firestore {
         allow list: if false;
       }
     }
+
+    match /presence/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /notifications/{toUid} {
+      allow read: if request.auth != null && request.auth.uid == toUid;
+      match /items/{notifId} {
+        allow read: if request.auth != null && request.auth.uid == toUid;
+        allow create: if request.auth != null;
+        allow update: if request.auth != null && request.auth.uid == toUid;
+        allow delete: if request.auth != null && request.auth.uid == toUid;
+      }
+    }
   }
 }
