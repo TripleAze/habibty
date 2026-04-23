@@ -1522,11 +1522,12 @@ html, body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 28px;
-  padding: 24px;
+  padding: 16px 18px;
   border: 1px solid rgba(255, 255, 255, 0.8);
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   display: flex;
-  flex-direction: column;
+  flex-direction: column
+  ;
   height: 100%;
   box-shadow: 
     0 4px 12px rgba(232, 160, 160, 0.08),
@@ -1550,9 +1551,9 @@ html, body {
 }
 
 .game-icon-wrap {
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1575,14 +1576,14 @@ html, body {
 
 .game-name {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 500;
   color: var(--ink);
   line-height: 1.2;
 }
 
 .game-desc {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--soft-ink);
   opacity: 0.8;
   margin-top: 4px;
@@ -1597,10 +1598,10 @@ html, body {
 
 .btn-game {
   flex: 1;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-radius: 100px;
   font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
