@@ -184,13 +184,23 @@ export default function CreatePage() {
 
         // Notify partner
         const { sendNotification } = await import('@/lib/notifications');
+        const { addMoment } = await import('@/lib/moments');
+
         await sendNotification(partnerId, {
           type: 'new_message',
           fromUid: currentUserId,
           fromName: senderName,
-          refId: 'new',
+          refId: 'new', // or the new doc id
+          meta: title.substring(0, 30),
         });
 
+        await addMoment(partnerId, {
+          type: 'message_sent',
+          title: 'Sent a new letter',
+          description: `"${title}" is waiting to be read.`,
+          emoji: '💌',
+        });
+        
         showToast('Message sent 💌');
         setTimeout(() => router.push('/inbox'), 1000);
       } catch (error) {

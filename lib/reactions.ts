@@ -51,12 +51,22 @@ export async function addReaction(
       const msgData = msgSnap.data();
       const targetUid = msgData.senderId === currentUserId ? msgData.receiverId : msgData.senderId;
       const { sendNotification } = await import('./notifications');
+      const { addMoment } = await import('./moments');
+
       await sendNotification(targetUid, {
         type: 'reaction',
         fromUid: currentUserId,
         fromName: userName,
         refId: messageId,
         meta: emoji,
+      });
+
+      await addMoment(targetUid, {
+        type: 'reaction_added',
+        title: `Reacted with ${emoji}`,
+        description: `${userName} left a reaction on your letter.`,
+        emoji: emoji,
+        metadata: { messageId }
       });
     }
   } catch (error) {

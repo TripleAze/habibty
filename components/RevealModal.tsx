@@ -132,6 +132,18 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
       unsubReplies = subReplies(message.id, (fetchedReplies) => {
         setReplies(fetchedReplies);
       });
+
+      // Mark message as opened moment if it's the first time
+      if (message.status === 'available') {
+        const { addMoment } = await import('@/lib/moments');
+        const partnerId = message.senderId === currentUserId.current ? message.receiverId : message.senderId;
+        await addMoment(partnerId, {
+          type: 'message_opened',
+          title: `Opened a letter`,
+          description: `"${message.title}" was finally read.`,
+          emoji: '📖'
+        });
+      }
     };
 
     setupSubscriptions();
@@ -574,8 +586,8 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
               {/* Replies Preview */}
               {replies.length > 0 && (
                 <div className="replies-preview">
-                  <p className="replies-label">Replies</p>
-                  {replies.slice(0, 3).map((reply) => (
+                  <p className="replies-label">Conversation</p>
+                  {replies.map((reply) => (
                     <div key={reply.id} className="reply-item">
                       <div className="reply-header">
                         {reply.userPhoto ? (

@@ -55,12 +55,22 @@ export async function addReply(
       const msgData = msgSnap.data();
       const targetUid = msgData.senderId === currentUserId ? msgData.receiverId : msgData.senderId;
       const { sendNotification } = await import('./notifications');
+      const { addMoment } = await import('./moments');
+
       await sendNotification(targetUid, {
         type: 'reply',
         fromUid: currentUserId,
         fromName: userName,
         refId: messageId,
         meta: text.substring(0, 30),
+      });
+
+      await addMoment(targetUid, {
+        type: 'reply_added',
+        title: 'Replied to a letter',
+        description: userName + ': ' + (text.length > 30 ? text.substring(0, 30) + '...' : text),
+        emoji: '💬',
+        metadata: { messageId }
       });
     }
 

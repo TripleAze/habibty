@@ -122,5 +122,10 @@ service cloud.firestore {
         allow delete: if request.auth != null && request.auth.uid == toUid;
       }
     }
+
+    match /moments/{momentId} {
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || resource.data.partnerId == request.auth.uid);
+      allow create: if request.auth != null;
+    }
   }
 }

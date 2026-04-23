@@ -83,23 +83,7 @@ export interface RevealModalProps {
 }
 
 export interface BottomNavProps {
-  activeTab: 'inbox' | 'create' | 'games' | 'scheduled' | 'profile';
-}
-
-export interface MessageCardProps {
-  message: Message;
-  onClick?: () => void;
-  now?: number;
-}
-
-export interface RevealModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  message: Message | null;
-}
-
-export interface BottomNavProps {
-  activeTab: 'inbox' | 'create' | 'games' | 'scheduled' | 'profile';
+  activeTab: 'inbox' | 'create' | 'games' | 'scheduled' | 'moments' | 'profile';
 }
 
 // ─── WHOT GAME TYPES ──────────────────────────────────────
