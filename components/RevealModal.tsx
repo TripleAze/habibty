@@ -263,7 +263,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           flex: 1;
           overflow-y: auto;
           overflow-x: hidden;
-          padding: 10px 24px 40px;
+          padding: 24px 24px 40px;
           -webkit-overflow-scrolling: touch;
         }
         .reveal-scroll-area::-webkit-scrollbar { width: 3px; }
@@ -272,6 +272,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           border-radius: 2px;
         }
         .reveal-message-body {
+          padding-top: 4px;
           margin-bottom: 40px;
         }
         .reveal-text {
