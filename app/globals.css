@@ -315,59 +315,111 @@ html, body {
   pointer-events: all;
 }
 
+/* Reveal Modal - Mobile First */
+.reveal-overlay {
+  align-items: flex-end;
+}
+
 .reveal-card {
   background: var(--white);
-  border-radius: 28px;
-  padding: 40px 32px;
-  max-width: 360px;
+  border-radius: 28px 28px 0 0;
   width: 100%;
-  text-align: center;
+  max-width: 520px;
+  height: 88vh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(40px);
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 -8px 48px rgba(61, 43, 61, 0.25);
+  overflow: hidden;
   position: relative;
-  transform: scale(0.88) translateY(20px);
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 32px 80px rgba(61, 43, 61, 0.25);
 }
 
 .reveal-overlay.open .reveal-card {
-  transform: scale(1) translateY(0);
+  transform: translateY(0);
+}
+
+.reveal-card-header {
+  padding: 16px 24px 10px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.reveal-drag-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(201, 184, 216, 0.4);
+  margin: 0 auto 12px;
 }
 
 .reveal-envelope {
-  font-size: 56px;
+  font-size: 32px;
   display: block;
-  margin-bottom: 20px;
-  animation: openEnvelope 0.8s ease both;
+  margin-bottom: 6px;
+  animation: openEnvelope 0.7s ease both;
 }
 
 @keyframes openEnvelope {
-  0%   { transform: scale(0.5) rotate(-10deg); opacity: 0; }
-  60%  { transform: scale(1.15) rotate(5deg); }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  0%   { transform: scale(0.6) rotate(-8deg); opacity: 0; }
+  60%  { transform: scale(1.1) rotate(4deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
 }
 
 .reveal-from {
-  font-size: 11px;
-  letter-spacing: 0.2em;
+  font-size: 8px;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--rose);
   font-weight: 500;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .reveal-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 300;
   font-style: italic;
   color: var(--ink);
-  margin-bottom: 24px;
+  margin-bottom: 8px;
+  line-height: 1.3;
 }
 
 .reveal-divider {
-  width: 40px;
+  width: 32px;
   height: 1px;
   background: linear-gradient(to right, transparent, var(--rose), transparent);
-  margin: 0 auto 24px;
+  margin: 0 auto 8px;
+}
+
+.reveal-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 24px 40px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.reveal-scroll-area::-webkit-scrollbar { width: 3px; }
+.reveal-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(232, 160, 160, 0.3);
+  border-radius: 2px;
+}
+
+.reveal-message-body {
+  padding-top: 4px;
+  margin-bottom: 40px;
+}
+
+.reveal-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 19px;
+  font-weight: 300;
+  line-height: 1.85;
+  color: var(--soft-ink);
+  letter-spacing: 0.01em;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .reveal-text {

@@ -202,11 +202,11 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         .reveal-overlay {
           position: fixed;
           inset: 0;
-          background: rgba(61,43,61,0.55);
+          background: rgba(61,43,61,0.55) !important;
           backdrop-filter: blur(12px);
           z-index: 100;
           display: flex;
-          align-items: flex-end;
+          align-items: flex-end !important;
           justify-content: center;
           opacity: 0;
           pointer-events: none;
@@ -219,21 +219,21 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         }
         @media (min-width: 1024px) {
           .reveal-overlay {
-            align-items: center;
+            align-items: center !important;
             padding: 32px;
           }
           .reveal-card {
-            border-radius: 28px;
-            max-height: 75vh;
-            height: auto;
+            border-radius: 28px !important;
+            max-height: 75vh !important;
+            height: auto !important;
           }
         }
         .reveal-card {
           background: #fff;
-          border-radius: 28px 28px 0 0;
+          border-radius: 28px 28px 0 0 !important;
           width: 100%;
           max-width: 520px;
-          height: 88vh;
+          height: 88vh !important;
           display: flex;
           flex-direction: column;
           transform: translateY(40px);
@@ -246,7 +246,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           transform: translateY(0);
         }
         .reveal-card-header {
-          padding: 16px 24px 10px;
+          padding: 16px 24px 10px !important;
           text-align: center;
           flex-shrink: 0;
         }
@@ -255,12 +255,12 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           height: 4px;
           border-radius: 2px;
           background: rgba(201,184,216,0.4);
-          margin: 0 auto 12px;
+          margin: 0 auto 12px !important;
         }
         .reveal-envelope {
-          font-size: 32px;
+          font-size: 32px !important;
           display: block;
-          margin-bottom: 6px;
+          margin-bottom: 6px !important;
           animation: openEnvelope 0.7s ease both;
         }
         @keyframes openEnvelope {
@@ -269,33 +269,33 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           100% { transform: scale(1) rotate(0); opacity: 1; }
         }
         .reveal-from {
-          font-size: 8px;
+          font-size: 8px !important;
           letter-spacing: 0.22em;
           text-transform: uppercase;
           color: #E8A0A0;
           font-weight: 500;
-          margin-bottom: 2px;
+          margin-bottom: 2px !important;
         }
         .reveal-title {
           font-family: 'Cormorant Garamond', serif;
-          font-size: 18px;
+          font-size: 18px !important;
           font-weight: 300;
           font-style: italic;
           color: #3D2B3D;
-          margin-bottom: 8px;
+          margin-bottom: 8px !important;
           line-height: 1.3;
         }
         .reveal-divider {
           width: 32px;
           height: 1px;
           background: linear-gradient(90deg, transparent, #E8A0A0, transparent);
-          margin: 0 auto 8px;
+          margin: 0 auto 8px !important;
         }
         .reveal-scroll-area {
           flex: 1;
           overflow-y: auto;
           overflow-x: hidden;
-          padding: 12px 24px 40px;
+          padding: 12px 24px 40px !important;
           -webkit-overflow-scrolling: touch;
         }
         .reveal-scroll-area::-webkit-scrollbar { width: 3px; }
