@@ -73,7 +73,7 @@ export default function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-3 w-72 bg-white/90 backdrop-blur-xl border border-[#E8A0A0]/20 rounded-2xl shadow-2xl z-[150] overflow-hidden animate-slide-up">
+        <div className="notification-dropdown fixed sm:absolute top-16 sm:top-full left-4 right-4 sm:left-auto sm:right-0 mt-3 w-auto sm:w-72 bg-white/95 backdrop-blur-xl border border-[#E8A0A0]/20 rounded-2xl shadow-2xl z-[200] overflow-hidden animate-slide-up">
           <div className="p-4 border-bottom border-[#E8A0A0]/10 flex justify-between items-center">
             <h3 className="font-serif italic text-lg color-[#3D2B3D]">Activity</h3>
             {unreadCount > 0 && <span className="text-[10px] text-[#E8A0A0] font-medium uppercase tracking-wider">New</span>}

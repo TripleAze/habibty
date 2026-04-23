@@ -14,12 +14,11 @@ export default function MessageCard({
   const isDelayedLocked = 
     message.status === 'locked' && 
     message.deliveryType === 'scheduled' && 
-    message.scheduledFor 
-      ? new Date(message.scheduledFor).getTime() > currentTime
-      : message.status === 'locked';
+    message.scheduledFor &&
+    new Date(message.scheduledFor).getTime() > currentTime;
 
-  // We allow opening the modal for specific lock types (like location) 
-  // so the user can see the unlock requirements.
+  // We allow opening the modal for specific lock types (like location or anytime) 
+  // so the user can see the unlock requirements or open it immediately.
   const canOpenModal = !isDelayedLocked || message.unlockType === 'event';
 
   const getStatusLabel = () => {

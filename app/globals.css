@@ -768,10 +768,11 @@ html, body {
 }
 
 .nav-label {
-  font-size: 10px;
-  letter-spacing: 0.06em;
+  font-size: 9px;
+  letter-spacing: 0.02em;
   color: #C0A0B0;
   font-weight: 400;
+  white-space: nowrap;
 }
 
 .nav-item.active .nav-label {
@@ -2025,6 +2026,16 @@ html, body {
  
   .toast {
     left: 50% !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .notification-dropdown {
+    width: calc(100vw - 32px) !important;
+    max-width: none !important;
+    left: 16px !important;
+    right: 16px !important;
+    top: 5rem !important;
   }
 }
  

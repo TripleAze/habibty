@@ -133,9 +133,13 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         setReplies(fetchedReplies);
       });
 
-      // Mark message as opened moment if it's the first time
-      if (message.status === 'available') {
+      // Mark message as opened moment and update status if it's the first time
+      if (message.status !== 'opened') {
+        const { updateMessageStatus } = await import('@/lib/messages');
         const { addMoment } = await import('@/lib/moments');
+        
+        await updateMessageStatus(message.id, 'opened');
+
         const partnerId = message.senderId === currentUserId.current ? message.receiverId : message.senderId;
         await addMoment(partnerId, {
           type: 'message_opened',

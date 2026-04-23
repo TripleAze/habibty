@@ -40,7 +40,7 @@ export default function CreatePage() {
   const [deliveryDate, setDeliveryDate] = useState('');
   const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
   const [isSurprise, setIsSurprise] = useState(false);
-  const [unlockType, setUnlockType] = useState<UnlockConditionType>('time');
+  const [unlockType, setUnlockType] = useState<UnlockConditionType>('manual');
   const [unlockLocation, setUnlockLocation] = useState<Message['unlockLocation']>(undefined);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState('');
