@@ -7,6 +7,8 @@ import {
   orderBy,
   limit,
   onSnapshot,
+  or,
+  and
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
 
@@ -67,22 +69,16 @@ export function subscribeToMoments(
 
   const q = query(
     collection(db, MOMENTS_COLLECTION),
-    where('userId', 'in', [currentUserId, partnerId]),
-    // Note: This 'in' query works for simple cases, but for bidirectional 
-    // it's better to use two queries or a composite index if needed.
-    // However, since moments are always between these two, we can filter partnerId locally or add it to q.
+    or(
+      and(where('userId', '==', currentUserId), where('partnerId', '==', partnerId)),
+      and(where('userId', '==', partnerId), where('partnerId', '==', currentUserId))
+    ),
     orderBy('createdAt', 'desc'),
     limit(50)
   );
 
   return onSnapshot(q, (snap) => {
-    const moments = snap.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as Moment))
-      // Filter for moments explicitly shared between these two
-      .filter(m => 
-        (m.userId === currentUserId && m.partnerId === partnerId) ||
-        (m.userId === partnerId && m.partnerId === currentUserId)
-      );
+    const moments = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Moment));
     callback(moments);
   });
 }
