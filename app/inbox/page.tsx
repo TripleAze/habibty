@@ -13,8 +13,9 @@ import { Message } from '@/types';
 import { MessageCardSkeleton, ListSkeleton } from '@/components/skeleton';
 import { subscribeToPresence, Presence, getPresenceStatusText } from '@/lib/presence';
 import NotificationBell from '@/components/NotificationBell';
+import { Suspense } from 'react';
 
-export default function InboxPage() {
+function InboxInternal() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const openId = searchParams.get('open');
@@ -270,5 +271,19 @@ export default function InboxPage() {
 
       <BottomNav activeTab="inbox" />
     </div>
+  );
+}
+
+export default function InboxPage() {
+  return (
+    <Suspense fallback={
+      <div className="app-container">
+        <div className="loading-state">
+          <div className="loading-spinner" />
+        </div>
+      </div>
+    }>
+      <InboxInternal />
+    </Suspense>
   );
 }
