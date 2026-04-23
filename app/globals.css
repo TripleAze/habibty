@@ -1743,26 +1743,29 @@ html, body {
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-radius: 24px;
-  padding: 20px 24px;
+  border-radius: 18px;
+  padding: 14px 18px;
   border: 1px solid rgba(255, 255, 255, 0.8);
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(232, 160, 160, 0.05);
 }
 
-.timeline-card:hover {
-  transform: translateX(8px);
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 12px 24px -8px rgba(232, 160, 160, 0.2);
+.timeline-card h3 {
+  font-size: 18px !important;
+  margin-bottom: 4px;
+}
+
+.timeline-card p {
+  font-size: 12px !important;
 }
 
 .timeline-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
+  gap: 5px;
+  padding: 4px 10px;
   border-radius: 100px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.03em;
 }
@@ -1770,3 +1773,226 @@ html, body {
 .badge-scheduled { background: rgba(201, 184, 216, 0.2); color: #7A6A8A; }
 .badge-delivered { background: rgba(144, 238, 144, 0.15); color: #2E7D32; }
 .badge-opened { background: rgba(232, 160, 160, 0.2); color: #B06060; }
+
+
+/* ─── SENT PAGE — COMPACT TIMELINE CARDS ─────────────────── */
+.timeline-item {
+  margin-bottom: 12px !important;
+}
+ 
+.timeline-content {
+  padding: 12px 16px !important;
+  border-radius: 16px !important;
+}
+ 
+.tl-title {
+  font-size: 14px !important;
+  margin-bottom: 2px !important;
+}
+ 
+.tl-meta {
+  font-size: 10px !important;
+  margin-bottom: 6px !important;
+}
+ 
+.tl-badge {
+  font-size: 9px !important;
+  padding: 2px 8px !important;
+}
+ 
+.timeline-dot {
+  width: 8px !important;
+  height: 8px !important;
+}
+ 
+/* ─── VIDEO IN REVEAL MODAL — NO SCROLL ──────────────────── */
+/* The reveal modal body must not scroll when video is present */
+.reveal-scroll-body {
+  padding: 16px 20px !important;
+}
+ 
+/* Video inside modal — constrained properly */
+.reveal-scroll-body .mp-video-wrap,
+.reveal-scroll-body video,
+.reveal-scroll-body .media-player {
+  max-height: 52vh !important;
+  overflow: hidden !important;
+}
+ 
+.reveal-scroll-body video {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 50vh !important;
+  object-fit: contain !important;
+  border-radius: 12px !important;
+  display: block !important;
+}
+ 
+/* Make modal taller on mobile so video + footer both fit */
+.reveal-card {
+  max-height: 92vh !important;
+}
+ 
+/* ─── DESKTOP IMPROVEMENTS ────────────────────────────────── */
+@media (min-width: 1024px) {
+ 
+  /* ── Sidebar refinements ── */
+  .bottom-nav {
+    width: 220px !important;
+    padding: 28px 12px !important;
+    gap: 2px !important;
+  }
+ 
+  .nav-item {
+    padding: 10px 16px !important;
+    border-radius: 12px !important;
+    gap: 12px !important;
+    margin-bottom: 2px !important;
+  }
+ 
+  .nav-item:hover {
+    background: rgba(232, 160, 160, 0.08) !important;
+  }
+ 
+  .nav-item.active {
+    background: rgba(232, 160, 160, 0.14) !important;
+  }
+ 
+  .nav-label {
+    font-size: 14px !important;
+    letter-spacing: 0.01em !important;
+  }
+ 
+  /* App container offset matches sidebar width */
+  .app-container {
+    padding-left: 220px !important;
+  }
+ 
+  /* ── Inbox header on desktop ── */
+  .home-header {
+    padding: 48px 40px 24px !important;
+  }
+ 
+  .home-title {
+    font-size: 38px !important;
+  }
+ 
+  /* ── Inbox grid — 3 cols on medium desktop ── */
+  .cards-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 14px !important;
+    padding: 0 40px 40px !important;
+  }
+ 
+  .messages-section {
+    padding: 0 !important;
+  }
+ 
+  .section-label {
+    padding: 0 40px 12px !important;
+  }
+ 
+  .tab-bar {
+    padding: 0 40px 20px !important;
+  }
+ 
+  /* ── Create form centered ── */
+  .create-header {
+    max-width: 680px !important;
+    margin: 0 auto !important;
+    padding: 48px 40px 24px !important;
+  }
+ 
+  .form-body {
+    max-width: 680px !important;
+    margin: 0 auto !important;
+    padding: 0 40px 40px !important;
+    background: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+ 
+  /* ── Sent / timeline centered ── */
+  .sched-header {
+    max-width: 760px !important;
+    margin: 0 auto !important;
+    padding: 48px 40px 24px !important;
+  }
+ 
+  .timeline {
+    max-width: 760px !important;
+    margin: 0 auto !important;
+    padding: 0 40px !important;
+  }
+ 
+  /* ── Games grid — 3 cols with breathing room ── */
+  .games-grid {
+    padding: 0 40px 40px !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 16px !important;
+    max-width: 1100px !important;
+    margin: 0 auto !important;
+  }
+ 
+  .game-card {
+    padding: 16px 18px !important;
+  }
+ 
+  /* ── Profile centered and narrower ── */
+  .profile-section,
+  .profile-content,
+  div[style*="padding: 0 20px 100px"] {
+    max-width: 560px !important;
+    margin: 0 auto !important;
+    padding: 0 40px 80px !important;
+  }
+ 
+  /* ── Reveal modal centered (not bottom sheet on desktop) ── */
+  .reveal-overlay {
+    align-items: center !important;
+    padding: 32px !important;
+  }
+ 
+  .reveal-card {
+    border-radius: 28px !important;
+    max-width: 480px !important;
+    max-height: 85vh !important;
+  }
+ 
+  /* ── Toast stays centered ── */
+  .toast {
+    left: calc(50% + 110px) !important; /* offset for sidebar */
+  }
+}
+ 
+/* ─── WIDE DESKTOP — 4 col inbox ─────────────────────────── */
+@media (min-width: 1440px) {
+  .cards-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+ 
+  .games-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+ 
+/* ─── GAME SCREENS — ACCOUNT FOR SIDEBAR ─────────────────── */
+@media (min-width: 1024px) {
+  .ttt-screen,
+  .whot-screen {
+    left: 220px !important;
+  }
+}
+ 
+/* ─── MOBILE — ensure no desktop overrides bleed in ─────── */
+@media (max-width: 1023px) {
+  .app-container {
+    padding-left: 0 !important;
+    padding-bottom: 100px !important;
+  }
+ 
+  .toast {
+    left: 50% !important;
+  }
+}
+ 

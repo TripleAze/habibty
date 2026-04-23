@@ -179,8 +179,8 @@ export default function ScheduledPage() {
                 />
 
                 <div className="timeline-card">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-serif text-xl text-[#3D2B3D] leading-tight flex items-center gap-2">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-serif text-[#3D2B3D] leading-tight flex items-center gap-2">
                       {message.title} {message.emoji}
                     </h3>
                     <span className={`timeline-badge ${getBadgeClass(message, now)}`}>
@@ -188,8 +188,8 @@ export default function ScheduledPage() {
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-3 text-xs text-gray-400 mb-4">
-                    <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-lg">
+                  <div className="flex items-center gap-3 text-gray-400 mb-2">
+                    <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-base">
                       {message.type === 'text' ? '📝' : message.type === 'voice' ? '🎙️' : '🎬'}
                     </div>
                     <p className="font-medium tracking-wide uppercase opacity-80">{formatMeta(message, now)}</p>
