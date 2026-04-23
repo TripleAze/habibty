@@ -4,17 +4,17 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && 
-        (request.auth.uid == userId || 
-         // Pairing: Allow if partnerId is null and setting to current user
-         (resource.data.partnerId == null && 
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['partnerId']) && 
-          request.resource.data.partnerId == request.auth.uid) ||
-         // Unpairing: Allow if current user is the partner and clearing it
-         (resource.data.partnerId == request.auth.uid &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['partnerId']) &&
-          (!('partnerId' in request.resource.data) || request.resource.data.partnerId == null))
-        );
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && (
+        request.auth.uid == userId || 
+        // Pairing: Allow if partnerId is null/missing and setting to current user
+        (resource.data.get('partnerId', null) == null && 
+         request.resource.data.partnerId == request.auth.uid) ||
+        // Unpairing: Allow if current user is the partner and clearing it
+        (resource.data.partnerId == request.auth.uid && 
+         (request.resource.data.get('partnerId', null) == null || !('partnerId' in request.resource.data)))
+      );
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
     match /messages/{messageId} {
@@ -34,8 +34,30 @@ service cloud.firestore {
         request.resource.data.senderId is string;
 
       allow update: if request.auth != null &&
-        (request.auth.uid == resource.data.receiverId || 
+        (request.auth.uid == resource.data.receiverId ||
          request.auth.uid == resource.data.senderId);
+
+      // Reactions subcollection
+      match /reactions/{reactionId} {
+        allow read: if request.auth != null && (
+          request.auth.uid == get(/databases/$(database)/documents/messages/$(messageId)).data.senderId ||
+          request.auth.uid == get(/databases/$(database)/documents/messages/$(messageId)).data.receiverId
+        );
+        allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+        allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+        allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      }
+
+      // Replies subcollection
+      match /replies/{replyId} {
+        allow read: if request.auth != null && (
+          request.auth.uid == get(/databases/$(database)/documents/messages/$(messageId)).data.senderId ||
+          request.auth.uid == get(/databases/$(database)/documents/messages/$(messageId)).data.receiverId
+        );
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+        allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      }
     }
 
     // Games collection - 2 players only, restricted read/write

@@ -194,7 +194,7 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
           {/* Centre play/pause overlay */}
           {mediaLoaded && (
             <div className={`mp-video-overlay ${showControls || !isPlaying ? 'show' : ''}`}>
-              <button className="mp-big-play" onClick={e => { e.stopPropagation(); togglePlay(); }}>
+              <button type="button" className="mp-big-play" onClick={e => { e.stopPropagation(); togglePlay(); }}>
                 {isPlaying ? '⏸' : '▶'}
               </button>
             </div>
@@ -203,7 +203,7 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
           {/* Bottom bar */}
           {mediaLoaded && (
             <div className={`mp-video-bar ${showControls ? 'show' : ''}`} onClick={e => e.stopPropagation()}>
-              <button className="mp-small-play" onClick={togglePlay}>
+              <button type="button" className="mp-small-play" onClick={togglePlay}>
                 {isPlaying ? '⏸' : '▶'}
               </button>
               <input
@@ -295,7 +295,7 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
         <div className="mp-audio">
           {/* Header: play button + title + duration */}
           <div className="mp-audio-header">
-            <button className="mp-play-circle" onClick={togglePlay}>
+            <button type="button" className="mp-play-circle" onClick={togglePlay}>
               {isPlaying ? '⏸' : '▶'}
             </button>
             <div className="mp-audio-meta">

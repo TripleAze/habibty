@@ -1,15 +1,23 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { RevealModalProps } from '@/types';
 import MediaPlayer from './MediaPlayer';
+import MessageActions from './MessageActions';
 
 export default function RevealModal({ isOpen, onClose, message }: RevealModalProps) {
+  const router = useRouter();
   const [displayedText, setDisplayedText] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [showCursor, setShowCursor] = useState(true);
+  const [showActions, setShowActions] = useState(false);
+  const [reactions, setReactions] = useState<any[]>([]);
+  const [replies, setReplies] = useState<any[]>([]);
+  const [userReaction, setUserReaction] = useState<any | undefined>();
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textScrollRef = useRef<HTMLDivElement>(null);
+  const currentUserId = useRef<string | null>(null);
 
   const stopTyping = useCallback(() => {
     if (typingTimeoutRef.current) {
@@ -36,6 +44,8 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         }
       } else {
         setShowCursor(false);
+        // Show actions panel after typing completes
+        setTimeout(() => setShowActions(true), 500);
       }
     };
     tick();
@@ -43,15 +53,61 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
 
   useEffect(() => {
     if (isOpen && message) {
-      if (message.content && message.type === 'text') typeText(message.content);
+      setShowActions(false);
+      setReactions([]);
+      setReplies([]);
+      setUserReaction(undefined);
+
+      if (message.content && message.type === 'text') {
+        typeText(message.content);
+      } else {
+        // For non-text messages, show actions immediately
+        setTimeout(() => setShowActions(true), 500);
+      }
     }
     return () => { stopTyping(); stopWave(); };
   }, [isOpen, message, typeText, stopTyping, stopWave]);
+
+  // Subscribe to reactions and replies
+  useEffect(() => {
+    if (!message || !isOpen) return;
+
+    let unsubReactions: (() => void) | null = null;
+    let unsubReplies: (() => void) | null = null;
+
+    const setupSubscriptions = async () => {
+      // Get current user ID
+      const { auth } = await import('@/lib/firebase');
+      currentUserId.current = auth?.currentUser?.uid || null;
+
+      const { subscribeToReactions: subReactions } = await import('@/lib/reactions');
+      const { subscribeToReplies: subReplies } = await import('@/lib/replies');
+
+      unsubReactions = subReactions(message.id, (fetchedReactions) => {
+        setReactions(fetchedReactions);
+        if (currentUserId.current) {
+          setUserReaction(fetchedReactions.find(r => r.userId === currentUserId.current));
+        }
+      });
+
+      unsubReplies = subReplies(message.id, (fetchedReplies) => {
+        setReplies(fetchedReplies);
+      });
+    };
+
+    setupSubscriptions();
+
+    return () => {
+      unsubReactions?.();
+      unsubReplies?.();
+    };
+  }, [message?.id, isOpen]);
 
   const handleClose = useCallback((e?: React.MouseEvent) => {
     if (e && e.target !== e.currentTarget) return;
     stopTyping();
     stopWave();
+    setShowActions(false);
     onClose();
   }, [onClose, stopTyping, stopWave]);
 
@@ -244,6 +300,87 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           0%,100% { transform: scaleY(0.4); }
           50%      { transform: scaleY(1); }
         }
+        .reactions-preview {
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid rgba(232, 160, 160, 0.15);
+        }
+        .reaction-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 4px 10px;
+          border-radius: 12px;
+          background: rgba(247, 232, 238, 0.6);
+          font-size: 14px;
+        }
+        .replies-preview {
+          margin-top: 16px;
+        }
+        .replies-label {
+          font-size: 11px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: #C9B8D8;
+          font-weight: 500;
+          margin-bottom: 10px;
+        }
+        .reply-item {
+          padding: 10px 12px;
+          border-radius: 12px;
+          background: rgba(247, 232, 238, 0.4);
+          margin-bottom: 8px;
+        }
+        .reply-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 6px;
+        }
+        .reply-avatar {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          color: white;
+          font-weight: 600;
+        }
+        .reply-avatar img {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+        .reply-author {
+          font-size: 12px;
+          font-weight: 500;
+          color: #3D2B3D;
+        }
+        .reply-text {
+          font-size: 13px;
+          color: #7A5C7A;
+          line-height: 1.5;
+        }
+        .message-actions-wrapper {
+          opacity: 0;
+          transform: translateY(10px);
+          transition: all 0.4s ease;
+          max-height: 0;
+          overflow: hidden;
+        }
+        .message-actions-wrapper.visible {
+          opacity: 1;
+          transform: translateY(0);
+          max-height: 500px;
+          overflow: visible;
+        }
       `}</style>
 
       <div className={`reveal-overlay ${isOpen ? 'open' : ''}`} onClick={handleClose}>
@@ -298,6 +435,61 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
                 : formatDate(message.createdAt)}
             </p>
             <button className="reveal-close" onClick={() => handleClose()}>✕</button>
+          </div>
+
+          {/* Actions Panel — slides up after message is read */}
+          <div className={`message-actions-wrapper ${showActions ? 'visible' : ''}`}>
+            <div className="reveal-scroll-body" style={{ borderTop: '1px solid rgba(232,160,160,0.1)' }}>
+              {/* Reactions Preview */}
+              {reactions.length > 0 && (
+                <div className="reactions-preview">
+                  {reactions.slice(0, 5).map((reaction) => (
+                    <span key={reaction.userId} className="reaction-chip">
+                      {reaction.emoji}
+                    </span>
+                  ))}
+                  {reactions.length > 5 && (
+                    <span className="reaction-chip" style={{ background: 'transparent', padding: '4px 0' }}>
+                      +{reactions.length - 5} more
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Replies Preview */}
+              {replies.length > 0 && (
+                <div className="replies-preview">
+                  <p className="replies-label">Replies</p>
+                  {replies.slice(0, 3).map((reply) => (
+                    <div key={reply.id} className="reply-item">
+                      <div className="reply-header">
+                        {reply.userPhoto ? (
+                          <img src={reply.userPhoto} alt="" className="reply-avatar" />
+                        ) : (
+                          <div className="reply-avatar">
+                            {reply.userName.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <span className="reply-author">{reply.userName}</span>
+                      </div>
+                      <p className="reply-text">{reply.text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Message Actions */}
+              <MessageActions
+                messageId={message.id}
+                userReaction={userReaction}
+                onReactionChange={() => {}}
+                onReplySent={() => {}}
+                onPlayTogether={() => {
+                  onClose();
+                  setTimeout(() => router.push('/games'), 300);
+                }}
+              />
+            </div>
           </div>
 
         </div>

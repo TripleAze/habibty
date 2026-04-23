@@ -137,6 +137,24 @@ export async function updateMessageStatus(
   try {
     const docRef = doc(db, MESSAGES_COLLECTION, messageId);
     await updateDoc(docRef, { status });
+
+    // Trigger notification if it's the first time being opened
+    if (status === 'opened') {
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        const { sendNotification } = await import('./notifications');
+        const userSnap = await getDoc(doc(db, 'users', data.receiverId));
+        const receiverName = userSnap.data()?.displayName || 'Someone';
+
+        await sendNotification(data.senderId, {
+          type: 'message_opened',
+          fromUid: data.receiverId,
+          fromName: receiverName,
+          refId: messageId,
+        });
+      }
+    }
   } catch (error) {
     console.error('Error updating message status:', error);
   }

@@ -1,8 +1,29 @@
 export type MessageType = 'text' | 'voice' | 'video';
 
-export type MessageStatus = 'locked' | 'available' | 'opened';
+export type MessageStatus = 'draft' | 'scheduled' | 'sent' | 'locked' | 'available' | 'opened';
 
 export type DeliveryType = 'immediate' | 'scheduled';
+
+export type UnlockConditionType = 'time' | 'emotional' | 'event' | 'manual';
+
+export interface Reaction {
+  userId: string;
+  userName?: string;
+  userPhoto?: string;
+  emoji: string;
+  createdAt: number;
+}
+
+export interface Reply {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  text: string;
+  type?: 'text' | 'voice';
+  mediaUrl?: string;
+  createdAt: number;
+}
 
 export interface Message {
   id: string;
@@ -17,12 +38,36 @@ export interface Message {
   senderName?: string;
   receiverId: string;
   createdAt: number;
+  updatedAt?: number;
   emoji?: string;
   meta?: string;
   moods?: string[];
   mediaUrl?: string;
   mediaPublicId?: string;
   mediaDuration?: number;
+  // Advanced unlock conditions
+  unlockType?: UnlockConditionType;
+  unlockCondition?: string;
+  isUnlocked?: boolean;
+  // Surprise mode
+  isSurprise?: boolean;
+  surpriseType?: 'message' | 'voice' | 'game' | 'combo';
+}
+
+export interface MessageCardProps {
+  message: Message;
+  onClick?: () => void;
+  now?: number;
+}
+
+export interface RevealModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  message: Message | null;
+}
+
+export interface BottomNavProps {
+  activeTab: 'inbox' | 'create' | 'games' | 'scheduled' | 'profile';
 }
 
 export interface MessageCardProps {

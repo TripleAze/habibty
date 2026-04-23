@@ -174,6 +174,15 @@ export default function CreatePage() {
           partnerId
         );
 
+        // Notify partner
+        const { sendNotification } = await import('@/lib/notifications');
+        await sendNotification(partnerId, {
+          type: 'new_message',
+          fromUid: currentUserId,
+          fromName: senderName,
+          refId: 'new',
+        });
+
         showToast('Message sent 💌');
         setTimeout(() => router.push('/inbox'), 1000);
       } catch (error) {

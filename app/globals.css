@@ -115,6 +115,38 @@ html, body {
   pointer-events: none;
 }
 
+.status-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 12px;
+  height: 12px;
+  background: #E0E0E0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.status-dot.online {
+  background: #4ADE80;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+}
+
+.status-dot-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #4ADE80;
+  animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
 /* ─── TAB BAR ─────────────────────────────────────────────*/
 .tab-bar {
   display: flex;

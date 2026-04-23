@@ -226,9 +226,14 @@ export default function ProfilePage() {
                     placeholder="Display name"
                     autoFocus
                   />
-                  <button className="px-4 py-2 text-xs font-medium text-gray-500" onClick={() => setIsEditingName(false)}>Cancel</button>
-                  <button className="px-5 py-2 rounded-full bg-gradient-to-r from-[#E8A0A0] to-[#C9B8D8] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50" onClick={handleSaveName} disabled={saving}>
-                    {saving ? '...' : 'Save'}
+                  <button type="button" className="px-4 py-2 text-xs font-medium text-gray-500 hover:text-gray-700" onClick={() => setIsEditingName(false)}>Cancel</button>
+                  <button 
+                    type="button" 
+                    className="px-6 py-2 rounded-full bg-gradient-to-r from-[#E8A0A0] to-[#C9B8D8] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50" 
+                    onClick={handleSaveName} 
+                    disabled={saving}
+                  >
+                    {saving ? 'Saving...' : 'Save ✨'}
                   </button>
                 </div>
               </div>

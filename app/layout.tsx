@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: 'A romantic message app for someone special',
 };
 
+import AppLifecycle from '@/components/AppLifecycle';
+
 export default function RootLayout({
   children,
 }: {
@@ -13,7 +15,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AppLifecycle />
+        {children}
+      </body>
     </html>
   );
 }

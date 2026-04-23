@@ -11,6 +11,8 @@ import RevealModal from '@/components/RevealModal';
 import BottomNav from '@/components/BottomNav';
 import { Message } from '@/types';
 import { MessageCardSkeleton, ListSkeleton } from '@/components/skeleton';
+import { subscribeToPresence, Presence, getPresenceStatusText } from '@/lib/presence';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function InboxPage() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export default function InboxPage() {
   const [checking, setChecking] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [partnerPresence, setPartnerPresence] = useState<Presence | null>(null);
 
   // Partner info
   const [partnerName, setPartnerName] = useState('');
@@ -104,6 +107,12 @@ export default function InboxPage() {
     return () => unsubscribe();
   }, [currentUserId, partnerId]);
 
+  // Subscribe to partner presence
+  useEffect(() => {
+    if (!partnerId) return;
+    return subscribeToPresence(partnerId, (p) => setPartnerPresence(p));
+  }, [partnerId]);
+
   const handleOpenMessage = useCallback((message: Message) => {
     setSelectedMessage(message);
     setIsModalOpen(true);
@@ -150,20 +159,28 @@ export default function InboxPage() {
           </h1>
         </div>
 
-        <div className="partner-avatar-wrap">
-          {partnerPhoto ? (
-            <img
-              src={partnerPhoto}
-              alt={partnerName}
-              className="partner-avatar"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="partner-avatar-fallback">
-              {partnerName ? partnerName[0].toUpperCase() : '♡'}
-            </div>
-          )}
-          <div className="partner-avatar-ring" />
+        <div className="flex items-center gap-3">
+          <NotificationBell />
+          <div className="partner-avatar-wrap">
+            {partnerPhoto ? (
+              <img
+                src={partnerPhoto}
+                alt={partnerName}
+                className="partner-avatar"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="partner-avatar-fallback">
+                {partnerName ? partnerName[0].toUpperCase() : '♡'}
+              </div>
+            )}
+            <div className="partner-avatar-ring" />
+            {partnerPresence && (
+              <div className={`status-dot ${partnerPresence.status === 'online' ? 'online' : ''}`} title={getPresenceStatusText(partnerPresence)}>
+                {partnerPresence.status === 'online' && <div className="status-dot-inner" />}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
