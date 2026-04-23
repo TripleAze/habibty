@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, query, where, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
@@ -16,6 +16,8 @@ import NotificationBell from '@/components/NotificationBell';
 
 export default function InboxPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const openId = searchParams.get('open');
   const [activeTab, setActiveTab] = useState<'available' | 'locked'>('available');
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,13 +101,25 @@ export default function InboxPage() {
       filtered.sort((a, b) => b.createdAt - a.createdAt);
       setMessages(filtered);
       setLoading(false);
+
+      // Auto-open message if 'open' param is present
+      if (openId && !selectedMessage) {
+        const msg = filtered.find(m => m.id === openId);
+        if (msg) {
+          setSelectedMessage(msg);
+          setIsModalOpen(true);
+          // Clear query param to avoid re-opening
+          const newPath = window.location.pathname;
+          window.history.replaceState({}, '', newPath);
+        }
+      }
     }, (error) => {
       console.error('Snapshot failed:', error);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [currentUserId, partnerId]);
+  }, [currentUserId, partnerId, openId, selectedMessage]);
 
   // Subscribe to partner presence
   useEffect(() => {

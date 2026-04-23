@@ -9,7 +9,8 @@ import BottomNav from '@/components/BottomNav';
 import { unlockDueMessages } from '@/lib/messages';
 import { Message, MessageStatus } from '@/types';
 import { auth, db } from '@/lib/firebase';
-import { ListSkeleton } from '@/components/skeleton';
+import ListSkeleton from '@/components/skeleton/ListSkeleton'; // Fixed import
+import RevealModal from '@/components/RevealModal';
 
 function getEffectiveStatus(message: Message, now: number): MessageStatus {
   if (message.status === 'opened') return 'opened';
@@ -85,6 +86,8 @@ export default function ScheduledPage() {
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(true);
   const [now, setNow] = useState(Date.now());
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Tick every 30 seconds to update scheduled statuses locally
   useEffect(() => {
@@ -178,7 +181,13 @@ export default function ScheduledPage() {
                   }`}
                 />
 
-                <div className="timeline-card">
+                <div 
+                  className="timeline-card cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => {
+                    setSelectedMessage(message);
+                    setIsModalOpen(true);
+                  }}
+                >
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-serif text-[#3D2B3D] leading-tight flex items-center gap-2">
                       {message.title} {message.emoji}
@@ -224,6 +233,12 @@ export default function ScheduledPage() {
       </div>
 
       <BottomNav activeTab="scheduled" />
+
+      <RevealModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        message={selectedMessage}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { subscribeToNotifications, AppNotification, markAllAsRead, markNotificationAsRead } from '@/lib/notifications';
 function timeAgo(date: number) {
   const seconds = Math.floor((Date.now() - date) / 1000);
@@ -18,6 +19,7 @@ function timeAgo(date: number) {
 }
 
 export default function NotificationBell() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -42,6 +44,18 @@ export default function NotificationBell() {
     if (!isOpen && unreadCount > 0) {
       // Small delay before marking as read so we can see the unread state
       setTimeout(markAllAsRead, 3000);
+    }
+  };
+
+  const handleNotificationClick = async (n: AppNotification) => {
+    markNotificationAsRead(n.id);
+    setIsOpen(false);
+    
+    if (n.refId) {
+      // Navigate to inbox with the message ID as a param
+      router.push(`/inbox?open=${n.refId}`);
+    } else if (n.type === 'game_turn') {
+      router.push('/games');
     }
   };
 
@@ -85,7 +99,7 @@ export default function NotificationBell() {
                 <div 
                   key={n.id} 
                   className={`p-4 border-bottom border-[#E8A0A0]/5 flex gap-3 hover:bg-[#FAD0DC]/10 transition-colors cursor-pointer ${!n.read ? 'bg-[#FAD0DC]/5' : ''}`}
-                  onClick={() => markNotificationAsRead(n.id)}
+                  onClick={() => handleNotificationClick(n)}
                 >
                   <span className="text-xl shrink-0">{getIcon(n.type)}</span>
                   <div className="flex-1 min-w-0">

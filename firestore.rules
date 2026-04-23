@@ -124,8 +124,9 @@ service cloud.firestore {
     }
 
     match /moments/{momentId} {
-      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || resource.data.partnerId == request.auth.uid);
-      allow create: if request.auth != null;
+      allow get: if request.auth != null && (resource.data.userId == request.auth.uid || resource.data.partnerId == request.auth.uid);
+      allow list: if request.auth != null && (resource.data.userId == request.auth.uid || resource.data.partnerId == request.auth.uid);
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
   }
 }
