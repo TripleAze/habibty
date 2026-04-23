@@ -1985,11 +1985,12 @@ html, body {
     align-items: center !important;
     padding: 32px !important;
   }
- 
+
   .reveal-card {
     border-radius: 28px !important;
     max-width: 480px !important;
-    max-height: 85vh !important;
+    max-height: 75vh !important;
+    height: auto !important;
   }
  
   /* ── Toast stays centered ── */

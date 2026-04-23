@@ -21,6 +21,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentUserId = useRef<string | null>(null);
+  const userHasScrolledRef = useRef(false);
 
   const stopTyping = useCallback(() => {
     if (typingTimeoutRef.current) {
@@ -35,14 +36,18 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
     stopTyping();
     setDisplayedText('');
     setShowCursor(true);
+    userHasScrolledRef.current = false; // Reset scroll tracking
     let i = 0;
     const tick = () => {
       if (i <= text.length) {
         setDisplayedText(text.substring(0, i));
         i++;
-        typingTimeoutRef.current = setTimeout(tick, 22);
-        // Auto-scroll as text types
-        if (scrollRef.current) {
+        // Variable typing speed: 35ms base, 180ms pause at punctuation
+        const char = text[i - 1];
+        const delay = ['.', '?', '!', '。', '！', '？'].includes(char) ? 180 : 35;
+        typingTimeoutRef.current = setTimeout(tick, delay);
+        // Auto-scroll only if user hasn't manually scrolled
+        if (scrollRef.current && !userHasScrolledRef.current) {
           scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
       } else {
@@ -106,6 +111,22 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
     const interval = setInterval(checkLocation, 10000); // Check every 10s
     return () => clearInterval(interval);
   }, [isOpen, message, isLocationLocked, typeText]);
+
+  // Track user scroll to prevent auto-scroll fighting
+  useEffect(() => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollEl;
+      // User has scrolled up if they're more than 50px from bottom
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+      userHasScrolledRef.current = !isNearBottom;
+    };
+
+    scrollEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => scrollEl.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Subscribe to reactions and replies
   useEffect(() => {
@@ -196,6 +217,17 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           opacity: 1;
           pointer-events: all;
         }
+        @media (min-width: 1024px) {
+          .reveal-overlay {
+            align-items: center;
+            padding: 32px;
+          }
+          .reveal-card {
+            border-radius: 28px;
+            max-height: 75vh;
+            height: auto;
+          }
+        }
         .reveal-card {
           background: #fff;
           border-radius: 28px 28px 0 0;
@@ -214,7 +246,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           transform: translateY(0);
         }
         .reveal-card-header {
-          padding: 24px 24px 12px;
+          padding: 16px 24px 10px;
           text-align: center;
           flex-shrink: 0;
         }
@@ -223,12 +255,12 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           height: 4px;
           border-radius: 2px;
           background: rgba(201,184,216,0.4);
-          margin: 0 auto 16px;
+          margin: 0 auto 12px;
         }
         .reveal-envelope {
-          font-size: 40px;
+          font-size: 32px;
           display: block;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
           animation: openEnvelope 0.7s ease both;
         }
         @keyframes openEnvelope {
@@ -237,33 +269,33 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           100% { transform: scale(1) rotate(0); opacity: 1; }
         }
         .reveal-from {
-          font-size: 9px;
+          font-size: 8px;
           letter-spacing: 0.22em;
           text-transform: uppercase;
           color: #E8A0A0;
           font-weight: 500;
-          margin-bottom: 4px;
+          margin-bottom: 2px;
         }
         .reveal-title {
           font-family: 'Cormorant Garamond', serif;
-          font-size: 20px;
+          font-size: 18px;
           font-weight: 300;
           font-style: italic;
           color: #3D2B3D;
-          margin-bottom: 12px;
+          margin-bottom: 8px;
           line-height: 1.3;
         }
         .reveal-divider {
           width: 32px;
           height: 1px;
           background: linear-gradient(90deg, transparent, #E8A0A0, transparent);
-          margin: 0 auto;
+          margin: 0 auto 8px;
         }
         .reveal-scroll-area {
           flex: 1;
           overflow-y: auto;
           overflow-x: hidden;
-          padding: 24px 24px 40px;
+          padding: 12px 24px 40px;
           -webkit-overflow-scrolling: touch;
         }
         .reveal-scroll-area::-webkit-scrollbar { width: 3px; }
