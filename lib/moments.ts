@@ -6,9 +6,7 @@ import {
   where,
   orderBy,
   limit,
-  onSnapshot,
-  or,
-  and
+  onSnapshot
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
 
@@ -26,6 +24,7 @@ export interface Moment {
   type: MomentType;
   userId: string;
   partnerId: string;
+  pairId: string; // Combined sorted IDs to avoid complex indices
   title: string;
   description?: string;
   emoji?: string;
@@ -36,11 +35,18 @@ export interface Moment {
 const MOMENTS_COLLECTION = 'moments';
 
 /**
+ * Generate a deterministic ID for a pair of users
+ */
+function getPairId(uid1: string, uid2: string): string {
+  return [uid1, uid2].sort().join('_');
+}
+
+/**
  * Add a new moment to the shared timeline
  */
 export async function addMoment(
   partnerId: string,
-  moment: Omit<Moment, 'id' | 'partnerId' | 'userId' | 'createdAt'>
+  moment: Omit<Moment, 'id' | 'partnerId' | 'userId' | 'createdAt' | 'pairId'>
 ): Promise<void> {
   const currentUserId = auth?.currentUser?.uid;
   if (!currentUserId) return;
@@ -50,6 +56,7 @@ export async function addMoment(
       ...moment,
       userId: currentUserId,
       partnerId,
+      pairId: getPairId(currentUserId, partnerId),
       createdAt: serverTimestamp(),
     });
   } catch (error) {
@@ -67,12 +74,16 @@ export function subscribeToMoments(
   const currentUserId = auth?.currentUser?.uid;
   if (!currentUserId) return () => {};
 
+  const pairId = getPairId(currentUserId, partnerId);
+
+  // Simple query on pairId + createdAt
+  // This still technically needs a composite index (pairId, createdAt),
+  // BUT Firestore automatically suggests/allows this more easily than the OR query.
+  // HOWEVER, we can even do it without any index if we just filter locally for a bit 
+  // or use the most basic query.
   const q = query(
     collection(db, MOMENTS_COLLECTION),
-    or(
-      and(where('userId', '==', currentUserId), where('partnerId', '==', partnerId)),
-      and(where('userId', '==', partnerId), where('partnerId', '==', currentUserId))
-    ),
+    where('pairId', '==', pairId),
     orderBy('createdAt', 'desc'),
     limit(50)
   );
@@ -80,5 +91,22 @@ export function subscribeToMoments(
   return onSnapshot(q, (snap) => {
     const moments = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Moment));
     callback(moments);
+  }, (err) => {
+    console.error('Moments subscription error:', err);
+    // Fallback: query without orderBy and sort locally if index is missing
+    const fallbackQ = query(
+      collection(db, MOMENTS_COLLECTION),
+      where('pairId', '==', pairId),
+      limit(50)
+    );
+    onSnapshot(fallbackQ, (snap) => {
+       const moments = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Moment));
+       moments.sort((a, b) => {
+         const t1 = a.createdAt?.toDate?.()?.getTime() || 0;
+         const t2 = b.createdAt?.toDate?.()?.getTime() || 0;
+         return t2 - t1;
+       });
+       callback(moments);
+    });
   });
 }

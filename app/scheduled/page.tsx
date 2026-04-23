@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import BottomNav from '@/components/BottomNav';
@@ -80,8 +80,10 @@ function formatMeta(message: Message, now: number): string {
   return `Anytime unlock · ${typeLabel}`;
 }
 
-export default function ScheduledPage() {
+function ScheduledInternal() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const openId = searchParams.get('open');
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(true);
@@ -123,10 +125,20 @@ export default function ScheduledPage() {
         id: doc.id,
         ...doc.data()
       })) as Message[];
-      
-      // Sort locally to avoid Firestore composite index requirement
-      data.sort((a, b) => b.createdAt - a.createdAt);
-      
+
+      data.sort((a, b) => (b.createdAt?.seconds || b.createdAt) - (a.createdAt?.seconds || a.createdAt));
+
+      // Auto-open message if 'open' param is present
+      if (openId && !selectedMessage) {
+        const msg = data.find(m => m.id === openId);
+        if (msg) {
+          setSelectedMessage(msg);
+          setIsModalOpen(true);
+          const newPath = window.location.pathname;
+          window.history.replaceState({}, '', newPath);
+        }
+      }
+
       setMessages(data);
       setLoading(false);
     }, (err) => {
@@ -135,7 +147,7 @@ export default function ScheduledPage() {
     });
 
     return () => unsubSnap();
-  }, [checking]);
+  }, [checking, openId, selectedMessage]);
 
   if (checking) {
     return (
@@ -240,5 +252,19 @@ export default function ScheduledPage() {
         message={selectedMessage}
       />
     </div>
+  );
+}
+
+export default function ScheduledPage() {
+  return (
+    <Suspense fallback={
+      <div className="app-container">
+        <div className="loading-state">
+          <div className="loading-spinner" />
+        </div>
+      </div>
+    }>
+      <ScheduledInternal />
+    </Suspense>
   );
 }

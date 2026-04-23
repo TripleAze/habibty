@@ -19,7 +19,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
   const [distanceToUnlock, setDistanceToUnlock] = useState<number | null>(null);
   const [userReaction, setUserReaction] = useState<any | undefined>();
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const textScrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const currentUserId = useRef<string | null>(null);
 
   const stopTyping = useCallback(() => {
@@ -42,8 +42,8 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         i++;
         typingTimeoutRef.current = setTimeout(tick, 22);
         // Auto-scroll as text types
-        if (textScrollRef.current) {
-          textScrollRef.current.scrollTop = textScrollRef.current.scrollHeight;
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
       } else {
         setShowCursor(false);
@@ -201,19 +201,20 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           border-radius: 28px 28px 0 0;
           width: 100%;
           max-width: 520px;
-          max-height: 88vh;
+          height: 88vh;
           display: flex;
           flex-direction: column;
           transform: translateY(40px);
           transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1);
           box-shadow: 0 -8px 48px rgba(61,43,61,0.18);
           overflow: hidden;
+          position: relative;
         }
         .reveal-overlay.open .reveal-card {
           transform: translateY(0);
         }
         .reveal-card-header {
-          padding: 24px 24px 0;
+          padding: 24px 24px 12px;
           text-align: center;
           flex-shrink: 0;
         }
@@ -222,12 +223,12 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           height: 4px;
           border-radius: 2px;
           background: rgba(201,184,216,0.4);
-          margin: 0 auto 20px;
+          margin: 0 auto 16px;
         }
         .reveal-envelope {
-          font-size: 48px;
+          font-size: 40px;
           display: block;
-          margin-bottom: 12px;
+          margin-bottom: 8px;
           animation: openEnvelope 0.7s ease both;
         }
         @keyframes openEnvelope {
@@ -236,7 +237,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           100% { transform: scale(1) rotate(0); opacity: 1; }
         }
         .reveal-from {
-          font-size: 10px;
+          font-size: 9px;
           letter-spacing: 0.22em;
           text-transform: uppercase;
           color: #E8A0A0;
@@ -249,25 +250,29 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           font-weight: 300;
           font-style: italic;
           color: #3D2B3D;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
           line-height: 1.3;
         }
         .reveal-divider {
           width: 32px;
           height: 1px;
           background: linear-gradient(90deg, transparent, #E8A0A0, transparent);
-          margin: 0 auto 0;
+          margin: 0 auto;
         }
-        .reveal-scroll-body {
+        .reveal-scroll-area {
           flex: 1;
           overflow-y: auto;
-          padding: 20px 24px;
+          overflow-x: hidden;
+          padding: 10px 24px 40px;
           -webkit-overflow-scrolling: touch;
         }
-        .reveal-scroll-body::-webkit-scrollbar { width: 3px; }
-        .reveal-scroll-body::-webkit-scrollbar-thumb {
+        .reveal-scroll-area::-webkit-scrollbar { width: 3px; }
+        .reveal-scroll-area::-webkit-scrollbar-thumb {
           background: rgba(232,160,160,0.3);
           border-radius: 2px;
+        }
+        .reveal-message-body {
+          margin-bottom: 40px;
         }
         .reveal-text {
           font-family: 'Cormorant Garamond', serif;
@@ -289,6 +294,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           animation: blink 0.8s step-end infinite;
         }
         @keyframes blink { 50% { opacity: 0; } }
+        
         .reveal-card-footer {
           padding: 12px 24px 32px;
           flex-shrink: 0;
@@ -296,6 +302,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           display: flex;
           align-items: center;
           justify-content: space-between;
+          background: #fff;
         }
         .reveal-date {
           font-size: 11px;
@@ -317,10 +324,10 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           justify-content: center;
           color: #7A5C7A;
           transition: all 0.2s;
-          flex-shrink: 0;
         }
         .reveal-close:hover { background: #E8A0A0; color: white; }
-        .reveal-voice { text-align: center; padding: 8px 0; }
+        
+        .reveal-voice { text-align: center; padding: 20px 0; }
         .play-btn {
           width: 60px;
           height: 60px;
@@ -337,7 +344,6 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           transition: transform 0.2s;
           box-shadow: 0 6px 20px rgba(232,160,160,0.35);
         }
-        .play-btn:hover { transform: scale(1.08); }
         .waveform {
           display: flex;
           align-items: center;
@@ -355,13 +361,24 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           0%,100% { transform: scaleY(0.4); }
           50%      { transform: scaleY(1); }
         }
+
+        .actions-visibility-wrapper {
+          opacity: 0;
+          transform: translateY(20px);
+          transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .actions-visibility-wrapper.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
         .reactions-preview {
           display: flex;
           gap: 6px;
           flex-wrap: wrap;
-          margin-top: 12px;
-          padding-top: 12px;
-          border-top: 1px solid rgba(232, 160, 160, 0.15);
+          margin-top: 24px;
+          padding-top: 20px;
+          border-top: 1px solid rgba(232, 160, 160, 0.08);
         }
         .reaction-chip {
           display: inline-flex;
@@ -373,21 +390,22 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           font-size: 14px;
         }
         .replies-preview {
-          margin-top: 16px;
+          margin-top: 24px;
         }
         .replies-label {
-          font-size: 11px;
+          font-size: 10px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
           color: #C9B8D8;
-          font-weight: 500;
-          margin-bottom: 10px;
+          font-weight: 700;
+          margin-bottom: 12px;
         }
         .reply-item {
-          padding: 10px 12px;
-          border-radius: 12px;
+          padding: 12px;
+          border-radius: 16px;
           background: rgba(247, 232, 238, 0.4);
-          margin-bottom: 8px;
+          margin-bottom: 10px;
+          border: 1px solid rgba(232, 160, 160, 0.05);
         }
         .reply-header {
           display: flex;
@@ -396,50 +414,67 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           margin-bottom: 6px;
         }
         .reply-avatar {
-          width: 24px;
-          height: 24px;
+          width: 20px;
+          height: 20px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
+          background: #E8A0A0;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 11px;
+          font-size: 9px;
           color: white;
-          font-weight: 600;
-        }
-        .reply-avatar img {
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
-          object-fit: cover;
+          overflow: hidden;
         }
         .reply-author {
-          font-size: 12px;
-          font-weight: 500;
+          font-size: 11px;
+          font-weight: 600;
           color: #3D2B3D;
+          opacity: 0.7;
         }
         .reply-text {
-          font-size: 13px;
+          font-size: 14px;
           color: #7A5C7A;
           line-height: 1.5;
         }
-        .message-actions-wrapper {
-          opacity: 0;
-          transform: translateY(10px);
-          transition: all 0.4s ease;
-          max-height: 0;
-          overflow: hidden;
-        }
-        .message-actions-wrapper.visible {
-          opacity: 1;
-          transform: translateY(0);
-          max-height: 500px;
-          overflow: visible;
+
+        .location-lock-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(255, 255, 255, 0.98);
+          backdrop-filter: blur(10px);
+          z-index: 200;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 40px;
+          text-align: center;
         }
       `}</style>
 
       <div className={`reveal-overlay ${isOpen ? 'open' : ''}`} onClick={handleClose}>
         <div className="reveal-card" onClick={e => e.stopPropagation()}>
+          
+          {/* Location Lock Screen */}
+          {isLocationLocked && (
+            <div className="location-lock-overlay">
+              <div className="location-lock-content">
+                <div style={{ fontSize: '48px', marginBottom: '20px' }}>📍</div>
+                <h3 className="reveal-title" style={{ fontStyle: 'italic' }}>A secret location awaits...</h3>
+                <p style={{ fontSize: '14px', color: '#7A5C7A', marginBottom: '24px' }}>
+                  This message is locked until you are near <strong>{message.unlockLocation?.name || 'a specific spot'}</strong>.
+                </p>
+                <div style={{ padding: '8px 16px', background: '#FAD0DC', borderRadius: '20px', fontSize: '11px', color: '#E8A0A0', fontWeight: 'bold' }}>
+                  {distanceToUnlock !== null ? `You are ${distanceToUnlock}m away` : 'Checking distance...'}
+                </div>
+                <button 
+                  onClick={() => window.location.reload()}
+                  style={{ marginTop: '24px', background: 'none', border: '1px solid #E8A0A0', color: '#E8A0A0', padding: '10px 20px', borderRadius: '100px', fontSize: '12px' }}
+                >
+                  Refresh Location
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Header — fixed */}
           <div className="reveal-card-header">
@@ -450,157 +485,69 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
             <div className="reveal-divider" />
           </div>
 
-          {/* Body — scrollable */}
-          <div className="reveal-scroll-body" ref={textScrollRef}>
-            {message.type === 'text' ? (
-              <p className="reveal-text">
-                {displayedText}
-                {showCursor && displayedText.length < (message.content?.length ?? 0) && (
-                  <span className="typing-cursor" />
-                )}
-              </p>
-            ) : (message as any).mediaUrl ? (
-              <MediaPlayer
-                src={(message as any).mediaUrl}
-                type={message.type === 'voice' ? 'audio' : 'video'}
-              />
-            ) : (
-              <div className="reveal-voice">
-                <button className="play-btn" onClick={() => setIsPlaying(p => !p)}>
-                  {isPlaying ? '⏸' : '▶'}
-                </button>
-                <div className="waveform">
-                  {waveHeights.map((h, i) => (
-                    <div key={i} className="wave-bar" style={{
-                      height: h,
-                      animationDelay: `${i * 0.08}s`,
-                      animationPlayState: isPlaying ? 'running' : 'paused',
-                    }} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Footer — fixed */}
-          <div className="reveal-card-footer">
-            <p className="reveal-date">
-              {message.type === 'voice'
-                ? message.meta || `Voice · ${formatDate(message.createdAt)}`
-                : formatDate(message.createdAt)}
-            </p>
-            <button className="reveal-close" onClick={() => handleClose()}>✕</button>
-          </div>
-
-          {/* Actions Panel — slides up after message is read */}
-          <div className={`message-actions-wrapper ${showActions ? 'visible' : ''}`}>
-            {/* Location Lock Screen */}
-            {isLocationLocked && (
-              <div className="location-lock-overlay">
-                <div className="location-lock-content">
-                  <div className="location-lock-icon">📍</div>
-                  <h3 className="location-lock-title">A secret location awaits...</h3>
-                  <p className="location-lock-text">
-                    This message is locked until you are near <strong>{message.unlockLocation?.name || 'a specific spot'}</strong>.
-                  </p>
-                  <div className="location-distance-badge">
-                    {distanceToUnlock !== null ? `You are ${distanceToUnlock}m away` : 'Checking distance...'}
-                  </div>
-                  <button className="location-refresh-btn" onClick={() => window.location.reload()}>
-                    Refresh Location
+          {/* Single Scrollable Body */}
+          <div className="reveal-scroll-area" ref={scrollRef}>
+            
+            {/* Message Content */}
+            <div className="reveal-message-body">
+              {message.type === 'text' ? (
+                <p className="reveal-text">
+                  {displayedText}
+                  {showCursor && displayedText.length < (message.content?.length ?? 0) && (
+                    <span className="typing-cursor" />
+                  )}
+                </p>
+              ) : (message as any).mediaUrl ? (
+                <MediaPlayer
+                  src={(message as any).mediaUrl}
+                  type={message.type === 'voice' ? 'audio' : 'video'}
+                />
+              ) : (
+                <div className="reveal-voice">
+                  <button className="play-btn" onClick={() => setIsPlaying(p => !p)}>
+                    {isPlaying ? '⏸' : '▶'}
                   </button>
+                  <div className="waveform">
+                    {waveHeights.map((h, i) => (
+                      <div key={i} className="wave-bar" style={{
+                        height: h,
+                        animationDelay: `${i * 0.08}s`,
+                        animationPlayState: isPlaying ? 'running' : 'paused',
+                      }} />
+                    ))}
+                  </div>
                 </div>
-                <style>{`
-                  .location-lock-overlay {
-                    position: absolute;
-                    inset: 0;
-                    background: rgba(255, 255, 255, 0.95);
-                    backdrop-filter: blur(10px);
-                    z-index: 100;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 40px;
-                    text-align: center;
-                  }
-                  .location-lock-icon {
-                    font-size: 48px;
-                    margin-bottom: 20px;
-                    animation: bounce 2s infinite;
-                  }
-                  .location-lock-title {
-                    font-family: 'Cormorant Garamond', serif;
-                    font-size: 24px;
-                    font-style: italic;
-                    color: #3D2B3D;
-                    margin-bottom: 12px;
-                  }
-                  .location-lock-text {
-                    font-size: 14px;
-                    color: #7A5C7A;
-                    line-height: 1.6;
-                    margin-bottom: 20px;
-                  }
-                  .location-distance-badge {
-                    display: inline-block;
-                    padding: 8px 16px;
-                    background: #FAD0DC;
-                    border-radius: 20px;
-                    font-size: 11px;
-                    font-weight: bold;
-                    color: #E8A0A0;
-                    text-transform: uppercase;
-                    letter-spacing: 0.1em;
-                  }
-                  .location-refresh-btn {
-                    margin-top: 24px;
-                    background: none;
-                    border: 1px solid #E8A0A0;
-                    color: #E8A0A0;
-                    padding: 10px 20px;
-                    border-radius: 100px;
-                    font-size: 12px;
-                    cursor: pointer;
-                  }
-                  @keyframes bounce {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-10px); }
-                  }
-                `}</style>
-              </div>
-            )}
+              )}
+            </div>
 
-            <div className="reveal-scroll-body" style={{ borderTop: '1px solid rgba(232,160,160,0.1)' }}>
-              {/* Reactions Preview */}
+            {/* Everything else follows naturally in the scroll */}
+            <div className={`actions-visibility-wrapper ${showActions ? 'visible' : ''}`}>
+              
+              {/* Reactions List */}
               {reactions.length > 0 && (
                 <div className="reactions-preview">
-                  {reactions.slice(0, 5).map((reaction) => (
+                  {reactions.slice(0, 8).map((reaction) => (
                     <span key={reaction.userId} className="reaction-chip">
                       {reaction.emoji}
                     </span>
                   ))}
-                  {reactions.length > 5 && (
-                    <span className="reaction-chip" style={{ background: 'transparent', padding: '4px 0' }}>
-                      +{reactions.length - 5} more
-                    </span>
-                  )}
                 </div>
               )}
 
-              {/* Replies Preview */}
+              {/* Conversation History */}
               {replies.length > 0 && (
                 <div className="replies-preview">
                   <p className="replies-label">Conversation</p>
                   {replies.map((reply) => (
                     <div key={reply.id} className="reply-item">
                       <div className="reply-header">
-                        {reply.userPhoto ? (
-                          <img src={reply.userPhoto} alt="" className="reply-avatar" />
-                        ) : (
-                          <div className="reply-avatar">
-                            {reply.userName.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                        <div className="reply-avatar">
+                          {reply.userPhoto ? (
+                            <img src={reply.userPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            reply.userName.charAt(0).toUpperCase()
+                          )}
+                        </div>
                         <span className="reply-author">{reply.userName}</span>
                       </div>
                       <p className="reply-text">{reply.text}</p>
@@ -609,7 +556,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
                 </div>
               )}
 
-              {/* Message Actions */}
+              {/* Interaction Buttons */}
               <MessageActions
                 messageId={message.id}
                 userReaction={userReaction}
@@ -621,6 +568,16 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
                 }}
               />
             </div>
+          </div>
+
+          {/* Footer — fixed */}
+          <div className="reveal-card-footer">
+            <p className="reveal-date">
+              {message.type === 'voice'
+                ? message.meta || `Voice · ${formatDate(message.createdAt)}`
+                : formatDate(message.createdAt)}
+            </p>
+            <button className="reveal-close" onClick={() => handleClose()}>✕</button>
           </div>
 
         </div>

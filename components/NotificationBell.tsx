@@ -52,8 +52,13 @@ export default function NotificationBell() {
     setIsOpen(false);
     
     if (n.refId) {
-      // Navigate to inbox with the message ID as a param
-      router.push(`/inbox?open=${n.refId}`);
+      if (n.type === 'new_message') {
+        // Navigate to inbox for received messages
+        router.push(`/inbox?open=${n.refId}`);
+      } else {
+        // Navigate to scheduled/sent for reactions, replies, and opens
+        router.push(`/scheduled?open=${n.refId}`);
+      }
     } else if (n.type === 'game_turn') {
       router.push('/games');
     }
