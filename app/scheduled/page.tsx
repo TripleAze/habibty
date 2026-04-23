@@ -126,7 +126,12 @@ function ScheduledInternal() {
         ...doc.data()
       })) as Message[];
 
-      data.sort((a, b) => (b.createdAt?.seconds || b.createdAt) - (a.createdAt?.seconds || a.createdAt));
+      // Sort locally to avoid Firestore composite index requirement
+      data.sort((a, b) => {
+        const t1 = (a.createdAt as any)?.seconds ? (a.createdAt as any).seconds * 1000 : (a.createdAt as number);
+        const t2 = (b.createdAt as any)?.seconds ? (b.createdAt as any).seconds * 1000 : (b.createdAt as number);
+        return t2 - t1;
+      });
 
       // Auto-open message if 'open' param is present
       if (openId && !selectedMessage) {

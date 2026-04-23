@@ -99,7 +99,11 @@ function InboxInternal() {
       // Filter to only show messages from the active partner
       const filtered = data.filter(m => m.senderId === partnerId);
       
-      filtered.sort((a, b) => b.createdAt - a.createdAt);
+      filtered.sort((a, b) => {
+        const t1 = (a.createdAt as any)?.seconds ? (a.createdAt as any).seconds * 1000 : (a.createdAt as number);
+        const t2 = (b.createdAt as any)?.seconds ? (b.createdAt as any).seconds * 1000 : (b.createdAt as number);
+        return t2 - t1;
+      });
       setMessages(filtered);
       setLoading(false);
 
