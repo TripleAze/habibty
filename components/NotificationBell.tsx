@@ -2,7 +2,20 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { subscribeToNotifications, AppNotification, markAllAsRead, markNotificationAsRead } from '@/lib/notifications';
-import { formatDistanceToNow } from 'date-fns';
+function timeAgo(date: number) {
+  const seconds = Math.floor((Date.now() - date) / 1000);
+  let interval = Math.floor(seconds / 31536000);
+  if (interval > 1) return interval + " years";
+  interval = Math.floor(seconds / 2592000);
+  if (interval > 1) return interval + " months";
+  interval = Math.floor(seconds / 86400);
+  if (interval > 1) return interval + " days";
+  interval = Math.floor(seconds / 3600);
+  if (interval > 1) return interval + " hours";
+  interval = Math.floor(seconds / 60);
+  if (interval > 1) return interval + " minutes";
+  return Math.floor(seconds) + " seconds";
+}
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -85,7 +98,7 @@ export default function NotificationBell() {
                       {n.type === 'game_turn' && "it's your turn in the game"}
                     </p>
                     <p className="text-[10px] text-[#B09090] mt-1 italic">
-                      {formatDistanceToNow(n.createdAt)} ago
+                      {timeAgo(n.createdAt)} ago
                     </p>
                   </div>
                 </div>
