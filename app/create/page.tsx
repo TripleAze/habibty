@@ -42,6 +42,9 @@ export default function CreatePage() {
   const [isSurprise, setIsSurprise] = useState(false);
   const [unlockType, setUnlockType] = useState<UnlockConditionType>('manual');
   const [unlockLocation, setUnlockLocation] = useState<Message['unlockLocation']>(undefined);
+  const [locationSearch, setLocationSearch] = useState('');
+  const [locationResults, setLocationResults] = useState<any[]>([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState('');
   // Media upload state
@@ -106,6 +109,20 @@ export default function CreatePage() {
     setToast(msg);
     setTimeout(() => setToast(''), 3000);
   }, []);
+
+  const searchLocation = async (query: string) => {
+    if (!query || query.length < 3) return;
+    setIsSearchingLocation(true);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setLocationResults(data.slice(0, 5));
+    } catch (err) {
+      console.error('Search error:', err);
+    } finally {
+      setIsSearchingLocation(false);
+    }
+  };
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -404,7 +421,7 @@ export default function CreatePage() {
                         lat: pos.coords.latitude,
                         lng: pos.coords.longitude,
                         radius: 500, // 500m radius
-                        name: 'This current spot'
+                        name: 'Your current location'
                       });
                       showToast('Location captured! 📍');
                     }, () => showToast('Failed to get location 😢'));
@@ -412,6 +429,50 @@ export default function CreatePage() {
                 >
                   📍 Use my current location
                 </button>
+
+                <div className="relative mt-2">
+                  <input
+                    type="text"
+                    className="w-full p-3 bg-white/40 border border-gray-100 rounded-xl text-xs outline-none focus:border-[#E8A0A0]/40 transition-colors"
+                    placeholder="Or search for a sentimental spot..."
+                    value={locationSearch}
+                    onChange={(e) => {
+                      setLocationSearch(e.target.value);
+                      searchLocation(e.target.value);
+                    }}
+                  />
+                  {isSearchingLocation && (
+                    <div className="absolute right-3 top-3">
+                      <div className="w-4 h-4 border-2 border-[#E8A0A0]/40 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                  
+                  {locationResults.length > 0 && locationSearch && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-md border border-[#E8A0A0]/10 rounded-xl shadow-xl z-50 overflow-hidden animate-slide-down">
+                      {locationResults.map((res: any) => (
+                        <div 
+                          key={res.place_id}
+                          className="p-3 border-b border-gray-50 hover:bg-[#E8A0A0]/5 cursor-pointer transition-colors"
+                          onClick={() => {
+                            setUnlockLocation({
+                              lat: parseFloat(res.lat),
+                              lng: parseFloat(res.lon),
+                              radius: 500,
+                              name: res.display_name.split(',')[0]
+                            });
+                            setLocationSearch('');
+                            setLocationResults([]);
+                            showToast(`${res.display_name.split(',')[0]} set! 📍`);
+                          }}
+                        >
+                          <p className="text-[11px] font-bold text-[#3D2B3D] truncate">{res.display_name.split(',')[0]}</p>
+                          <p className="text-[9px] text-gray-400 truncate">{res.display_name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
                 <p className="text-[10px] text-gray-400 italic text-center">Your partner must be within 500m of this spot to open the letter.</p>
               </div>
             </div>
