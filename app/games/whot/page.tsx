@@ -17,12 +17,12 @@ function ExitSheet({ onResume, onMessages, onLeave }: { onResume: () => void; on
     <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(61,43,61,0.55)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
       <div style={{ background: 'white', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 480, padding: '28px 24px 40px', animation: 'slideUp 0.3s ease' }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(201,184,216,0.4)', margin: '0 auto 24px' }} />
-        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 300, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', marginBottom: 6 }}>Leave game?</p>
+        <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontWeight: 300, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', marginBottom: 6 }}>Leave game?</p>
         <p style={{ fontSize: 12, color: 'rgba(122,92,122,0.6)', textAlign: 'center', marginBottom: 24 }}>Your game is saved — come back anytime</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button onClick={onResume} style={{ padding: 14, borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>Resume game</button>
-          <button onClick={onMessages} style={{ padding: 14, borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(232,160,160,0.35)', color: '#7A5C7A', fontSize: 14, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>Open messages</button>
-          <button onClick={onLeave} style={{ padding: 14, borderRadius: 100, background: 'transparent', border: 'none', color: '#B06060', fontSize: 13, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>Leave game</button>
+          <button onClick={onResume} style={{ padding: 14, borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>Resume game</button>
+          <button onClick={onMessages} style={{ padding: 14, borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(232,160,160,0.35)', color: '#7A5C7A', fontSize: 14, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>Open messages</button>
+          <button onClick={onLeave} style={{ padding: 14, borderRadius: 100, background: 'transparent', border: 'none', color: '#B06060', fontSize: 13, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>Leave game</button>
         </div>
       </div>
     </div>
@@ -35,7 +35,7 @@ function SuitPicker({ onPick }: { onPick: (s: Suit) => void }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 350, background: 'rgba(61,43,61,0.6)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ background: 'rgba(255,255,255,0.96)', borderRadius: 24, padding: '28px 20px', width: '100%', maxWidth: 340, textAlign: 'center' }}>
-        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 4 }}>Call a suit</p>
+        <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 22, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 4 }}>Call a suit</p>
         <p style={{ fontSize: 12, color: 'rgba(122,92,122,0.55)', marginBottom: 20 }}>Your partner must match this suit</p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           {suits.map(s => (
@@ -81,7 +81,7 @@ function WhotCardView({
       boxShadow: selected ? `0 8px 20px ${SUIT_COLOR[card.suit]}55` : '0 2px 6px rgba(0,0,0,0.08)',
       ...extraStyle,
     }}>
-      <span style={{ fontSize: 22, color: selected ? 'white' : SUIT_COLOR[card.suit], fontFamily: "'Cormorant Garamond',serif", lineHeight: 1, fontWeight: 400 }}>
+      <span style={{ fontSize: 22, color: selected ? 'white' : SUIT_COLOR[card.suit], fontFamily: "var(--font-cormorant),serif", lineHeight: 1, fontWeight: 400 }}>
         {card.suit === 'whot' ? 'W' : cardLabel(card)}
       </span>
       <span style={{ fontSize: 14, color: selected ? 'rgba(255,255,255,0.85)' : SUIT_COLOR[card.suit] }}>
@@ -91,7 +91,7 @@ function WhotCardView({
         <span style={{
           position: 'absolute', bottom: 3, left: 0, right: 0, textAlign: 'center',
           fontSize: 6.5, color: selected ? 'rgba(255,255,255,0.7)' : SUIT_COLOR[card.suit],
-          letterSpacing: '0.04em', fontFamily: "'DM Sans',sans-serif", fontWeight: 600,
+          letterSpacing: '0.04em', fontFamily: "var(--font-dm-sans),sans-serif", fontWeight: 600,
           textTransform: 'uppercase',
         }}>{effect}</span>
       )}
@@ -237,7 +237,7 @@ function WhotInner() {
           position: fixed; inset: 0; overflow: hidden;
           background: linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%);
           display: flex; flex-direction: column;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
         }
 
         .whot-topbar { display: flex; align-items: center; justify-content: space-between; padding: 44px 20px 10px; flex-shrink: 0; }
@@ -256,7 +256,7 @@ function WhotInner() {
         .whot-player { flex: 1; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.55); border-radius: 12px; padding: 8px 10px; border: 1.5px solid rgba(255,255,255,0.7); transition: border-color 0.2s; }
         .whot-player.active { border-color: rgba(232,160,160,0.5); background: rgba(255,255,255,0.8); }
         .w-av { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-        .w-av-fb { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#F2C4CE,#C9B8D8); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond',serif; font-size: 13px; color: #3D2B3D; flex-shrink: 0; }
+        .w-av-fb { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#F2C4CE,#C9B8D8); display: flex; align-items: center; justify-content: center; font-family: var(--font-cormorant),serif; font-size: 13px; color: #3D2B3D; flex-shrink: 0; }
         .w-pname { font-size: 12px; color: #3D2B3D; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .w-count { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 100px; background: rgba(201,184,216,0.2); color: #7A6A8A; white-space: nowrap; flex-shrink: 0; }
         .w-lastcard { background: rgba(232,160,160,0.2) !important; color: #B06060 !important; animation: pulse 1.5s infinite; }
@@ -275,26 +275,26 @@ function WhotInner() {
         .hand-fan { position: relative; height: 120px; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
 
         .whot-action-bar { flex-shrink: 0; padding: 8px 16px 32px; display: flex; gap: 8px; }
-        .btn-play { flex: 1; padding: 13px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'DM Sans',sans-serif; transition: all 0.2s; box-shadow: 0 4px 14px rgba(232,160,160,0.3); }
+        .btn-play { flex: 1; padding: 13px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font-dm-sans),sans-serif; transition: all 0.2s; box-shadow: 0 4px 14px rgba(232,160,160,0.3); }
         .btn-play:hover:not(:disabled) { transform: translateY(-2px); }
         .btn-play:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
-        .btn-draw-card { padding: 13px 18px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.35); background: transparent; font-family: 'DM Sans',sans-serif; font-size: 13px; color: #7A5C7A; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        .btn-draw-card { padding: 13px 18px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.35); background: transparent; font-family: var(--font-dm-sans),sans-serif; font-size: 13px; color: #7A5C7A; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
         .btn-draw-card:hover:not(:disabled) { background: rgba(232,160,160,0.08); }
         .btn-draw-card:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .action-err { font-size: 12px; color: #c0706a; text-align: center; padding: 0 16px 6px; animation: fadeIn 0.2s ease; flex-shrink: 0; }
 
         .whot-finished { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; gap: 10px; }
-        .fin-title { font-family: 'Cormorant Garamond',serif; font-size: 28px; font-weight: 300; font-style: italic; color: #3D2B3D; }
-        .btn-rematch { width: 100%; max-width: 280px; padding: 14px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'DM Sans',sans-serif; box-shadow: 0 4px 16px rgba(232,160,160,0.3); }
-        .btn-back-games { width: 100%; max-width: 280px; padding: 13px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.35); background: transparent; color: #7A5C7A; font-size: 13px; cursor: pointer; font-family: 'DM Sans',sans-serif; }
+        .fin-title { font-family: var(--font-cormorant),serif; font-size: 28px; font-weight: 300; font-style: italic; color: #3D2B3D; }
+        .btn-rematch { width: 100%; max-width: 280px; padding: 14px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--font-dm-sans),sans-serif; box-shadow: 0 4px 16px rgba(232,160,160,0.3); }
+        .btn-back-games { width: 100%; max-width: 280px; padding: 13px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.35); background: transparent; color: #7A5C7A; font-size: 13px; cursor: pointer; font-family: var(--font-dm-sans),sans-serif; }
 
         .whot-waiting { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
-        .wait-code { font-family: 'Cormorant Garamond',serif; font-size: 38px; letter-spacing: 0.2em; color: #3D2B3D; cursor: pointer; }
+        .wait-code { font-family: var(--font-cormorant),serif; font-size: 38px; letter-spacing: 0.2em; color: #3D2B3D; cursor: pointer; }
 
         .code-row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; padding: 0 16px 6px; }
-        .code-row-val { font-family: 'Cormorant Garamond',serif; font-size: 14px; letter-spacing: 0.12em; color: rgba(61,43,61,0.45); }
-        .code-row-btn { font-size: 11px; color: rgba(122,92,122,0.45); background: none; border: none; cursor: pointer; font-family: 'DM Sans',sans-serif; }
+        .code-row-val { font-family: var(--font-cormorant),serif; font-size: 14px; letter-spacing: 0.12em; color: rgba(61,43,61,0.45); }
+        .code-row-btn { font-size: 11px; color: rgba(122,92,122,0.45); background: none; border: none; cursor: pointer; font-family: var(--font-dm-sans),sans-serif; }
       `}</style>
 
       {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
@@ -305,7 +305,7 @@ function WhotInner() {
         <div className="whot-topbar">
           <div>
             <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
-            <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, fontWeight: 300, color: '#3D2B3D' }}>
+            <h1 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 22, fontWeight: 300, color: '#3D2B3D' }}>
               Naija <em style={{ fontStyle: 'italic', color: '#7A5C7A' }}>Whot</em>
             </h1>
           </div>
@@ -314,7 +314,7 @@ function WhotInner() {
 
         {game.status === 'waiting' ? (
           <div className="whot-waiting">
-            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontStyle: 'italic', color: '#7A5C7A' }}>Share code with partner</p>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#7A5C7A' }}>Share code with partner</p>
             <div className="wait-code" onClick={copyCode}>{gameId}</div>
             <p style={{ fontSize: 11, color: '#B06060' }}>{copied ? 'Copied!' : 'Tap to copy'}</p>
           </div>
@@ -370,7 +370,7 @@ function WhotInner() {
             <div className="whot-table">
               <div className="deck-pile" onClick={isMyTurn ? handleDraw : undefined}>
                 <div className="deck-back">
-                  <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, color: 'white', fontStyle: 'italic' }}>W</span>
+                  <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 22, color: 'white', fontStyle: 'italic' }}>W</span>
                 </div>
                 <span className="pile-lbl">{game.deckCount ?? 0} cards</span>
                 {isMyTurn && <span style={{ fontSize: 10, color: '#B06060', fontWeight: 500 }}>{game.pendingPickup > 0 ? `Draw ${game.pendingPickup}` : 'Tap to draw'}</span>}

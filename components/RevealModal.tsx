@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { RevealModalProps, Reaction, Reply } from '@/types';
 import { getDistance } from '@/lib/location';
@@ -277,7 +278,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           margin-bottom: 2px !important;
         }
         .reveal-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 18px !important;
           font-weight: 300;
           font-style: italic;
@@ -308,7 +309,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           margin-bottom: 40px;
         }
         .reveal-text {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 19px;
           font-weight: 300;
           line-height: 1.85;
@@ -342,7 +343,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           color: #C0A0A0;
           letter-spacing: 0.05em;
           font-style: italic;
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
         }
         .reveal-close {
           width: 32px;
@@ -574,9 +575,9 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
                   {replies.map((reply) => (
                     <div key={reply.id} className="reply-item">
                       <div className="reply-header">
-                        <div className="reply-avatar">
+                        <div className="reply-avatar relative overflow-hidden">
                           {reply.userPhoto ? (
-                            <img src={reply.userPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <Image src={reply.userPhoto} alt="" fill className="object-cover" unoptimized />
                           ) : (
                             reply.userName.charAt(0).toUpperCase()
                           )}

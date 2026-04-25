@@ -25,7 +25,7 @@ export default function LandingPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400&display=swap');
+        
 
         .land-root {
           min-height: 100vh;
@@ -36,7 +36,7 @@ export default function LandingPage() {
           background: linear-gradient(160deg, #FAD0DC 0%, #EDD5F0 45%, #D5E2F8 100%);
           position: relative;
           overflow: hidden;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
         }
 
         /* floating petals */
@@ -76,7 +76,7 @@ export default function LandingPage() {
         }
 
         .land-eyebrow {
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
           font-size: 10px;
           font-weight: 400;
           letter-spacing: 0.25em;
@@ -87,7 +87,7 @@ export default function LandingPage() {
         }
 
         .land-logo {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: clamp(62px, 16vw, 96px);
           font-weight: 300;
           font-style: italic;
@@ -99,7 +99,7 @@ export default function LandingPage() {
         }
 
         .land-arabic {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 13px;
           font-weight: 300;
           color: rgba(122, 92, 122, 0.6);
@@ -117,7 +117,7 @@ export default function LandingPage() {
         }
 
         .land-tagline {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: clamp(18px, 5vw, 24px);
           font-weight: 300;
           font-style: italic;
@@ -138,7 +138,7 @@ export default function LandingPage() {
           border: 1px solid rgba(232, 160, 160, 0.4);
           border-radius: 100px;
           color: #3D2B3D;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
           font-size: 14px;
           font-weight: 400;
           letter-spacing: 0.06em;
@@ -162,7 +162,7 @@ export default function LandingPage() {
         .land-footer {
           position: absolute;
           bottom: 28px;
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 12px;
           font-style: italic;
           color: rgba(122, 92, 122, 0.45);

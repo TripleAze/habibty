@@ -6,8 +6,24 @@ export const metadata: Metadata = {
   description: 'A romantic message app for someone special',
 };
 
+import { Cormorant_Garamond, DM_Sans } from 'next/font/google';
 import AppLifecycle from '@/components/AppLifecycle';
 import AppHeader from '@/components/AppHeader';
+
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-cormorant',
+  display: 'swap',
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
 
 export default function RootLayout({
   children,
@@ -16,7 +32,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>
+      <body className={`${cormorant.variable} ${dmSans.variable}`} suppressHydrationWarning>
         <AppLifecycle />
         <AppHeader />
         {children}

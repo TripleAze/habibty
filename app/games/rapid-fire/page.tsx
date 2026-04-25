@@ -90,7 +90,7 @@ function ResultsScreen({ game, uid, router }: { game: GameState; uid: string; ro
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 20px 40px', overflow: 'auto' }}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 8 }}>Results</p>
+        <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 8 }}>Results</p>
         <p style={{ fontSize: 48, fontWeight: 700, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{matchPercent}% Match</p>
         <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)' }}>You agreed on {matches} of {allQuestions.length} questions</p>
       </div>
@@ -107,7 +107,7 @@ function ResultsScreen({ game, uid, router }: { game: GameState; uid: string; ro
           return (
             <div key={q.id} style={{ background: 'rgba(255,255,255,0.55)', borderRadius: 16, padding: '14px 16px', border: isMatch ? '1.5px solid rgba(168,213,162,0.5)' : '1.5px solid rgba(255,255,255,0.7)' }}>
               <p style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7A5C7A', marginBottom: 8 }}>Question {i + 1}</p>
-              <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 12 }}>{q.text}</p>
+              <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 14, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 12 }}>{q.text}</p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <div style={{ flex: 1, padding: '8px 12px', borderRadius: 10, background: myAnswer ? 'rgba(232,160,160,0.15)' : 'rgba(200,200,200,0.1)', border: myAnswer ? '1px solid rgba(232,160,160,0.3)' : 'none' }}>
                   <p style={{ fontSize: 10, color: 'rgba(122,92,122,0.5)', marginBottom: 2 }}>You chose</p>
@@ -128,7 +128,7 @@ function ResultsScreen({ game, uid, router }: { game: GameState; uid: string; ro
         })}
       </div>
 
-      <button onClick={() => router.push('/games')} style={{ marginTop: 24, padding: '14px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+      <button onClick={() => router.push('/games')} style={{ marginTop: 24, padding: '14px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
         Back to Games
       </button>
     </div>
@@ -217,7 +217,7 @@ function RapidFireInner() {
               ⚡
             </div>
             <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Rapid Fire</h2>
+              <h2 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Rapid Fire</h2>
               <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>60 seconds. 10 questions. How many can you and your partner agree on?</p>
             </div>
             <button onClick={handleCreate} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(232,160,160,0.2)' }}>
@@ -313,12 +313,12 @@ function RapidFireInner() {
         {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
         <GameScreen title="Rapid Fire" onExit={() => setShowExit(true)}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '0 20px' }}>
-            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Share this code with your partner</p>
-            <div onClick={copyCode} style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 36, letterSpacing: '0.2em', color: '#3D2B3D', cursor: 'pointer', padding: '16px 32px', background: 'rgba(255,255,255,0.5)', borderRadius: 16 }}>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Share this code with your partner</p>
+            <div onClick={copyCode} style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 36, letterSpacing: '0.2em', color: '#3D2B3D', cursor: 'pointer', padding: '16px 32px', background: 'rgba(255,255,255,0.5)', borderRadius: 16 }}>
               {gameId}
             </div>
             <p style={{ fontSize: 12, color: '#B06060' }}>{copied ? 'Copied!' : 'Tap to copy code'}</p>
-            <button onClick={handleJoin} style={{ marginTop: 24, padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+            <button onClick={handleJoin} style={{ marginTop: 24, padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
               Join Game
             </button>
           </div>
@@ -373,7 +373,7 @@ function RapidFireInner() {
             </svg>
             {/* Time display */}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 36, fontWeight: 700, color: '#3D2B3D' }}>
+              <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 36, fontWeight: 700, color: '#3D2B3D' }}>
                 {remaining}
               </span>
               <span style={{ fontSize: 11, color: '#7A5C7A', textTransform: 'uppercase', letterSpacing: '0.1em' }}>seconds</span>
@@ -395,7 +395,7 @@ function RapidFireInner() {
         {currentQuestion && isMyTurn && (
           <div style={{ padding: '0 20px 16px' }}>
             <div style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(8px)', borderRadius: 20, padding: '24px', border: '1.5px solid rgba(255,255,255,0.8)', textAlign: 'center' }}>
-              <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', lineHeight: 1.5 }}>
                 {currentQuestion.text}
               </p>
             </div>
@@ -456,7 +456,7 @@ function RapidFireInner() {
                 {oppPhoto ? (
                   <img src={oppPhoto} style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }} alt={opponentName} />
                 ) : (
-                  <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: '#7A5C7A' }}>{opponentName[0]?.toUpperCase()}</span>
+                  <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 32, color: '#7A5C7A' }}>{opponentName[0]?.toUpperCase()}</span>
                 )}
               </div>
               <p style={{ fontSize: 14, color: '#7A5C7A' }}>{opponentName} is answering...</p>
@@ -467,8 +467,8 @@ function RapidFireInner() {
 
         {/* Code row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 20px 16px' }}>
-          <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, letterSpacing: '0.12em', color: 'rgba(61,43,61,0.5)' }}>{gameId}</span>
-          <button onClick={copyCode} style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+          <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 14, letterSpacing: '0.12em', color: 'rgba(61,43,61,0.5)' }}>{gameId}</span>
+          <button onClick={copyCode} style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
             {copied ? 'Copied' : 'Copy'}
           </button>
         </div>

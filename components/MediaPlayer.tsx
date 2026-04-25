@@ -217,7 +217,7 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
         .mp-audio-title { font-size: 12px; font-weight: 500; color: #3D2B3D; margin-bottom: 1px; }
         .mp-audio-dur {
           font-size: 11px; color: rgba(122,92,122,0.65);
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
         }
         .mp-wave {
           display: flex; align-items: center; gap: 2.5px; height: 36px; margin-bottom: 8px;
@@ -237,8 +237,8 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
           display: flex; justify-content: space-between; align-items: center;
           margin-top: 4px;
         }
-        .mp-cur-time { font-size: 11px; color: rgba(122,92,122,0.6); font-family: 'DM Sans', sans-serif; }
-        .mp-total-time { font-size: 11px; color: rgba(122,92,122,0.5); font-family: 'DM Sans', sans-serif; }
+        .mp-cur-time { font-size: 11px; color: rgba(122,92,122,0.6); font-family: var(--font-dm-sans), sans-serif; }
+        .mp-total-time { font-size: 11px; color: rgba(122,92,122,0.5); font-family: var(--font-dm-sans), sans-serif; }
         .mp-audio-skel {
           height: 80px; border-radius: 14px;
           background: linear-gradient(90deg, rgba(232,160,160,0.1) 25%, rgba(232,160,160,0.2) 50%, rgba(232,160,160,0.1) 75%);

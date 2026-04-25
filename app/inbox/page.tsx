@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, query, where, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { unlockDueMessages, updateMessageStatus } from '@/lib/messages';
 import MessageCard from '@/components/MessageCard';
-import RevealModal from '@/components/RevealModal';
+import dynamic from 'next/dynamic';
+const RevealModal = dynamic(() => import('@/components/RevealModal'), { ssr: false });
 import BottomNav from '@/components/BottomNav';
 import { Message } from '@/types';
 import { MessageCardSkeleton, ListSkeleton } from '@/components/skeleton';
@@ -180,11 +182,13 @@ function InboxInternal() {
         <div className="flex items-center gap-3">
           <div className="partner-avatar-wrap">
             {partnerPhoto ? (
-              <img
+              <Image
                 src={partnerPhoto}
-                alt={partnerName}
+                alt={partnerName || 'Heart'}
+                width={38}
+                height={38}
                 className="partner-avatar"
-                referrerPolicy="no-referrer"
+                style={{ objectFit: 'cover' }}
               />
             ) : (
               <div className="partner-avatar-fallback">

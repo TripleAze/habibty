@@ -113,7 +113,7 @@ export default function PairPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+        
 
         .pair-root {
           min-height: 100vh;
@@ -123,7 +123,7 @@ export default function PairPage() {
           justify-content: center;
           background: linear-gradient(160deg, #FAD0DC 0%, #EDD5F0 45%, #D5E2F8 100%);
           padding: 24px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
         }
 
         .pair-card {
@@ -139,7 +139,7 @@ export default function PairPage() {
         }
 
         .pair-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 26px;
           font-weight: 300;
           font-style: italic;
@@ -169,7 +169,7 @@ export default function PairPage() {
           border: none;
           border-radius: 100px;
           background: transparent;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
           font-size: 12px;
           color: rgba(122,92,122,0.6);
           cursor: pointer;
@@ -196,7 +196,7 @@ export default function PairPage() {
           color: rgba(122,92,122,0.55);
         }
         .code-box {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 44px;
           font-weight: 400;
           letter-spacing: 0.18em;
@@ -225,7 +225,7 @@ export default function PairPage() {
           background: transparent;
           border: 1px solid rgba(232,160,160,0.5);
           border-radius: 100px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
           font-size: 13px;
           color: #7A5C7A;
           cursor: pointer;
@@ -251,7 +251,7 @@ export default function PairPage() {
           background: rgba(255,255,255,0.7);
           border: 1px solid rgba(232,160,160,0.35);
           border-radius: 16px;
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 28px;
           font-weight: 400;
           letter-spacing: 0.2em;
@@ -275,7 +275,7 @@ export default function PairPage() {
           background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
           border: none;
           border-radius: 100px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
           font-size: 14px;
           color: #fff;
           cursor: pointer;

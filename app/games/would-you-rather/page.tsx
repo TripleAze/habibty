@@ -113,7 +113,7 @@ function WouldYouRatherInner() {
               🤔
             </div>
             <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Would You Rather</h2>
+              <h2 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Would You Rather</h2>
               <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>Make impossible choices together. See if you and your partner agree!</p>
             </div>
             <button onClick={handleCreate} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#9B7EBD,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(155,126,189,0.2)' }}>
@@ -218,12 +218,12 @@ function WouldYouRatherInner() {
         {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
         <GameScreen title="Would You Rather" onExit={() => setShowExit(true)}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '0 20px' }}>
-            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Share this code with your partner</p>
-            <div onClick={copyCode} style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 36, letterSpacing: '0.2em', color: '#3D2B3D', cursor: 'pointer', padding: '16px 32px', background: 'rgba(255,255,255,0.5)', borderRadius: 16 }}>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Share this code with your partner</p>
+            <div onClick={copyCode} style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 36, letterSpacing: '0.2em', color: '#3D2B3D', cursor: 'pointer', padding: '16px 32px', background: 'rgba(255,255,255,0.5)', borderRadius: 16 }}>
               {gameId}
             </div>
             <p style={{ fontSize: 12, color: '#B06060' }}>{copied ? 'Copied!' : 'Tap to copy code'}</p>
-            <button onClick={handleJoin} style={{ marginTop: 24, padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+            <button onClick={handleJoin} style={{ marginTop: 24, padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
               Join Game
             </button>
           </div>
@@ -241,16 +241,16 @@ function WouldYouRatherInner() {
         <GameScreen title="Would You Rather" onExit={() => setShowExit(true)}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 8 }}>Game Over!</p>
+              <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 32, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 8 }}>Game Over!</p>
               <p style={{ fontSize: 48, fontWeight: 700, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{matchPercent}% Match</p>
               <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', marginTop: 8 }}>You agreed on {game.score.matches} of {game.score.total} questions</p>
             </div>
 
             <div style={{ display: 'flex', gap: 8, width: '100%', maxWidth: 320 }}>
-              <button onClick={() => router.push('/games')} style={{ flex: 1, padding: '14px', borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(232,160,160,0.35)', color: '#7A5C7A', fontSize: 14, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+              <button onClick={() => router.push('/games')} style={{ flex: 1, padding: '14px', borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(232,160,160,0.35)', color: '#7A5C7A', fontSize: 14, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
                 Back to Games
               </button>
-              <button onClick={handleCreate} style={{ flex: 1, padding: '14px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+              <button onClick={handleCreate} style={{ flex: 1, padding: '14px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
                 New Game
               </button>
             </div>
@@ -283,7 +283,7 @@ function WouldYouRatherInner() {
               {p.photo ? (
                 <img src={p.photo} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} alt={p.name} />
               ) : (
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#F2C4CE,#C9B8D8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond',serif", fontSize: 14, color: '#3D2B3D' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#F2C4CE,#C9B8D8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "var(--font-cormorant),serif", fontSize: 14, color: '#3D2B3D' }}>
                   {p.name[0]?.toUpperCase()}
                 </div>
               )}
@@ -299,11 +299,11 @@ function WouldYouRatherInner() {
         <div style={{ padding: '0 20px 16px' }}>
           <div style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(8px)', borderRadius: 20, padding: '20px', border: '1.5px solid rgba(255,255,255,0.8)' }}>
             <p style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 600, marginBottom: 12, textAlign: 'center' }}>Would You Rather</p>
-            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', lineHeight: 1.5 }}>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', lineHeight: 1.5 }}>
               {currentQuestion.optionA}
             </p>
             <div style={{ height: 1, background: 'linear-gradient(90deg,transparent,rgba(232,160,160,0.4),transparent)', margin: '16px 0' }} />
-            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', lineHeight: 1.5 }}>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', lineHeight: 1.5 }}>
               {currentQuestion.optionB}
             </p>
           </div>
@@ -334,7 +334,7 @@ function WouldYouRatherInner() {
             }}
           >
             <span style={{ fontSize: 32, fontWeight: 700, color: selected === 'A' ? 'white' : '#E8A0A0' }}>A</span>
-            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 15, fontStyle: 'italic', color: selected === 'A' ? 'white' : '#3D2B3D', textAlign: 'center', lineHeight: 1.4 }}>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 15, fontStyle: 'italic', color: selected === 'A' ? 'white' : '#3D2B3D', textAlign: 'center', lineHeight: 1.4 }}>
               {currentQuestion.optionA}
             </p>
           </button>
@@ -362,7 +362,7 @@ function WouldYouRatherInner() {
             }}
           >
             <span style={{ fontSize: 32, fontWeight: 700, color: selected === 'B' ? 'white' : '#C9B8D8' }}>B</span>
-            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 15, fontStyle: 'italic', color: selected === 'B' ? 'white' : '#3D2B3D', textAlign: 'center', lineHeight: 1.4 }}>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 15, fontStyle: 'italic', color: selected === 'B' ? 'white' : '#3D2B3D', textAlign: 'center', lineHeight: 1.4 }}>
               {currentQuestion.optionB}
             </p>
           </button>
@@ -377,7 +377,7 @@ function WouldYouRatherInner() {
             {!game.readyForNext?.includes(uid) && (
               <button
                 onClick={handleReadyForNext}
-                style={{ padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}
+                style={{ padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}
               >
                 {game.responses[uid] === game.responses[opponentUid] ? "You both chose the same! 🎉" : "Different choices! 😄"} - Next Question
               </button>
@@ -405,8 +405,8 @@ function WouldYouRatherInner() {
 
         {/* Code row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 20px 16px' }}>
-          <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, letterSpacing: '0.12em', color: 'rgba(61,43,61,0.5)' }}>{gameId}</span>
-          <button onClick={copyCode} style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+          <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 14, letterSpacing: '0.12em', color: 'rgba(61,43,61,0.5)' }}>{gameId}</span>
+          <button onClick={copyCode} style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
             {copied ? 'Copied' : 'Copy'}
           </button>
         </div>

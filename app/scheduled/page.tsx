@@ -10,7 +10,8 @@ import { unlockDueMessages } from '@/lib/messages';
 import { Message, MessageStatus } from '@/types';
 import { auth, db } from '@/lib/firebase';
 import ListSkeleton from '@/components/skeleton/ListSkeleton'; // Fixed import
-import RevealModal from '@/components/RevealModal';
+import dynamic from 'next/dynamic';
+const RevealModal = dynamic(() => import('@/components/RevealModal'), { ssr: false });
 
 function getEffectiveStatus(message: Message, now: number): MessageStatus {
   if (message.status === 'opened') return 'opened';

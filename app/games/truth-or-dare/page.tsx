@@ -59,7 +59,7 @@ function HistoryPanel({ history, playerNames, onClose }: { history: HistoryEntry
       <div style={{ background: 'white', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 480, padding: '28px 24px 40px', animation: 'slideUp 0.3s ease', maxHeight: '70vh', display: 'flex', flexDirection: 'column' }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(201,184,216,0.4)', margin: '0 auto 24px' }} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 300, fontStyle: 'italic', color: '#3D2B3D' }}>Round History</p>
+          <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontWeight: 300, fontStyle: 'italic', color: '#3D2B3D' }}>Round History</p>
           <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(201,184,216,0.2)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7A5C7A', fontSize: 16 }}>×</button>
         </div>
         <div style={{ overflow: 'auto', flex: 1 }}>
@@ -76,7 +76,7 @@ function HistoryPanel({ history, playerNames, onClose }: { history: HistoryEntry
                     <span style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)' }}>{playerNames[entry.playerId] || 'Player'}</span>
                     {entry.skipped && <span style={{ fontSize: 10, color: '#B06060', marginLeft: 'auto' }}>Skipped</span>}
                   </div>
-                  <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, fontStyle: 'italic', color: '#3D2B3D' }}>{entry.prompt}</p>
+                  <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 14, fontStyle: 'italic', color: '#3D2B3D' }}>{entry.prompt}</p>
                 </div>
               ))}
             </div>
@@ -102,7 +102,7 @@ function PromptCard({ prompt, type }: { prompt: Prompt; type: 'truth' | 'dare' }
       <p style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: type === 'truth' ? '#C9829A' : '#8B7A9E', fontWeight: 600, marginBottom: 16 }}>
         {type === 'truth' ? 'Truth' : 'Dare'}
       </p>
-      <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontStyle: 'italic', color: '#3D2B3D', lineHeight: 1.6 }}>
+      <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontStyle: 'italic', color: '#3D2B3D', lineHeight: 1.6 }}>
         {prompt.text}
       </p>
       <p style={{ fontSize: 11, color: 'rgba(122,92,122,0.4)', marginTop: 16, textTransform: 'capitalize' }}>
@@ -186,7 +186,7 @@ function TruthOrDareInner() {
               🔥
             </div>
             <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Truth or Dare</h2>
+              <h2 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Truth or Dare</h2>
               <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>Ready for some fun? Take turns choosing between deep truths and spicy dares!</p>
             </div>
             <button onClick={handleCreate} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#D4A94A,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(212,169,74,0.2)' }}>
@@ -291,12 +291,12 @@ function TruthOrDareInner() {
         {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
         <GameScreen title="Truth or Dare" onExit={() => setShowExit(true)}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '0 20px' }}>
-            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Share this code with your partner</p>
-            <div onClick={copyCode} style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 36, letterSpacing: '0.2em', color: '#3D2B3D', cursor: 'pointer', padding: '16px 32px', background: 'rgba(255,255,255,0.5)', borderRadius: 16 }}>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Share this code with your partner</p>
+            <div onClick={copyCode} style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 36, letterSpacing: '0.2em', color: '#3D2B3D', cursor: 'pointer', padding: '16px 32px', background: 'rgba(255,255,255,0.5)', borderRadius: 16 }}>
               {gameId}
             </div>
             <p style={{ fontSize: 12, color: '#B06060' }}>{copied ? 'Copied!' : 'Tap to copy code'}</p>
-            <button onClick={handleJoin} style={{ marginTop: 24, padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+            <button onClick={handleJoin} style={{ marginTop: 24, padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
               Join Game
             </button>
           </div>
@@ -312,13 +312,13 @@ function TruthOrDareInner() {
       {choosingType && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(61,43,61,0.55)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div style={{ background: 'rgba(255,255,255,0.96)', borderRadius: 24, padding: '28px 20px', width: '100%', maxWidth: 340, textAlign: 'center' }}>
-            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 4 }}>Choose your challenge</p>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 22, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 4 }}>Choose your challenge</p>
             <p style={{ fontSize: 12, color: 'rgba(122,92,122,0.55)', marginBottom: 20 }}>What will it be?</p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button onClick={() => handleChooseType('truth')} style={{ flex: 1, padding: '16px 24px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+              <button onClick={() => handleChooseType('truth')} style={{ flex: 1, padding: '16px 24px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
                 Truth
               </button>
-              <button onClick={() => handleChooseType('dare')} style={{ flex: 1, padding: '16px 24px', borderRadius: 100, background: 'linear-gradient(135deg,#C9B8D8,#E8A0A0)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+              <button onClick={() => handleChooseType('dare')} style={{ flex: 1, padding: '16px 24px', borderRadius: 100, background: 'linear-gradient(135deg,#C9B8D8,#E8A0A0)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
                 Dare
               </button>
             </div>
@@ -333,7 +333,7 @@ function TruthOrDareInner() {
             {myPhoto ? (
               <img src={myPhoto} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} alt={myName} />
             ) : (
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#F2C4CE,#C9B8D8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond',serif", fontSize: 14, color: '#3D2B3D' }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#F2C4CE,#C9B8D8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "var(--font-cormorant),serif", fontSize: 14, color: '#3D2B3D' }}>
                 {myName[0]?.toUpperCase()}
               </div>
             )}
@@ -346,7 +346,7 @@ function TruthOrDareInner() {
             {oppPhoto ? (
               <img src={oppPhoto} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} alt={opponentName} />
             ) : (
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#F2C4CE,#C9B8D8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond',serif", fontSize: 14, color: '#3D2B3D' }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#F2C4CE,#C9B8D8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "var(--font-cormorant),serif", fontSize: 14, color: '#3D2B3D' }}>
                 {opponentName[0]?.toUpperCase()}
               </div>
             )}
@@ -372,14 +372,14 @@ function TruthOrDareInner() {
               <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 340 }}>
                 <button
                   onClick={handleComplete}
-                  style={{ flex: 1, padding: '14px', borderRadius: 100, background: 'linear-gradient(135deg,#68B88B,#5A9A7A)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}
+                  style={{ flex: 1, padding: '14px', borderRadius: 100, background: 'linear-gradient(135deg,#68B88B,#5A9A7A)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}
                 >
                   Done
                 </button>
                 {mySkipsLeft > 0 && (
                   <button
                     onClick={handleSkip}
-                    style={{ padding: '14px 24px', borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(176,96,96,0.4)', color: '#B06060', fontSize: 13, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}
+                    style={{ padding: '14px 24px', borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(176,96,96,0.4)', color: '#B06060', fontSize: 13, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}
                   >
                     Skip
                   </button>
@@ -388,14 +388,14 @@ function TruthOrDareInner() {
             </>
           ) : isMyTurn ? (
             <>
-              <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center' }}>
+              <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 24, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center' }}>
                 What will it be?
               </p>
               <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 340 }}>
-                <button onClick={() => setChoosingType(true)} style={{ flex: 1, padding: '18px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+                <button onClick={() => setChoosingType(true)} style={{ flex: 1, padding: '18px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
                   Truth
                 </button>
-                <button onClick={() => setChoosingType(true)} style={{ flex: 1, padding: '18px', borderRadius: 100, background: 'linear-gradient(135deg,#C9B8D8,#E8A0A0)', border: 'none', color: 'white', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+                <button onClick={() => setChoosingType(true)} style={{ flex: 1, padding: '18px', borderRadius: 100, background: 'linear-gradient(135deg,#C9B8D8,#E8A0A0)', border: 'none', color: 'white', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
                   Dare
                 </button>
               </div>
@@ -406,7 +406,7 @@ function TruthOrDareInner() {
                 {oppPhoto ? (
                   <img src={oppPhoto} style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }} alt={opponentName} />
                 ) : (
-                  <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, color: '#7A5C7A' }}>{opponentName[0]?.toUpperCase()}</span>
+                  <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 32, color: '#7A5C7A' }}>{opponentName[0]?.toUpperCase()}</span>
                 )}
               </div>
               <p style={{ fontSize: 14, color: '#7A5C7A' }}>{opponentName} is choosing...</p>
@@ -416,15 +416,15 @@ function TruthOrDareInner() {
 
         {/* History button */}
         <div style={{ padding: '0 20px 16px', textAlign: 'center' }}>
-          <button onClick={() => setShowHistory(true)} style={{ fontSize: 12, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer', fontFamily: '"DM Sans",sans-serif', textDecoration: 'underline' }}>
+          <button onClick={() => setShowHistory(true)} style={{ fontSize: 12, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-dm-sans),sans-serif', textDecoration: 'underline' }}>
             View round history ({game.history.length})
           </button>
         </div>
 
         {/* Code row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 20px 16px' }}>
-          <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, letterSpacing: '0.12em', color: 'rgba(61,43,61,0.5)' }}>{gameId}</span>
-          <button onClick={copyCode} style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+          <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 14, letterSpacing: '0.12em', color: 'rgba(61,43,61,0.5)' }}>{gameId}</span>
+          <button onClick={copyCode} style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
             {copied ? 'Copied' : 'Copy'}
           </button>
         </div>

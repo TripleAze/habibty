@@ -106,7 +106,7 @@ export default function WordleSetupPage() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 20px 40px', overflow: 'auto' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 8 }}>Create a Word Puzzle</p>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 24, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 8 }}>Create a Word Puzzle</p>
             <p style={{ fontSize: 13, color: 'rgba(122,92,122,0.6)' }}>Set a word and hints for your partner to guess</p>
           </div>
 
@@ -128,7 +128,7 @@ export default function WordleSetupPage() {
                 border: '1.5px solid rgba(201,184,216,0.4)',
                 background: 'rgba(255,255,255,0.8)',
                 fontSize: 24,
-                fontFamily: "'Cormorant Garamond',serif",
+                fontFamily: "var(--font-cormorant),serif",
                 textAlign: 'center',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
@@ -232,7 +232,7 @@ export default function WordleSetupPage() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: 20,
-                    fontFamily: "'Cormorant Garamond',serif",
+                    fontFamily: "var(--font-cormorant),serif",
                     color: revealLetters.includes(i) ? 'white' : '#7A5C7A',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
@@ -262,7 +262,7 @@ export default function WordleSetupPage() {
               fontSize: 14,
               fontWeight: 500,
               cursor: creating ? 'not-allowed' : 'pointer',
-              fontFamily: "'DM Sans',sans-serif",
+              fontFamily: "var(--font-dm-sans),sans-serif",
               opacity: creating ? 0.7 : 1,
             }}
           >

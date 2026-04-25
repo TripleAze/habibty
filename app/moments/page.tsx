@@ -205,7 +205,7 @@ export default function MomentsPage() {
           font-style: italic;
         }
         .moment-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 16px;
           font-weight: 600;
           color: #3D2B3D;
@@ -223,7 +223,7 @@ export default function MomentsPage() {
           border-top: 1px dashed rgba(232, 160, 160, 0.3);
         }
         .timeline-start-label {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 14px;
           font-style: italic;
           color: #C9B8D8;
@@ -245,7 +245,7 @@ export default function MomentsPage() {
           opacity: 0.8;
         }
         .empty-moments-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 24px;
           margin-bottom: 12px;
           color: #3D2B3D;

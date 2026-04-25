@@ -130,7 +130,7 @@ export default function MessageActions({
           border: 1px solid rgba(232, 160, 160, 0.3);
           background: rgba(247, 232, 238, 0.5);
           font-size: 14px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
           color: #3D2B3D;
           outline: none;
           transition: all 0.2s;

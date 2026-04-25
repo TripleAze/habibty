@@ -22,16 +22,16 @@ function ExitSheet({
         animation: 'slideUp 0.3s ease',
       }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(201,184,216,0.4)', margin: '0 auto 24px' }} />
-        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 300, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', marginBottom: 6 }}>Leave game?</p>
+        <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontWeight: 300, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', marginBottom: 6 }}>Leave game?</p>
         <p style={{ fontSize: 12, color: 'rgba(122,92,122,0.6)', textAlign: 'center', marginBottom: 24 }}>Your game is saved — you can come back anytime</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button onClick={onResume} style={{ padding: '14px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+          <button onClick={onResume} style={{ padding: '14px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
             Resume game
           </button>
-          <button onClick={onMessages} style={{ padding: '14px', borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(232,160,160,0.35)', color: '#7A5C7A', fontSize: 14, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+          <button onClick={onMessages} style={{ padding: '14px', borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(232,160,160,0.35)', color: '#7A5C7A', fontSize: 14, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
             Open messages
           </button>
-          <button onClick={onLeave} style={{ padding: '14px', borderRadius: 100, background: 'transparent', border: 'none', color: '#B06060', fontSize: 13, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+          <button onClick={onLeave} style={{ padding: '14px', borderRadius: 100, background: 'transparent', border: 'none', color: '#B06060', fontSize: 13, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
             Leave game
           </button>
         </div>
@@ -118,7 +118,7 @@ function TicTacToeInner() {
               ✕
             </div>
             <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Tic Tac Toe</h2>
+              <h2 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Tic Tac Toe</h2>
               <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>Classic 3×3 strategy. Play a quick game with your partner!</p>
             </div>
             <button onClick={handleCreateLocal} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(232,160,160,0.2)' }}>
@@ -177,7 +177,7 @@ function TicTacToeInner() {
           position: fixed; inset: 0; overflow: hidden;
           background: linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%);
           display: flex; flex-direction: column;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
         }
         .ttt-topbar {
           display: flex; align-items: center; justify-content: space-between;
@@ -190,7 +190,7 @@ function TicTacToeInner() {
           cursor: pointer; font-size: 14px; color: #7A5C7A;
           backdrop-filter: blur(8px);
         }
-        .ttt-title { font-family: 'Cormorant Garamond',serif; font-size: 22px; font-weight: 300; color: #3D2B3D; }
+        .ttt-title { font-family: var(--font-cormorant),serif; font-size: 22px; font-weight: 300; color: #3D2B3D; }
         .ttt-title em { font-style: italic; color: #7A5C7A; }
 
         .ttt-status-pill {
@@ -222,7 +222,7 @@ function TicTacToeInner() {
         }
         .ttt-player.active { border-color: rgba(232,160,160,0.5); background: rgba(255,255,255,0.8); }
         .ttt-pav { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1.5px solid rgba(255,255,255,0.8); }
-        .ttt-pav-fb { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#F2C4CE,#C9B8D8); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond',serif; font-size: 15px; color: #3D2B3D; flex-shrink: 0; }
+        .ttt-pav-fb { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#F2C4CE,#C9B8D8); display: flex; align-items: center; justify-content: center; font-family: var(--font-cormorant),serif; font-size: 15px; color: #3D2B3D; flex-shrink: 0; }
         .ttt-pname { font-size: 13px; color: #3D2B3D; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .ttt-sym { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 100px; }
         .sym-x { background: rgba(232,160,160,0.2); color: #B06060; }
@@ -241,7 +241,7 @@ function TicTacToeInner() {
           background: rgba(255,255,255,0.65); backdrop-filter: blur(8px);
           border: 1.5px solid rgba(255,255,255,0.8);
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Cormorant Garamond',serif; font-size: 40px; font-weight: 300;
+          font-family: var(--font-cormorant),serif; font-size: 40px; font-weight: 300;
           cursor: default; user-select: none; transition: all 0.18s ease;
         }
         .ttt-cell.playable { cursor: pointer; }
@@ -253,17 +253,17 @@ function TicTacToeInner() {
         .ttt-actions {
           padding: 12px 20px 32px; flex-shrink: 0; display: flex; gap: 8px;
         }
-        .ttt-btn-main { flex: 1; padding: 14px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'DM Sans',sans-serif; }
-        .ttt-btn-sec { padding: 14px 18px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.35); background: transparent; color: #7A5C7A; font-size: 13px; cursor: pointer; font-family: 'DM Sans',sans-serif; white-space: nowrap; }
+        .ttt-btn-main { flex: 1; padding: 14px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--font-dm-sans),sans-serif; }
+        .ttt-btn-sec { padding: 14px 18px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.35); background: transparent; color: #7A5C7A; font-size: 13px; cursor: pointer; font-family: var(--font-dm-sans),sans-serif; white-space: nowrap; }
 
         .ttt-code-row { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 20px 8px; flex-shrink: 0; }
-        .ttt-code-val { font-family: 'Cormorant Garamond',serif; font-size: 15px; letter-spacing: 0.12em; color: rgba(61,43,61,0.5); }
-        .ttt-code-copy { font-size: 11px; color: rgba(122,92,122,0.5); background: none; border: none; cursor: pointer; font-family: 'DM Sans',sans-serif; }
+        .ttt-code-val { font-family: var(--font-cormorant),serif; font-size: 15px; letter-spacing: 0.12em; color: rgba(61,43,61,0.5); }
+        .ttt-code-copy { font-size: 11px; color: rgba(122,92,122,0.5); background: none; border: none; cursor: pointer; font-family: var(--font-dm-sans),sans-serif; }
 
         .ttt-waiting-center {
           flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
         }
-        .ttt-waiting-code { font-family: 'Cormorant Garamond',serif; font-size: 36px; letter-spacing: 0.2em; color: #3D2B3D; cursor: pointer; }
+        .ttt-waiting-code { font-family: var(--font-cormorant),serif; font-size: 36px; letter-spacing: 0.2em; color: #3D2B3D; cursor: pointer; }
       `}</style>
 
       {showExit && (
@@ -286,7 +286,7 @@ function TicTacToeInner() {
 
         {game.status === 'waiting' ? (
           <div className="ttt-waiting-center">
-            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontStyle: 'italic', color: '#7A5C7A' }}>Share this code with your partner</p>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#7A5C7A' }}>Share this code with your partner</p>
             <div className="ttt-waiting-code" onClick={copyCode}>{gameId}</div>
             <p style={{ fontSize: 11, color: '#B06060' }}>{copied ? 'Copied!' : 'Tap to copy'}</p>
           </div>

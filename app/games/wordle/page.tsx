@@ -149,7 +149,7 @@ function Tile({
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: 28,
-        fontFamily: "'Cormorant Garamond',serif",
+        fontFamily: "var(--font-cormorant),serif",
         fontWeight: 600,
         color: state ? 'white' : '#3D2B3D',
         transition: isRevealing ? 'all 0.5s ease' : 'all 0.15s',
@@ -212,7 +212,7 @@ function HintBanner({
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: 18,
-                  fontFamily: "'Cormorant Garamond',serif",
+                  fontFamily: "var(--font-cormorant),serif",
                   fontWeight: 600,
                   color: hints.revealLetters.includes(i) ? 'white' : 'rgba(122,92,122,0.3)',
                 }}
@@ -398,8 +398,8 @@ function WordleInner() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '0 20px' }}>
             {isCreator ? (
               <>
-                <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Share this code with your partner</p>
-                <div onClick={copyCode} style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 36, letterSpacing: '0.2em', color: '#3D2B3D', cursor: 'pointer', padding: '16px 32px', background: 'rgba(255,255,255,0.5)', borderRadius: 16 }}>
+                <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Share this code with your partner</p>
+                <div onClick={copyCode} style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 36, letterSpacing: '0.2em', color: '#3D2B3D', cursor: 'pointer', padding: '16px 32px', background: 'rgba(255,255,255,0.5)', borderRadius: 16 }}>
                   {gameId}
                 </div>
                 <p style={{ fontSize: 12, color: '#B06060' }}>{copied ? 'Copied!' : 'Tap to copy code'}</p>
@@ -409,8 +409,8 @@ function WordleInner() {
               </>
             ) : (
               <>
-                <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Join this word puzzle?</p>
-                <button onClick={handleJoin} style={{ padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+                <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Join this word puzzle?</p>
+                <button onClick={handleJoin} style={{ padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
                   Join Game
                 </button>
               </>
@@ -432,7 +432,7 @@ function WordleInner() {
         <GameScreen title="Partner Wordle" onExit={() => setShowExit(true)}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 32, fontStyle: 'italic', color: won ? '#5A7A56' : '#B06060', marginBottom: 8 }}>
+              <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 32, fontStyle: 'italic', color: won ? '#5A7A56' : '#B06060', marginBottom: 8 }}>
                 {won ? 'You won! 🎉' : lost ? 'Better luck next time!' : 'Game Over'}
               </p>
               {isCreator && (
@@ -443,10 +443,10 @@ function WordleInner() {
             </div>
 
             <div style={{ display: 'flex', gap: 8, width: '100%', maxWidth: 320 }}>
-              <button onClick={() => router.push('/games')} style={{ flex: 1, padding: '14px', borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(232,160,160,0.35)', color: '#7A5C7A', fontSize: 14, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+              <button onClick={() => router.push('/games')} style={{ flex: 1, padding: '14px', borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(232,160,160,0.35)', color: '#7A5C7A', fontSize: 14, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
                 Back to Games
               </button>
-              <button onClick={handleCreate} style={{ flex: 1, padding: '14px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+              <button onClick={handleCreate} style={{ flex: 1, padding: '14px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
                 New Game
               </button>
             </div>
@@ -468,7 +468,7 @@ function WordleInner() {
         {/* Category hint */}
         <div style={{ padding: '0 20px 8px', textAlign: 'center' }}>
           <p style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 600, marginBottom: 4 }}>Category</p>
-          <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, fontStyle: 'italic', color: '#3D2B3D' }}>{game?.hints?.category}</p>
+          <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 16, fontStyle: 'italic', color: '#3D2B3D' }}>{game?.hints?.category}</p>
         </div>
 
         {/* Hint banner */}
@@ -532,8 +532,8 @@ function WordleInner() {
 
         {/* Code row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 20px 12px' }}>
-          <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, letterSpacing: '0.12em', color: 'rgba(61,43,61,0.5)' }}>{gameId}</span>
-          <button onClick={copyCode} style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Sans',sans-serif" }}>
+          <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 14, letterSpacing: '0.12em', color: 'rgba(61,43,61,0.5)' }}>{gameId}</span>
+          <button onClick={copyCode} style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
             {copied ? 'Copied' : 'Copy'}
           </button>
         </div>

@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -27,7 +27,7 @@
 
 html, body {
   height: 100%;
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  font-family: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
   background: var(--cream);
   color: var(--ink);
   overflow-x: hidden;
@@ -68,7 +68,7 @@ html, body {
 }
 
 .app-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 22px;
   font-weight: 600;
   font-style: italic;
@@ -102,7 +102,7 @@ html, body {
 }
 
 .home-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 32px;
   font-weight: 300;
   color: var(--ink);
@@ -139,7 +139,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Cormorant Garamond', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", serif;
+  font-family: var(--font-cormorant), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", serif;
   font-size: 22px;
   font-weight: 400;
   color: var(--ink);
@@ -294,7 +294,7 @@ html, body {
 }
 
 .card-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 14px;
   font-weight: 400;
   color: var(--ink);
@@ -415,7 +415,7 @@ html, body {
 }
 
 .reveal-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 18px;
   font-weight: 300;
   font-style: italic;
@@ -451,7 +451,7 @@ html, body {
 }
 
 .reveal-text {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 19px;
   font-weight: 300;
   line-height: 1.85;
@@ -462,7 +462,7 @@ html, body {
 }
 
 .reveal-text {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 18px;
   font-weight: 300;
   line-height: 1.8;
@@ -586,7 +586,7 @@ html, body {
 .back-btn:hover { color: var(--ink); }
 
 .create-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 32px;
   font-weight: 300;
   color: var(--ink);
@@ -630,7 +630,7 @@ html, body {
   border: 1px solid rgba(232, 160, 160, 0.25);
   border-radius: 14px;
   padding: 14px 18px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), sans-serif;
   font-size: 14px;
   color: var(--ink);
   transition: all 0.25s;
@@ -706,7 +706,7 @@ html, body {
   color: var(--soft-ink);
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), sans-serif;
   backdrop-filter: blur(6px);
 }
 
@@ -725,7 +725,7 @@ html, body {
   border: none;
   padding: 18px;
   border-radius: 100px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), sans-serif;
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
@@ -797,7 +797,7 @@ html, body {
   border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-.tl-title { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
+.tl-title { font-family: var(--font-cormorant), serif; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
 .tl-meta  { font-size: 11px; color: #B09090; margin-bottom: 8px; }
 
 .tl-badge {
@@ -905,7 +905,7 @@ html, body {
 }
 
 .empty-state-text {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 18px;
   font-style: italic;
   font-weight: 300;
@@ -959,7 +959,7 @@ html, body {
 }
 
 .splash-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 42px;
   font-weight: 300;
   color: var(--ink);
@@ -1699,7 +1699,7 @@ html, body {
 }
 
 .game-name {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 18px;
   font-weight: 500;
   color: var(--ink);
@@ -1724,7 +1724,7 @@ html, body {
   flex: 1;
   padding: 10px 14px;
   border-radius: 100px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), sans-serif;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -1844,7 +1844,7 @@ html, body {
 }
 
 .pf-section-label {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-cormorant), serif;
   font-size: 14px;
   font-style: italic;
   letter-spacing: 0.1em;

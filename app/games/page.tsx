@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -234,7 +235,7 @@ export default function GamesPage() {
               <div className="game-card-header">
                 <div className="game-icon-wrap" style={{ background: g.bg, border: `1px solid ${g.border}` }}>
                   {g.icon
-                    ? <img src={g.icon} alt={g.name} />
+                    ? <div className="relative w-full h-full"><Image src={g.icon} alt={g.name} fill className="object-contain" unoptimized /></div>
                     : <span style={{ color: g.color, fontSize: '20px' }}>{g.symbol || g.name[0]}</span>
                   }
                 </div>

@@ -28,7 +28,7 @@ export default function GameScreen({ title, subtitle, onExit, children }: GameSc
           position: fixed; inset: 0; overflow: hidden;
           background: linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%);
           display: flex; flex-direction: column;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
         }
         .game-topbar {
           display: flex; align-items: center; justify-content: space-between;
@@ -41,7 +41,7 @@ export default function GameScreen({ title, subtitle, onExit, children }: GameSc
           cursor: pointer; font-size: 14px; color: #7A5C7A;
           backdrop-filter: blur(8px);
         }
-        .game-title { font-family: 'Cormorant Garamond',serif; font-size: 22px; font-weight: 300; color: #3D2B3D; }
+        .game-title { font-family: var(--font-cormorant),serif; font-size: 22px; font-weight: 300; color: #3D2B3D; }
         .game-title em { font-style: italic; color: #7A5C7A; }
         .game-label { font-size: 10px; letter-spacing: '0.2em'; text-transform: uppercase; color: '#C9829A'; font-weight: 500; margin-bottom: 3px; }
       `}</style>

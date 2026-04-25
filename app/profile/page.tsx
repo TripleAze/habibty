@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
@@ -226,9 +227,9 @@ export default function ProfilePage() {
             onClick={() => fileInputRef.current?.click()}
           >
             <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-[#E8A0A0] to-[#C9B8D8] shadow-lg transition-transform duration-300 group-hover:scale-105">
-              <div className="w-full h-full rounded-full overflow-hidden border-4 border-white bg-white">
+              <div className="w-full h-full rounded-full overflow-hidden border-4 border-white bg-white relative">
                 {photoURL ? (
-                  <img src={photoURL} className="w-full h-full object-cover" alt="avatar" referrerPolicy="no-referrer" />
+                  <Image src={photoURL} fill className="object-cover" alt="avatar" unoptimized />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gray-50 text-3xl font-serif">
                     {displayName?.[0]?.toUpperCase() || 'H'}

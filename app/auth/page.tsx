@@ -87,7 +87,7 @@ export default function AuthPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400&display=swap');
+        
 
         .auth-root {
           min-height: 100vh;
@@ -97,7 +97,7 @@ export default function AuthPage() {
           justify-content: center;
           background: linear-gradient(160deg, #FAD0DC 0%, #EDD5F0 45%, #D5E2F8 100%);
           padding: 24px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
           position: relative;
           overflow: hidden;
         }
@@ -129,7 +129,7 @@ export default function AuthPage() {
         }
 
         .auth-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 28px;
           font-weight: 300;
           font-style: italic;
@@ -164,7 +164,7 @@ export default function AuthPage() {
           background: rgba(255,255,255,0.85);
           border: 1px solid rgba(232,160,160,0.35);
           border-radius: 100px;
-          font-family: 'DM Sans', sans-serif;
+          font-family: var(--font-dm-sans), sans-serif;
           font-size: 14px;
           font-weight: 400;
           color: #3D2B3D;
@@ -210,7 +210,7 @@ export default function AuthPage() {
 
         .auth-footer {
           margin-top: 24px;
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--font-cormorant), serif;
           font-size: 12px;
           font-style: italic;
           color: rgba(122,92,122,0.4);
