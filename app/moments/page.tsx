@@ -268,7 +268,7 @@ export default function MomentsPage() {
         }
       `}</style>
 
-      <BottomNav activeTab="moments" />
+      <BottomNav activeTab="profile" />
     </div>
   );
 }

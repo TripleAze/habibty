@@ -114,7 +114,7 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
             width: 100%;
             border-radius: 14px;
             overflow: hidden;
-            background: #000;
+            background: transparent;
             cursor: pointer;
           }
           .mp-video-wrap video {
@@ -122,7 +122,7 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
             height: auto;
             max-height: 70vh;
             display: block;
-            object-fit: contain;
+            object-fit: cover;
           }
           .mp-video-wrap video.hidden { opacity: 0; position: absolute; pointer-events: none; }
           .mp-video-skel {
@@ -149,27 +149,6 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
             box-shadow: 0 4px 20px rgba(0,0,0,0.25);
           }
           .mp-big-play:hover { transform: scale(1.1); }
-          .mp-video-bar {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
-            padding: 20px 14px 12px;
-            display: flex; align-items: center; gap: 10px;
-            opacity: 0; transition: opacity 0.25s;
-          }
-          .mp-video-wrap:hover .mp-video-bar,
-          .mp-video-bar.show { opacity: 1; }
-          .mp-seek {
-            flex: 1; -webkit-appearance: none; appearance: none;
-            height: 3px; border-radius: 2px;
-            background: rgba(255,255,255,0.35); outline: none; cursor: pointer;
-          }
-          .mp-seek::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 12px; height: 12px;
-            border-radius: 50%; background: white; cursor: pointer;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-          }
-          .mp-time { font-size: 11px; color: rgba(255,255,255,0.9); white-space: nowrap; font-family: 'DM Sans', sans-serif; font-weight: 500; }
-          .mp-small-play { background: none; border: none; font-size: 16px; cursor: pointer; flex-shrink: 0; padding: 0; }
         `}</style>
 
         <div
@@ -189,6 +168,7 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
             className={mediaLoaded ? '' : 'hidden'}
             playsInline
             preload="metadata"
+            loop
           />
 
           {/* Centre play/pause overlay */}
@@ -197,25 +177,6 @@ export default function MediaPlayer({ src, type, autoPlay = false, onLoaded }: M
               <button type="button" className="mp-big-play" onClick={e => { e.stopPropagation(); togglePlay(); }}>
                 {isPlaying ? '⏸' : '▶'}
               </button>
-            </div>
-          )}
-
-          {/* Bottom bar */}
-          {mediaLoaded && (
-            <div className={`mp-video-bar ${showControls ? 'show' : ''}`} onClick={e => e.stopPropagation()}>
-              <button type="button" className="mp-small-play" onClick={togglePlay}>
-                {isPlaying ? '⏸' : '▶'}
-              </button>
-              <input
-                className="mp-seek"
-                type="range" min="0" max="100"
-                value={progress}
-                onChange={handleSeek}
-                style={{
-                  background: `linear-gradient(to right, rgba(255,255,255,0.9) ${progress}%, rgba(255,255,255,0.3) ${progress}%)`,
-                }}
-              />
-              <span className="mp-time">{formatTime(currentTime)} / {formatTime(duration)}</span>
             </div>
           )}
         </div>

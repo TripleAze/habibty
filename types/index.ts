@@ -83,7 +83,7 @@ export interface RevealModalProps {
 }
 
 export interface BottomNavProps {
-  activeTab: 'inbox' | 'create' | 'games' | 'scheduled' | 'moments' | 'profile';
+  activeTab: 'inbox' | 'sent' | 'create' | 'games' | 'profile';
 }
 
 // ─── WHOT GAME TYPES ──────────────────────────────────────

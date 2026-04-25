@@ -378,6 +378,10 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
+
+            <Link href="/moments" className="block w-full py-3 rounded-2xl bg-white border border-[#E8A0A0]/20 text-center shadow-sm hover:shadow-md transition-all mt-4 mb-8">
+              <span className="text-sm font-bold text-[#E8A0A0]">View Our Memories ✨</span>
+            </Link>
           </div>
         )}
 

@@ -21,7 +21,7 @@ export default function BottomNav({ activeTab }: BottomNavProps) {
 
       <Link href="/inbox" className={`nav-item ${activeTab === 'inbox' ? 'active' : ''}`}>
         <div className="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke('inbox')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={stroke('inbox')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20 4H4a1 1 0 00-1 1v14a1 1 0 001 1h16a1 1 0 001-1V5a1 1 0 00-1-1z"/>
             <path d="M3 7l9 6 9-6"/>
           </svg>
@@ -29,18 +29,26 @@ export default function BottomNav({ activeTab }: BottomNavProps) {
         <span className="nav-label">Inbox</span>
       </Link>
 
-      <Link href="/create" className={`nav-item ${activeTab === 'create' ? 'active' : ''}`}>
+      <Link href="/scheduled" className={`nav-item ${activeTab === 'sent' ? 'active' : ''}`}>
         <div className="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke('create')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={stroke('sent')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/>
+          </svg>
+        </div>
+        <span className="nav-label">Sent</span>
+      </Link>
+
+      <Link href="/create" className={`nav-fab nav-item ${activeTab === 'create' ? 'active' : ''}`}>
+        <div className="nav-fab-inner">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14"/>
           </svg>
         </div>
-        <span className="nav-label">Create</span>
       </Link>
 
       <Link href="/games" className={`nav-item ${activeTab === 'games' ? 'active' : ''}`}>
         <div className="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke('games')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={stroke('games')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <rect x="2" y="7" width="20" height="14" rx="2"/>
             <path d="M16 3l-4 4-4-4"/>
             <circle cx="9" cy="14" r="1.5" fill={fill('games')} stroke="none"/>
@@ -50,27 +58,9 @@ export default function BottomNav({ activeTab }: BottomNavProps) {
         <span className="nav-label">Games</span>
       </Link>
 
-      <Link href="/scheduled" className={`nav-item ${activeTab === 'scheduled' ? 'active' : ''}`}>
-        <div className="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke('scheduled')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/>
-          </svg>
-        </div>
-        <span className="nav-label">Sent</span>
-      </Link>
-
-      <Link href="/moments" className={`nav-item ${activeTab === 'moments' ? 'active' : ''}`}>
-        <div className="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke('moments')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-          </svg>
-        </div>
-        <span className="nav-label">Memories</span>
-      </Link>
-
       <Link href="/profile" className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}>
         <div className="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={stroke('profile')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={stroke('profile')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="8" r="4"/>
             <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
           </svg>

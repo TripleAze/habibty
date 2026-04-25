@@ -182,7 +182,6 @@ export default function GamesPage() {
       color: '#68B88B',
       bg: 'rgba(104,184,139,0.12)',
       border: 'rgba(104,184,139,0.3)',
-      new: true,
     },
     {
       type: 'truthordare',
@@ -192,7 +191,6 @@ export default function GamesPage() {
       color: '#D4A94A',
       bg: 'rgba(212,169,74,0.12)',
       border: 'rgba(212,169,74,0.3)',
-      new: true,
     },
     {
       type: 'rapidfire',
@@ -202,7 +200,6 @@ export default function GamesPage() {
       color: '#E8A0A0',
       bg: 'rgba(232,160,160,0.12)',
       border: 'rgba(232,160,160,0.3)',
-      new: true,
     },
     {
       type: 'wouldyourather',
@@ -212,7 +209,6 @@ export default function GamesPage() {
       color: '#9B7EBD',
       bg: 'rgba(155,126,189,0.12)',
       border: 'rgba(155,126,189,0.3)',
-      new: true,
     },
   ];
 

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import {
-  doc, getDoc, setDoc, updateDoc,
+  doc, onSnapshot, setDoc, updateDoc,
   collection, query, where, getDocs,
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -23,18 +23,32 @@ export default function PairPage() {
 
   useEffect(() => {
     if (!auth) return;
-    const unsub = onAuthStateChanged(auth, async (user) => {
+    
+    let unsubscribeDoc: () => void;
+
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
       if (!user) { router.replace('/auth'); return; }
       setUid(user.uid);
-      const snap = await getDoc(doc(db, 'users', user.uid));
-      if (snap.exists()) {
-        const data = snap.data();
-        if (data.partnerId) { router.replace('/inbox'); return; }
-        setMyCode(data.inviteCode || '');
-      }
-      setChecking(false);
+      
+      // Use real-time listener instead of a one-time getDoc
+      unsubscribeDoc = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.partnerId) {
+            setStatus('Paired! Taking you to your inbox 💌');
+            setTimeout(() => router.replace('/inbox'), 1500);
+            return; 
+          }
+          setMyCode(data.inviteCode || '');
+        }
+        setChecking(false);
+      });
     });
-    return () => unsub();
+
+    return () => {
+      unsubAuth();
+      if (unsubscribeDoc) unsubscribeDoc();
+    };
   }, [router]);
 
   const handlePair = async () => {

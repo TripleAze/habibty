@@ -588,23 +588,25 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
                   ))}
                 </div>
               )}
-
-              {/* Interaction Buttons */}
-              <MessageActions
-                messageId={message.id}
-                userReaction={userReaction}
-                onReactionChange={() => {}}
-                onReplySent={() => {}}
-                onPlayTogether={() => {
-                  onClose();
-                  setTimeout(() => router.push('/games'), 300);
-                }}
-              />
             </div>
           </div>
 
+          {/* Sticky Bottom Actions Bar */}
+          <div className={`reveal-actions-bar ${showActions ? 'visible' : ''}`} style={{ padding: '0 24px 16px', background: '#fff', borderTop: '0.5px solid rgba(232,160,160,0.12)', flexShrink: 0, opacity: showActions ? 1 : 0, transition: 'opacity 0.6s' }}>
+            <MessageActions
+              messageId={message.id}
+              userReaction={userReaction}
+              onReactionChange={() => {}}
+              onReplySent={() => {}}
+              onPlayTogether={() => {
+                onClose();
+                setTimeout(() => router.push('/games'), 300);
+              }}
+            />
+          </div>
+
           {/* Footer — fixed */}
-          <div className="reveal-card-footer">
+          <div className="reveal-card-footer" style={{ borderTop: 'none', paddingTop: 0 }}>
             <p className="reveal-date">
               {message.type === 'voice'
                 ? message.meta || `Voice · ${formatDate(message.createdAt)}`

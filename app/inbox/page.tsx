@@ -12,7 +12,6 @@ import BottomNav from '@/components/BottomNav';
 import { Message } from '@/types';
 import { MessageCardSkeleton, ListSkeleton } from '@/components/skeleton';
 import { subscribeToPresence, Presence, getPresenceStatusText } from '@/lib/presence';
-import NotificationBell from '@/components/NotificationBell';
 import { Suspense } from 'react';
 
 function InboxInternal() {
@@ -173,13 +172,12 @@ function InboxInternal() {
       <div className="home-header">
         <div className="home-header-left">
           <p className="home-label">Your inbox</p>
-          <h1 className="home-title">
+          <h1 className="home-title" style={{ fontSize: '28px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             From <em>{partnerName || 'your love'}</em>
           </h1>
         </div>
 
         <div className="flex items-center gap-3">
-          <NotificationBell />
           <div className="partner-avatar-wrap">
             {partnerPhoto ? (
               <img

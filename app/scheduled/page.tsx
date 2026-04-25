@@ -249,7 +249,7 @@ function ScheduledInternal() {
         )}
       </div>
 
-      <BottomNav activeTab="scheduled" />
+      <BottomNav activeTab="sent" />
 
       <RevealModal 
         isOpen={isModalOpen}
