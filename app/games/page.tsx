@@ -10,6 +10,7 @@ import { createGame, joinGame } from '@/lib/games';
 import { createWhotGame, joinWhotGame } from '@/lib/whot';
 import BottomNav from '@/components/BottomNav';
 import { useHeader } from '@/lib/HeaderContext';
+import NotificationBell from '@/components/NotificationBell';
 
 type GameType = 'tictactoe' | 'whot' | 'wordle' | 'truthordare' | 'rapidfire' | 'wouldyourather';
 
@@ -217,6 +218,7 @@ export default function GamesPage() {
             <p className="home-label">Games</p>
             <h1 className="home-title">Play <em>together</em></h1>
           </div>
+          <NotificationBell />
         </div>
 
         <div className="section-label">Available games</div>

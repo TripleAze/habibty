@@ -13,6 +13,7 @@ import { MessageType, DeliveryType, UnlockConditionType, Message } from '@/types
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { MediaSkeleton } from '@/components/skeleton';
 import { useHeader } from '@/lib/HeaderContext';
+import NotificationBell from '@/components/NotificationBell';
 
 const MOOD_CHIPS = [
   'Sad',
@@ -249,6 +250,7 @@ export default function CreatePage() {
         <Link href="/inbox" className="back-btn">
           ← Back
         </Link>
+        <NotificationBell />
         <h1 className="create-title">
           Create a
           <br />

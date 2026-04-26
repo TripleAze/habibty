@@ -16,6 +16,7 @@ import { MessageCardSkeleton, ListSkeleton } from '@/components/skeleton';
 import { subscribeToPresence, Presence, getPresenceStatusText } from '@/lib/presence';
 import { Suspense } from 'react';
 import { useHeader } from '@/lib/HeaderContext';
+import NotificationBell from '@/components/NotificationBell';
 
 function InboxInternal() {
   useHeader({ hide: true });
@@ -182,6 +183,7 @@ function InboxInternal() {
         </div>
 
         <div className="flex items-center gap-3">
+          <NotificationBell />
           <div className="partner-avatar-wrap">
             {partnerPhoto ? (
               <Image

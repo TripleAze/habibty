@@ -9,6 +9,7 @@ import { subscribeToMoments, Moment } from '@/lib/moments';
 import BottomNav from '@/components/BottomNav';
 import ListSkeleton from '@/components/skeleton/ListSkeleton';
 import { useHeader } from '@/lib/HeaderContext';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function MomentsPage() {
   useHeader({ hide: true });
@@ -91,6 +92,7 @@ export default function MomentsPage() {
           <p className="home-label">Our Journey</p>
           <h1 className="home-title">Shared <em>memories</em></h1>
         </div>
+        <NotificationBell />
       </div>
 
       <div className="moments-timeline">

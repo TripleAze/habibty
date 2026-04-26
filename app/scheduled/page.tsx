@@ -13,6 +13,7 @@ import ListSkeleton from '@/components/skeleton/ListSkeleton'; // Fixed import
 import dynamic from 'next/dynamic';
 const RevealModal = dynamic(() => import('@/components/RevealModal'), { ssr: false });
 import { useHeader } from '@/lib/HeaderContext';
+import NotificationBell from '@/components/NotificationBell';
 
 function getEffectiveStatus(message: Message, now: number): MessageStatus {
   if (message.status === 'opened') return 'opened';
@@ -177,6 +178,7 @@ function ScheduledInternal() {
           </svg>
           Back
         </Link>
+        <NotificationBell />
         <p className="home-label">Memories & Magic</p>
         <h1 className="home-title" style={{ fontSize: '28px' }}>
           Your <em>journey</em> <span>✨</span>

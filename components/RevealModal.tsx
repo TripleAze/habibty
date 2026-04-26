@@ -313,7 +313,14 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         }
         .rev-scroll-body::-webkit-scrollbar { display: none; }
         
-        .rev-center-content { align-items: center; justify-content: center; min-height: 100%; }
+        .rev-scroll-inner {
+          margin: auto 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+          min-height: min-content;
+        }
 
         .rev-text-wrap { max-width: 600px; width: 100%; text-align: center; }
         .rev-text {
@@ -381,13 +388,14 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           text-align: center;
           transition: opacity 0.2s ease;
           pointer-events: none;
+          z-index: 100;
         }
         .rev-swipe-hint.hide { opacity: 0; }
         .rev-hint-arrow { color: #E8A0A0; opacity: 0.6; font-size: 16px; display: block; animation: rev-bounce 1.8s ease-in-out infinite; }
-        .rev-hint-text { font-family: var(--font-dm-sans); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(122, 92, 122, 0.5); }
+        .rev-hint-text { font-family: var(--font-dm-sans), sans-serif; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(122, 92, 122, 0.5); }
         @keyframes rev-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
-        .rev-date-stamp { font-family: var(--font-cormorant), serif; font-style: italic; font-size: 12px; color: #C0A0A0; text-align: center; margin-top: 32px; }
+        .rev-date-stamp { font-family: var(--font-cormorant), serif; font-style: italic; font-size: 12px; color: #C0A0A0; text-align: center; margin-top: 32px; width: 100%; }
 
         /* Layer 2: Actions Sheet */
         .rev-actions-sheet {
@@ -416,7 +424,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         .rev-reactions-thread { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
         .rev-reaction-chip { padding: 3px 9px; border-radius: 100px; background: rgba(247, 232, 238, 0.7); font-size: 15px; }
 
-        .rev-replies-label { font-size: 9px; uppercase; letter-spacing: 0.12em; color: #C9B8D8; margin-bottom: 8px; font-weight: 700; }
+        .rev-replies-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em; color: #C9B8D8; margin-bottom: 8px; font-weight: 700; }
         .rev-reply-item { padding: 8px 12px; border-radius: 12px; background: rgba(247, 232, 238, 0.45); margin-bottom: 6px; display: flex; gap: 10px; align-items: flex-start; }
         .rev-reply-avatar { position: relative; width: 20px; height: 20px; border-radius: 50%; background: #E8A0A0; flex-shrink: 0; font-size: 9px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .rev-reply-body { flex: 1; }
@@ -459,7 +467,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         
         .rev-input { flex: 1; padding: 10px 16px; border-radius: 100px; border: 1px solid rgba(232, 160, 160, 0.3); background: rgba(247, 232, 238, 0.5); font-size: 14px; outline: none; transition: border-color 0.2s; }
         .rev-input:focus { border-color: #E8A0A0; }
-        .rev-send { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #E8A0A0, #C9B8D8); border: none; color: white; cursor: pointer; }
+        .rev-send { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #E8A0A0, #C9B8D8); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
         .rev-play-together {
           width: 100%;
@@ -518,40 +526,42 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           <button className="rev-close" onClick={onClose}>✕</button>
 
           <div 
-            className={`rev-scroll-body ${message.content || message.type === 'text' ? 'rev-center-content' : ''}`}
+            className="rev-scroll-body"
             onClick={() => setPhase('actions')}
           >
-            {message.type === 'text' ? (
-              <div className="rev-text-wrap">
-                <p className="rev-text">
-                  {displayedText}
-                  {showCursor && <span className="rev-cursor" />}
-                </p>
-              </div>
-            ) : message.type === 'video' ? (
-              <div className="rev-video-wrap">
-                <video 
-                  ref={videoRef}
-                  src={(message as any).mediaUrl} 
-                  className="rev-video" 
-                  onClick={(e) => { e.stopPropagation(); handleVideoTap(); }}
-                  playsInline
-                  autoPlay
-                />
-                <div className={`rev-video-overlay ${showVideoControls ? 'visible' : ''}`}>
-                  <div className="rev-play-icon">
-                    {isVideoPlaying ? '⏸' : '▶'}
+            <div className="rev-scroll-inner">
+              {message.type === 'text' ? (
+                <div className="rev-text-wrap">
+                  <p className="rev-text">
+                    {displayedText}
+                    {showCursor && <span className="rev-cursor" />}
+                  </p>
+                </div>
+              ) : message.type === 'video' ? (
+                <div className="rev-video-wrap">
+                  <video 
+                    ref={videoRef}
+                    src={(message as any).mediaUrl} 
+                    className="rev-video" 
+                    onClick={(e) => { e.stopPropagation(); handleVideoTap(); }}
+                    playsInline
+                    autoPlay
+                  />
+                  <div className={`rev-video-overlay ${showVideoControls ? 'visible' : ''}`}>
+                    <div className="rev-play-icon">
+                      {isVideoPlaying ? '⏸' : '▶'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div style={{ marginTop: 40, width: '100%' }}>
-                <MediaPlayer src={(message as any).mediaUrl} type="audio" />
-              </div>
-            )}
+              ) : (
+                <div style={{ marginTop: 20, width: '100%' }}>
+                  <MediaPlayer src={(message as any).mediaUrl} type="audio" />
+                </div>
+              )}
 
-            <div className="rev-date-stamp">
-              {formatDate(message.createdAt)}
+              <div className="rev-date-stamp">
+                {formatDate(message.createdAt)}
+              </div>
             </div>
           </div>
 

@@ -70,6 +70,11 @@ export default function AppHeader() {
           letter-spacing: -0.01em;
         }
 
+        .header-actions {
+          display: flex;
+          align-items: center;
+        }
+
         @media (min-width: 1024px) {
           .app-header-root {
             display: none;
@@ -82,7 +87,7 @@ export default function AppHeader() {
           <span className="header-heart">🤍</span>
           <span className="header-title">Habibty</span>
         </Link>
-        <div className="flex items-center">
+        <div className="header-actions">
           <NotificationBell />
         </div>
       </header>

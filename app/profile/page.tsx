@@ -22,6 +22,7 @@ import { uploadMedia } from '@/lib/imagekit';
 import { unpairPartner } from '@/lib/pair';
 import BottomNav from '@/components/BottomNav';
 import { useHeader } from '@/lib/HeaderContext';
+import NotificationBell from '@/components/NotificationBell';
 
 function SkeletonRow() {
   return (
@@ -218,6 +219,7 @@ export default function ProfilePage() {
           <p className="home-label">Settings</p>
           <h1 className="home-title">Your <em>profile</em></h1>
         </div>
+        <NotificationBell />
       </div>
 
       <div className="profile-section">

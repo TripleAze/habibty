@@ -566,6 +566,9 @@ html, body {
 /* ─── CREATE SCREEN ──────────────────────────────────────*/
 .create-header {
   padding: 52px 24px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .back-btn {
@@ -749,7 +752,10 @@ html, body {
 
 /* ─── SCHEDULED / SENT SCREEN ───────────────────────────*/
 .sched-header {
-  padding: 52px 24px 24px;
+  padding: 60px 24px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
 .timeline { padding: 0 20px; }
