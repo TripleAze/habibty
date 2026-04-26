@@ -107,7 +107,7 @@ function ResultsScreen({ game, uid, router }: { game: GameState; uid: string; ro
           return (
             <div key={q.id} style={{ background: 'rgba(255,255,255,0.55)', borderRadius: 16, padding: '14px 16px', border: isMatch ? '1.5px solid rgba(168,213,162,0.5)' : '1.5px solid rgba(255,255,255,0.7)' }}>
               <p style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7A5C7A', marginBottom: 8 }}>Question {i + 1}</p>
-              <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 14, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 12 }}>{q.text}</p>
+              <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 14, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 12, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{q.text}</p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <div style={{ flex: 1, padding: '8px 12px', borderRadius: 10, background: myAnswer ? 'rgba(232,160,160,0.15)' : 'rgba(200,200,200,0.1)', border: myAnswer ? '1px solid rgba(232,160,160,0.3)' : 'none' }}>
                   <p style={{ fontSize: 10, color: 'rgba(122,92,122,0.5)', marginBottom: 2 }}>You chose</p>
@@ -395,7 +395,7 @@ function RapidFireInner() {
         {currentQuestion && isMyTurn && (
           <div style={{ padding: '0 20px 16px' }}>
             <div style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(8px)', borderRadius: 20, padding: '24px', border: '1.5px solid rgba(255,255,255,0.8)', textAlign: 'center' }}>
-              <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', lineHeight: 1.5, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
                 {currentQuestion.text}
               </p>
             </div>

@@ -1714,6 +1714,87 @@ html, body {
   line-height: 1.4;
 }
 
+.join-panel {
+  margin-top: auto;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  padding: 12px;
+  border: 1px solid rgba(232, 160, 160, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: slideUp 0.3s ease;
+}
+
+.join-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.join-input {
+  flex: 1;
+  background: white;
+  border: 1.5px solid rgba(232, 160, 160, 0.25);
+  border-radius: 100px;
+  padding: 10px 16px;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: all 0.2s;
+  min-width: 0;
+}
+
+.join-input:focus {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px rgba(232, 160, 160, 0.1);
+}
+
+.join-confirm {
+  background: linear-gradient(135deg, var(--rose), var(--lavender));
+  color: white;
+  border: none;
+  border-radius: 100px;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.join-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.join-confirm:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(232, 160, 160, 0.3);
+}
+
+.join-cancel {
+  font-size: 11px;
+  color: var(--soft-ink);
+  text-align: center;
+  cursor: pointer;
+  text-decoration: underline;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.join-cancel:hover {
+  opacity: 1;
+}
+
+.lobby-error {
+  font-size: 11px;
+  color: #B06060;
+  text-align: center;
+  padding: 0 4px;
+}
+
 .game-actions {
   margin-top: auto;
   display: flex;
@@ -2098,6 +2179,33 @@ html, body {
  
   .games-grid {
     grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* ─── GAMES MOBILE REFINEMENTS ─────────────────────────── */
+@media (max-width: 480px) {
+  .game-card {
+    padding: 14px !important;
+    border-radius: 20px !important;
+  }
+  
+  .game-icon-wrap {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .game-name {
+    font-size: 16px !important;
+  }
+
+  .join-input {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+  }
+  
+  .join-confirm {
+    padding: 0 14px !important;
+    font-size: 12px !important;
   }
 }
  

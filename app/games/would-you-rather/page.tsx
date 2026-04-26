@@ -299,11 +299,11 @@ function WouldYouRatherInner() {
         <div style={{ padding: '0 20px 16px' }}>
           <div style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(8px)', borderRadius: 20, padding: '20px', border: '1.5px solid rgba(255,255,255,0.8)' }}>
             <p style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 600, marginBottom: 12, textAlign: 'center' }}>Would You Rather</p>
-            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', lineHeight: 1.5 }}>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', lineHeight: 1.5, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
               {currentQuestion.optionA}
             </p>
             <div style={{ height: 1, background: 'linear-gradient(90deg,transparent,rgba(232,160,160,0.4),transparent)', margin: '16px 0' }} />
-            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', lineHeight: 1.5 }}>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 18, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', lineHeight: 1.5, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
               {currentQuestion.optionB}
             </p>
           </div>
@@ -334,7 +334,7 @@ function WouldYouRatherInner() {
             }}
           >
             <span style={{ fontSize: 32, fontWeight: 700, color: selected === 'A' ? 'white' : '#E8A0A0' }}>A</span>
-            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 15, fontStyle: 'italic', color: selected === 'A' ? 'white' : '#3D2B3D', textAlign: 'center', lineHeight: 1.4 }}>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 15, fontStyle: 'italic', color: selected === 'A' ? 'white' : '#3D2B3D', textAlign: 'center', lineHeight: 1.4, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
               {currentQuestion.optionA}
             </p>
           </button>
@@ -362,7 +362,7 @@ function WouldYouRatherInner() {
             }}
           >
             <span style={{ fontSize: 32, fontWeight: 700, color: selected === 'B' ? 'white' : '#C9B8D8' }}>B</span>
-            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 15, fontStyle: 'italic', color: selected === 'B' ? 'white' : '#3D2B3D', textAlign: 'center', lineHeight: 1.4 }}>
+            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 15, fontStyle: 'italic', color: selected === 'B' ? 'white' : '#3D2B3D', textAlign: 'center', lineHeight: 1.4, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
               {currentQuestion.optionB}
             </p>
           </button>

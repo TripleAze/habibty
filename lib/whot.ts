@@ -478,10 +478,12 @@ export function cardLabel(card: WhotCard): string {
 }
 
 export function getEffectLabel(card: WhotCard): string | null {
-  switch (getSpecialEffect(card)) {
-    case 'skip':           return 'Hold On';
+  const effect = getSpecialEffect(card);
+  if (!effect) return null;
+  switch (effect) {
     case 'pick2':          return 'Pick 2';
     case 'pick3':          return 'Pick 3';
+    case 'skip':           return card.value === 1 ? 'Hold On' : 'Suspension';
     case 'market':         return 'Whot!';
     case 'general-market': return 'General Market';
     default:               return null;

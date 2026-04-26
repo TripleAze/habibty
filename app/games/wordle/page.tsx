@@ -72,36 +72,35 @@ function Keyboard({
   keyStates: Record<string, 'correct' | 'present' | 'absent'>;
 }) {
   return (
-    <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div style={{ padding: '0 8px 16px', display: 'flex', flexDirection: 'column', gap: 6, width: '100%', maxWidth: 500, margin: '0 auto' }}>
       {KEYBOARD_ROWS.map((row, i) => (
-        <div key={i} style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-          {row.map(key => {
+        <div key={i} style={{ display: 'flex', gap: 4, justifyContent: 'center', width: '100%' }}>
+          {(i === 2 ? ['ENTER', ...row, 'BACKSPACE'] : row).map(key => {
             const state = keyStates[key];
+            const isSpecial = key === 'ENTER' || key === 'BACKSPACE';
             return (
               <button
                 key={key}
                 onClick={() => onKeyPress(key)}
                 disabled={disabled}
                 style={{
-                  minWidth: key === 'BACKSPACE' || key === 'ENTER' ? 50 : 36,
-                  height: 50,
+                  flex: isSpecial ? 1.5 : 1,
+                  height: 54,
                   borderRadius: 8,
                   background: state
-                    ? state === 'correct'
-                      ? '#68B88B'
-                      : state === 'present'
-                      ? '#D4A94A'
-                      : 'rgba(120,120,120,0.8)'
-                    : 'rgba(255,255,255,0.8)',
-                  border: state ? 'none' : '1px solid rgba(200,200,200,0.3)',
+                    ? state === 'correct' ? '#68B88B' : state === 'present' ? '#D4A94A' : 'rgba(120,120,120,0.8)'
+                    : 'rgba(255,255,255,0.85)',
+                  border: state ? 'none' : '1px solid rgba(255,255,255,0.4)',
                   color: state ? 'white' : '#3D2B3D',
-                  fontSize: key === 'BACKSPACE' || key === 'ENTER' ? 11 : 15,
+                  fontSize: isSpecial ? 10 : 14,
                   fontWeight: 600,
                   cursor: disabled ? 'default' : 'pointer',
                   transition: 'all 0.15s',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  padding: 0,
+                  backdropFilter: 'blur(4px)',
                 }}
               >
                 {key === 'BACKSPACE' ? '⌫' : key === 'ENTER' ? '↵' : key}

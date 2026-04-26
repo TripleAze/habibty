@@ -7,12 +7,14 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId;
       allow update: if request.auth != null && (
         request.auth.uid == userId || 
-        // Pairing: Allow if partnerId is null/missing and setting to current user
+        // Pairing: Allow if partnerId is null/missing and setting to current user, but change NOTHING else
         (resource.data.get('partnerId', null) == null && 
-         request.resource.data.partnerId == request.auth.uid) ||
-        // Unpairing: Allow if current user is the partner and clearing it
+         request.resource.data.partnerId == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['partnerId'])) ||
+        // Unpairing: Allow if current user is the partner and clearing it, but change NOTHING else
         (resource.data.partnerId == request.auth.uid && 
-         (request.resource.data.get('partnerId', null) == null || !('partnerId' in request.resource.data)))
+         (request.resource.data.get('partnerId', null) == null || !('partnerId' in request.resource.data)) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['partnerId']))
       );
       allow delete: if request.auth != null && request.auth.uid == userId;
     }

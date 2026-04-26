@@ -33,6 +33,7 @@ export function generateGameId(): string {
 }
 
 export interface GameState {
+  type?: string;
   id: string;
   players: string[];
   playerNames: Record<string, string>;
@@ -54,6 +55,7 @@ export async function createGame(
 ): Promise<string> {
   const gameId = generateGameId();
   const gameData: Omit<GameState, 'id'> = {
+    type: 'tictactoe',
     players: [creatorUid],
     playerNames: { [creatorUid]: creatorName },
     playerPhotos: { [creatorUid]: creatorPhoto || '' },
@@ -141,6 +143,7 @@ export async function rematch(gameId: string, initiatorUid: string): Promise<str
   const firstTurn = data.players.find(uid => flippedSymbols[uid] === 'X') ?? p1;
 
   await setDoc(doc(db, 'games', newGameId), {
+    type: 'tictactoe',
     players: data.players,
     playerNames: data.playerNames,
     playerPhotos: data.playerPhotos,

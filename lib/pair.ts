@@ -1,4 +1,4 @@
-import { doc, writeBatch, deleteField } from 'firebase/firestore';
+import { doc, getDoc, writeBatch, deleteField } from 'firebase/firestore';
 import { db } from './firebase';
 
 /**
@@ -14,17 +14,32 @@ export async function unpairPartner(uid: string, partnerId: string): Promise<{ o
   }
 
   try {
+    // 1. Fetch current state to ensure valid permissions
+    const [userSnap, partnerSnap] = await Promise.all([
+      getDoc(doc(db, 'users', uid)),
+      getDoc(doc(db, 'users', partnerId))
+    ]);
+
     const batch = writeBatch(db);
+    let hasWork = false;
+
+    // Clear partnerId for current user only if it matches
+    if (userSnap.exists() && userSnap.data().partnerId === partnerId) {
+      batch.update(doc(db, 'users', uid), { partnerId: deleteField() });
+      hasWork = true;
+    }
     
-    // Clear partnerId for current user
-    const userRef = doc(db, 'users', uid);
-    batch.update(userRef, { partnerId: deleteField() });
+    // Clear partnerId for the partner ONLY if they are still pointing to current user
+    // This avoids "insufficient permissions" errors if they've already unpaired us.
+    if (partnerSnap.exists() && partnerSnap.data().partnerId === uid) {
+      batch.update(doc(db, 'users', partnerId), { partnerId: deleteField() });
+      hasWork = true;
+    }
     
-    // Clear partnerId for the partner
-    const partnerRef = doc(db, 'users', partnerId);
-    batch.update(partnerRef, { partnerId: deleteField() });
+    if (hasWork) {
+      await batch.commit();
+    }
     
-    await batch.commit();
     return { ok: true };
   } catch (err: any) {
     console.error('Unpair error:', err);

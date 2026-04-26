@@ -13,6 +13,7 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export type NotificationType = 'message_opened' | 'reaction' | 'reply' | 'new_message' | 'game_turn' | 'pairing_success';
 
@@ -60,26 +61,40 @@ export async function sendNotification(
 export function subscribeToNotifications(
   callback: (notifications: AppNotification[]) => void
 ): () => void {
-  const currentUserId = auth?.currentUser?.uid;
-  if (!currentUserId) {
-    callback([]);
-    return () => {};
-  }
+  let unsubSnapshot: (() => void) | null = null;
 
-  const q = query(
-    collection(db, NOTIFICATIONS_COLLECTION, currentUserId, 'items'),
-    orderBy('createdAt', 'desc'),
-    limit(20)
-  );
+  const unsubAuth = onAuthStateChanged(auth, (user) => {
+    // Clean up previous listener if any
+    if (unsubSnapshot) {
+      unsubSnapshot();
+      unsubSnapshot = null;
+    }
 
-  return onSnapshot(q, (snap) => {
-    const items = snap.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate?.().getTime() || Date.now(),
-    })) as AppNotification[];
-    callback(items);
+    if (!user) {
+      callback([]);
+      return;
+    }
+
+    const q = query(
+      collection(db, NOTIFICATIONS_COLLECTION, user.uid, 'items'),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+
+    unsubSnapshot = onSnapshot(q, (snap) => {
+      const items = snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.().getTime() || Date.now(),
+      })) as AppNotification[];
+      callback(items);
+    });
   });
+
+  return () => {
+    unsubAuth();
+    if (unsubSnapshot) unsubSnapshot();
+  };
 }
 
 /**

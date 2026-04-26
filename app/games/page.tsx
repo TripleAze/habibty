@@ -103,14 +103,8 @@ export default function GamesPage() {
       } else if (gameType === 'whot') {
         result = await joinWhotGame(code, uid, displayName, photoURL);
       } else {
-        // Generic join for other games
-        const { updateDoc, arrayUnion } = await import('firebase/firestore');
-        await updateDoc(gameRef, {
-          players: arrayUnion(uid),
-          [`playerNames.${uid}`]: displayName,
-          ...(photoURL ? { [`playerPhotos.${uid}`]: photoURL } : {}),
-          status: gameType === 'wordle' ? 'playing' : 'active',
-        });
+        // Push newly implemented games directly to their routes 
+        // to let them natively execute their specific join logic.
         result = { ok: true };
       }
 

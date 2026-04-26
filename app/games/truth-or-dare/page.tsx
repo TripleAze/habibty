@@ -102,7 +102,7 @@ function PromptCard({ prompt, type }: { prompt: Prompt; type: 'truth' | 'dare' }
       <p style={{ fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: type === 'truth' ? '#C9829A' : '#8B7A9E', fontWeight: 600, marginBottom: 16 }}>
         {type === 'truth' ? 'Truth' : 'Dare'}
       </p>
-      <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontStyle: 'italic', color: '#3D2B3D', lineHeight: 1.6 }}>
+      <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontStyle: 'italic', color: '#3D2B3D', lineHeight: 1.6, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
         {prompt.text}
       </p>
       <p style={{ fontSize: 11, color: 'rgba(122,92,122,0.4)', marginTop: 16, textTransform: 'capitalize' }}>

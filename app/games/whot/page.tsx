@@ -213,7 +213,7 @@ function WhotInner() {
   const getFanStyle = (i: number, total: number, isSelected: boolean): React.CSSProperties => {
     const maxAngle = Math.min(4 * (total - 1), 30);
     const angle = total > 1 ? -maxAngle / 2 + (maxAngle / (total - 1)) * i : 0;
-    const overlap = Math.min(42, (total > 7 ? 44 : total > 4 ? 36 : 28));
+    const overlap = Math.min(48, (total > 10 ? 46 : total > 7 ? 42 : total > 4 ? 34 : 26));
     const xOffset = i * (58 - overlap) - ((total - 1) * (58 - overlap)) / 2;
     const yOffset = Math.abs(angle) * 0.8;
     return {
