@@ -5,7 +5,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { RevealModalProps, Reaction, Reply } from '@/types';
 import { getDistance } from '@/lib/location';
-import MessageActions from './MessageActions';
+import { REACTION_EMOJIS, addReaction, removeReaction } from '@/lib/reactions';
+import { addReply } from '@/lib/replies';
+import MediaPlayer from './MediaPlayer'; // Still used for audio
 
 type ModalPhase = 'content' | 'actions';
 
@@ -18,13 +20,24 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
   
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [showAllReplies, setShowAllReplies] = useState(false);
   const [isLocationLocked, setIsLocationLocked] = useState(false);
   const [distanceToUnlock, setDistanceToUnlock] = useState<number | null>(null);
-  const [userReaction, setUserReaction] = useState<any | undefined>();
+  const [userReaction, setUserReaction] = useState<Reaction | undefined>();
   
+  const [showReplyInput, setShowReplyInput] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+
+  // Video states
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [showVideoControls, setShowVideoControls] = useState(true);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentUserId = useRef<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const touchStartY = useRef<number>(0);
 
   const stopTyping = useCallback(() => {
     if (typingTimeoutRef.current) {
@@ -49,7 +62,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
       } else {
         setShowCursor(false);
         setIsFinishingTyping(true);
-        // Transition to actions phase after a short delay
+        // Automatic phase transition after delay
         setTimeout(() => setPhase('actions'), 800);
       }
     };
@@ -63,11 +76,15 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
       setReplies([]);
       setUserReaction(undefined);
       setDisplayedText('');
+      setShowReplyInput(false);
+      setReplyText('');
+      setShowAllReplies(false);
 
       if (message.type === 'text' && message.content) {
         typeText(message.content);
       } else {
-        // For media, wait 1.5s then show actions
+        // For media, show hint immediately and transition after slight delay
+        setIsFinishingTyping(true);
         setTimeout(() => setPhase('actions'), 1500);
       }
     }
@@ -122,89 +139,196 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
     };
   }, [message?.id, isOpen]);
 
-  // Location logic
-  useEffect(() => {
-    if (!isOpen || !message || message.unlockType !== 'event' || !message.unlockLocation) {
-      setIsLocationLocked(false);
-      return;
+  // Swipe Gestures
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaY = touchEndY - touchStartY.current;
+
+    if (phase === 'actions' && deltaY > 60) {
+      setPhase('content');
+    } else if (phase === 'content' && deltaY < -60) {
+      setPhase('actions');
     }
+  };
 
-    const checkLocation = () => {
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const dist = getDistance(
-          pos.coords.latitude,
-          pos.coords.longitude,
-          message.unlockLocation!.lat,
-          message.unlockLocation!.lng
-        );
-        setDistanceToUnlock(Math.round(dist));
-        if (dist > message.unlockLocation!.radius) {
-          setIsLocationLocked(true);
-        } else {
-          setIsLocationLocked(false);
-          if (isLocationLocked && message.content && message.type === 'text' && !displayedText) {
-            typeText(message.content);
-          }
-        }
-      }, () => setIsLocationLocked(true));
-    };
+  // Video Controls Logic
+  const handleVideoTap = () => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+      setIsVideoPlaying(true);
+    } else {
+      videoRef.current.pause();
+      setIsVideoPlaying(false);
+    }
+    setShowVideoControls(true);
+    resetControlsTimeout();
+  };
 
-    checkLocation();
-    const interval = setInterval(checkLocation, 10000);
-    return () => clearInterval(interval);
-  }, [isOpen, message, isLocationLocked, typeText, displayedText]);
+  const resetControlsTimeout = () => {
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (isVideoPlaying) setShowVideoControls(false);
+    }, 2500);
+  };
+
+  // Actions
+  const handleReactionToggle = async (emoji: string) => {
+    if (!message) return;
+    try {
+      if (userReaction?.emoji === emoji) {
+        await removeReaction(message.id);
+      } else {
+        await addReaction(message.id, emoji);
+      }
+    } catch (err) {
+      console.error('Reaction error:', err);
+    }
+  };
+
+  const handleSendReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message || !replyText.trim()) return;
+    setSendingReply(true);
+    try {
+      await addReply(message.id, replyText.trim());
+      setReplyText('');
+      setShowReplyInput(false);
+    } catch (err) {
+      console.error('Reply error:', err);
+    } finally {
+      setSendingReply(false);
+    }
+  };
 
   if (!message) return null;
+
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return `Sent with love · ${date.toLocaleString('en-US', { month: 'short' })} ${date.getFullYear()}`;
+  };
 
   return (
     <>
       <style>{`
-        .rev-overlay {
+        .rev-backdrop {
           position: fixed;
           inset: 0;
-          background: #fff;
-          z-index: 2000;
-          display: flex;
-          flex-direction: column;
+          background: rgba(41, 28, 41, 0.6);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          z-index: 200;
           opacity: 0;
-          transition: opacity 0.4s ease;
           pointer-events: none;
+          transition: opacity 0.4s ease;
         }
-        .rev-overlay.open {
+        .rev-backdrop.open {
           opacity: 1;
           pointer-events: all;
         }
-        
-        /* Phase 1 Immersive Content */
-        .rev-content-wrap {
-          flex: 1;
+
+        /* Layer 1: Content Screen */
+        .rev-content-screen {
+          position: fixed;
+          inset: 0;
+          background: #ffffff;
+          z-index: 201;
           display: flex;
           flex-direction: column;
-          justify-content: center;
-          position: relative;
-          transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+          opacity: 0;
+          transform: translateY(20px);
+          transition: all 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+          pointer-events: none;
         }
-        .rev-overlay.phase-actions .rev-content-wrap {
-          transform: translateY(-80px);
+        .rev-backdrop.open .rev-content-screen {
+          opacity: 1;
+          transform: translateY(0);
+          pointer-events: all;
         }
 
-        .rev-text-container {
-          padding: 0 48px;
-          max-width: 600px;
-          margin: 0 auto;
-          text-align: center;
+        /* Header Pill */
+        .rev-pill {
+          position: absolute;
+          top: 16px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 0.5px solid rgba(232, 160, 160, 0.2);
+          border-radius: 100px;
+          padding: 6px 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          z-index: 10;
+          max-width: 70vw;
         }
+        .rev-pill-emoji { font-size: 18px; }
+        .rev-pill-divider { width: 1px; height: 12px; background: rgba(232, 160, 160, 0.3); }
+        .rev-pill-title {
+          font-family: var(--font-cormorant), serif;
+          font-style: italic;
+          font-size: 14px;
+          color: #7A5C7A;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        /* Large Close Button */
+        .rev-close {
+          position: absolute;
+          top: 14px;
+          right: 16px;
+          z-index: 10;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.07);
+          border: none;
+          color: rgba(61, 43, 61, 0.5);
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .rev-close:hover { background: rgba(0, 0, 0, 0.12); }
+
+        /* Scrollable Body */
+        .rev-scroll-body {
+          flex: 1;
+          overflow-y: auto;
+          overflow-x: hidden;
+          padding: 80px 28px 48px;
+          -webkit-overflow-scrolling: touch;
+          display: flex;
+          flex-direction: column;
+        }
+        .rev-scroll-body::-webkit-scrollbar { display: none; }
+        
+        .rev-center-content { align-items: center; justify-content: center; min-height: 100%; }
+
+        .rev-text-wrap { max-width: 600px; width: 100%; text-align: center; }
         .rev-text {
           font-family: var(--font-cormorant), serif;
           font-size: 22px;
-          line-height: 2;
-          color: #3D2B3D;
+          font-weight: 300;
+          line-height: 2.0;
+          color: #4A3550;
+          letter-spacing: 0.01em;
           white-space: pre-wrap;
         }
         .rev-cursor {
           display: inline-block;
-          width: 2px;
-          height: 20px;
+          width: 3px;
+          height: 22px;
           background: #E8A0A0;
           margin-left: 2px;
           vertical-align: middle;
@@ -212,228 +336,338 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         }
         @keyframes rev-blink { 50% { opacity: 0; } }
 
-        .rev-media-container {
-          width: 100%;
-          background: #fff;
-        }
+        /* Video Styles */
+        .rev-video-wrap { position: relative; width: 100%; margin-bottom: 24px; }
         .rev-video {
           width: 100%;
           height: auto;
-          max-height: 55vh;
-          object-fit: cover;
+          max-height: 58vh;
+          object-fit: contain;
+          background: #000;
+          border-radius: 14px;
           display: block;
         }
-        .rev-audio-wrap {
-          padding: 40px;
-          text-align: center;
+        .rev-video-overlay {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0,0,0,0.2);
+          opacity: 0;
+          transition: opacity 0.3s;
+          pointer-events: none;
         }
-        .rev-audio-play {
-          width: 72px;
-          height: 72px;
+        .rev-video-overlay.visible { opacity: 1; }
+        .rev-play-icon {
+          width: 64px;
+          height: 64px;
+          background: rgba(255,255,255,0.2);
+          backdrop-filter: blur(8px);
           border-radius: 50%;
-          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
-          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           color: white;
           font-size: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 20px;
-          box-shadow: 0 10px 25px rgba(232, 160, 160, 0.4);
-        }
-
-        /* Floating Header Pill */
-        .rev-header-pill {
-          position: fixed;
-          top: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          padding: 6px 16px;
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(12px);
-          border-radius: 100px;
-          border: 1px solid rgba(232, 160, 160, 0.2);
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          z-index: 2010;
-          font-family: var(--font-dm-sans), sans-serif;
-          font-size: 13px;
-          color: #3D2B3D;
-          white-space: nowrap;
-        }
-
-        .rev-close-btn {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: rgba(0, 0, 0, 0.05);
-          border: none;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #3D2B3D;
-          font-size: 14px;
-          z-index: 2010;
-          cursor: pointer;
         }
 
         /* Swipe Hint */
         .rev-swipe-hint {
           position: absolute;
-          bottom: 40px;
-          left: 0;
-          right: 0;
+          bottom: 24px;
+          left: 50%;
+          transform: translateX(-50%);
           text-align: center;
-          font-size: 11px;
-          color: #C0A0A0;
-          opacity: 0;
-          transform: translateY(10px);
-          transition: all 0.5s ease;
+          transition: opacity 0.2s ease;
+          pointer-events: none;
         }
-        .rev-swipe-hint.show {
-          opacity: 1;
-          transform: translateY(0);
-          animation: rev-nudge 2s ease-in-out infinite;
-        }
-        @keyframes rev-nudge {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
+        .rev-swipe-hint.hide { opacity: 0; }
+        .rev-hint-arrow { color: #E8A0A0; opacity: 0.6; font-size: 16px; display: block; animation: rev-bounce 1.8s ease-in-out infinite; }
+        .rev-hint-text { font-family: var(--font-dm-sans); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(122, 92, 122, 0.5); }
+        @keyframes rev-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
-        /* Phase 2 Actions Panel */
-        .rev-actions-panel {
+        .rev-date-stamp { font-family: var(--font-cormorant), serif; font-style: italic; font-size: 12px; color: #C0A0A0; text-align: center; margin-top: 32px; }
+
+        /* Layer 2: Actions Sheet */
+        .rev-actions-sheet {
           position: fixed;
           bottom: 0;
           left: 0;
           right: 0;
-          height: 40%;
-          background: #fff;
-          border-radius: 20px 20px 0 0;
-          box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.08);
-          z-index: 2020;
+          background: #ffffff;
+          z-index: 202;
+          max-width: 520px;
+          margin: 0 auto;
+          border-radius: 22px 22px 0 0;
+          box-shadow: 0 -12px 48px rgba(61, 43, 61, 0.14);
+          padding: 0 20px 32px;
           transform: translateY(100%);
-          transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-          display: flex;
-          flex-direction: column;
-          padding: 20px 24px 32px;
+          opacity: 0;
+          transition: transform 0.44s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease;
         }
-        .rev-overlay.phase-actions .rev-actions-panel {
+        .rev-backdrop.open.phase-actions .rev-actions-sheet {
           transform: translateY(0);
-        }
-        
-        .rev-actions-handle {
-          width: 32px;
-          height: 4px;
-          background: rgba(0, 0, 0, 0.05);
-          border-radius: 2px;
-          margin: 0 auto 20px;
+          opacity: 1;
         }
 
-        .rev-play-btn {
-          width: 100%;
-          padding: 16px;
-          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
-          color: white;
-          border: none;
-          border-radius: 100px;
-          font-weight: 600;
-          font-size: 14px;
-          margin-top: auto;
-          cursor: pointer;
-          box-shadow: 0 4px 15px rgba(232, 160, 160, 0.3);
-        }
+        .rev-drag-handle { width: 40px; height: 4px; border-radius: 2px; background: rgba(201, 184, 216, 0.45); margin: 12px auto 16px; cursor: ns-resize; }
 
-        .rev-lock-screen {
-          position: fixed;
-          inset: 0;
-          background: #fff;
-          z-index: 3000;
+        .rev-reactions-thread { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+        .rev-reaction-chip { padding: 3px 9px; border-radius: 100px; background: rgba(247, 232, 238, 0.7); font-size: 15px; }
+
+        .rev-replies-label { font-size: 9px; uppercase; letter-spacing: 0.12em; color: #C9B8D8; margin-bottom: 8px; font-weight: 700; }
+        .rev-reply-item { padding: 8px 12px; border-radius: 12px; background: rgba(247, 232, 238, 0.45); margin-bottom: 6px; display: flex; gap: 10px; align-items: flex-start; }
+        .rev-reply-avatar { width: 20px; height: 20px; border-radius: 50%; background: #E8A0A0; flex-shrink: 0; font-size: 9px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .rev-reply-body { flex: 1; }
+        .rev-reply-name { font-size: 11px; font-weight: 600; color: #3D2B3D; display: block; margin-bottom: 1px; }
+        .rev-reply-text { font-size: 13px; color: #7A5C7A; line-height: 1.4; }
+        .rev-more-replies { font-size: 11px; color: #E8A0A0; font-weight: 600; margin-bottom: 8px; cursor: pointer; }
+
+        .rev-action-row { display: flex; align-items: center; gap: 8px; }
+        .rev-emoji-btn {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          border: 1.5px solid rgba(232, 160, 160, 0.25);
+          background: rgba(247, 232, 238, 0.5);
+          font-size: 18px;
           display: flex;
-          flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 40px;
-          text-align: center;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .rev-emoji-btn.active { background: linear-gradient(135deg, #E8A0A0, #F2C4CE); border-color: #E8A0A0; color: white; }
+        
+        .rev-reply-toggle {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background: rgba(201, 184, 216, 0.12);
+          border: 1.5px solid rgba(201, 184, 216, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .rev-reply-toggle.active { background: #C9B8D8; }
+
+        .rev-input-row { display: flex; gap: 8px; margin-top: 12px; animation: rev-slide-up-fade 0.22s ease-out; }
+        @keyframes rev-slide-up-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .rev-input { flex: 1; padding: 10px 16px; border-radius: 100px; border: 1px solid rgba(232, 160, 160, 0.3); background: rgba(247, 232, 238, 0.5); font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .rev-input:focus { border-color: #E8A0A0; }
+        .rev-send { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #E8A0A0, #C9B8D8); border: none; color: white; cursor: pointer; }
+
+        .rev-play-together {
+          width: 100%;
+          padding: 13px;
+          border-radius: 100px;
+          background: linear-gradient(135deg, #C9B8D8 0%, #E8A0A0 100%);
+          color: white;
+          font-size: 14px;
+          font-weight: 500;
+          letter-spacing: 0.02em;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-top: 10px;
+          cursor: pointer;
+          box-shadow: 0 4px 16px rgba(201, 184, 216, 0.35);
+        }
+
+        /* Desktop Behavior */
+        @media (min-width: 768px) {
+          .rev-content-screen {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            width: 480px;
+            height: 80vh;
+            border-radius: 24px;
+            overflow: hidden;
+            display: flex;
+          }
+          .rev-backdrop.open .rev-content-screen {
+            transform: translate(-50%, -50%) scale(1);
+          }
+          .rev-actions-sheet {
+            bottom: 0;
+            width: 480px;
+          }
         }
       `}</style>
 
-      <div className={`rev-overlay ${isOpen ? 'open' : ''} phase-${phase}`}>
-        <button className="rev-close-btn" onClick={onClose}>✕</button>
-        
-        <div className="rev-header-pill">
-          <span>{message.emoji || '💌'}</span>
-          <span style={{ opacity: 0.5 }}>·</span>
-          <span>{message.title}</span>
-        </div>
+      <div 
+        className={`rev-backdrop ${isOpen ? 'open' : ''} phase-${phase}`}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Layer 1: Content Screen */}
+        <div className="rev-content-screen">
+          <div className="rev-pill">
+            <span className="rev-pill-emoji">{message.emoji || '💌'}</span>
+            <div className="rev-pill-divider" />
+            <span className="rev-pill-title">{message.title}</span>
+          </div>
 
-        {isLocationLocked && (
-          <div className="rev-lock-screen">
-            <div style={{ fontSize: 48, marginBottom: 20 }}>📍</div>
-            <h2 className="rev-title" style={{ fontSize: 24, marginBottom: 12 }}>A secret location awaits...</h2>
-            <p style={{ color: '#7A5C7A', marginBottom: 24 }}>This letter is locked until you are near {message.unlockLocation?.name}</p>
-            <div style={{ background: '#FAD0DC', padding: '8px 16px', borderRadius: 100, fontSize: 13, color: '#E8A0A0', fontWeight: 'bold' }}>
-              {distanceToUnlock}m away
+          <button className="rev-close" onClick={onClose}>✕</button>
+
+          <div 
+            className={`rev-scroll-body ${message.content || message.type === 'text' ? 'rev-center-content' : ''}`}
+            onClick={() => setPhase('actions')}
+          >
+            {message.type === 'text' ? (
+              <div className="rev-text-wrap">
+                <p className="rev-text">
+                  {displayedText}
+                  {showCursor && <span className="rev-cursor" />}
+                </p>
+              </div>
+            ) : message.type === 'video' ? (
+              <div className="rev-video-wrap">
+                <video 
+                  ref={videoRef}
+                  src={(message as any).mediaUrl} 
+                  className="rev-video" 
+                  onClick={(e) => { e.stopPropagation(); handleVideoTap(); }}
+                  playsInline
+                  autoPlay
+                />
+                <div className={`rev-video-overlay ${showVideoControls ? 'visible' : ''}`}>
+                  <div className="rev-play-icon">
+                    {isVideoPlaying ? '⏸' : '▶'}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ marginTop: 40, width: '100%' }}>
+                <MediaPlayer src={(message as any).mediaUrl} type="audio" />
+              </div>
+            )}
+
+            <div className="rev-date-stamp">
+              {formatDate(message.createdAt)}
             </div>
           </div>
-        )}
 
-        <div className="rev-content-wrap">
-          {message.type === 'text' ? (
-            <div className="rev-text-container">
-              <p className="rev-text">
-                {displayedText}
-                {showCursor && <span className="rev-cursor" />}
-              </p>
-            </div>
-          ) : message.type === 'video' ? (
-            <div className="rev-media-container">
-              <video 
-                ref={videoRef}
-                src={(message as any).mediaUrl} 
-                className="rev-video" 
-                controls 
-                autoPlay 
-                playsInline
-                disablePictureInPicture
-              />
-            </div>
-          ) : (
-            <div className="rev-audio-wrap">
-              <button className="rev-audio-play">▶</button>
-              <div style={{ fontFamily: 'var(--font-dm-sans)', fontSize: 14, color: '#C0A0A0' }}>
-                {message.meta || 'Voice Note'}
+          <div 
+            className={`rev-swipe-hint ${isFinishingTyping && phase === 'content' ? '' : 'hide'}`}
+            onClick={(e) => { e.stopPropagation(); setPhase('actions'); }}
+          >
+            <span className="rev-hint-arrow">↑</span>
+            <span className="rev-hint-text">REACT & REPLY</span>
+          </div>
+
+          {/* Location Lock Screen */}
+          {isLocationLocked && (
+            <div 
+              style={{
+                position: 'absolute', inset: 0, background: '#ffffff', zIndex: 300,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                padding: 40, textAlign: 'center'
+              }}
+            >
+              <div style={{ fontSize: 48, marginBottom: 20 }}>📍</div>
+              <h2 style={{ fontFamily: 'var(--font-cormorant)', fontStyle: 'italic', fontSize: 24, marginBottom: 12 }}>A secret location awaits...</h2>
+              <p style={{ color: '#7A5C7A', marginBottom: 24, fontSize: 14 }}>Locked until you are near <strong>{message.unlockLocation?.name || 'the secret spot'}</strong>.</p>
+              <div style={{ background: '#FAD0DC', padding: '8px 16px', borderRadius: 100, fontSize: 13, color: '#E8A0A0', fontWeight: 'bold' }}>
+                {distanceToUnlock}m away
               </div>
             </div>
           )}
-
-          <div className={`rev-swipe-hint ${isFinishingTyping && phase === 'content' ? 'show' : ''}`}>
-            ↑ Swipe up to react
-          </div>
         </div>
 
-        <div className="rev-actions-panel">
-          <div className="rev-actions-handle" />
-          
-          <MessageActions 
-            messageId={message.id}
-            userReaction={userReaction}
-            onReactionChange={() => {}}
-            onReplySent={() => {}}
-            onPlayTogether={() => {
-              onClose();
-              setTimeout(() => router.push('/games'), 300);
-            }}
-          />
-          
-          <button className="rev-play-btn" onClick={() => {
+        {/* Layer 2: Actions Sheet */}
+        <div className="rev-actions-sheet">
+          <div className="rev-drag-handle" />
+
+          {/* Reactions Thread */}
+          {reactions.length > 0 && (
+            <div className="rev-reactions-thread">
+              {reactions.map((r, i) => (
+                <span key={i} className="rev-reaction-chip">{r.emoji}</span>
+              ))}
+            </div>
+          )}
+
+          {/* Replies Thread */}
+          {replies.length > 0 && (
+            <div>
+              <p className="rev-replies-label">Conversation</p>
+              {(showAllReplies ? replies : replies.slice(-2)).map((reply) => (
+                <div key={reply.id} className="rev-reply-item">
+                  <div className="rev-reply-avatar">
+                    {reply.userPhoto ? (
+                      <Image src={reply.userPhoto} alt="" fill className="object-cover" unoptimized />
+                    ) : (
+                      reply.userName.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <div className="rev-reply-body">
+                    <span className="rev-reply-name">{reply.userName}</span>
+                    <p className="rev-reply-text">{reply.text}</p>
+                  </div>
+                </div>
+              ))}
+              {replies.length > 2 && !showAllReplies && (
+                <p className="rev-more-replies" onClick={() => setShowAllReplies(true)}>
+                  + {replies.length - 2} more replies
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Action Row */}
+          <div className="rev-action-row">
+            {REACTION_EMOJIS.slice(0, 4).map((emoji) => (
+              <button
+                key={emoji}
+                className={`rev-emoji-btn ${userReaction?.emoji === emoji ? 'active' : ''}`}
+                onClick={() => handleReactionToggle(emoji)}
+              >
+                {emoji}
+              </button>
+            ))}
+            <button 
+              className={`rev-reply-toggle ${showReplyInput ? 'active' : ''}`}
+              onClick={() => setShowReplyInput(!showReplyInput)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={showReplyInput ? '#fff' : '#7A5C7A'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* Reply Input Row */}
+          {showReplyInput && (
+            <form className="rev-input-row" onSubmit={handleSendReply}>
+              <input 
+                className="rev-input"
+                placeholder="Type a response..."
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                autoFocus
+              />
+              <button className="rev-send" disabled={sendingReply || !replyText.trim()}>
+                {sendingReply ? '...' : '➤'}
+              </button>
+            </form>
+          )}
+
+          {/* Play Together */}
+          <button className="rev-play-together" onClick={() => {
             onClose();
             setTimeout(() => router.push('/games'), 300);
           }}>
-            Play Together →
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h2m-1-1v2"/>
+            </svg>
+            Play Together
           </button>
         </div>
       </div>
