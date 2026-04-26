@@ -261,25 +261,33 @@ export default function ProfilePage() {
           <div className="pf-section-label px-1">Account Info</div>
           <div className="profile-card">
             {isEditingName ? (
-              <div className="p-4 bg-white/40 animate-slide-down">
-                <div className="flex gap-2">
+              <div className="p-5 bg-white/40 animate-slide-down">
+                <div className="flex flex-col gap-3">
                   <input
-                    className="flex-1 bg-white/60 border border-[#E8A0A0]/30 rounded-xl px-4 py-2 outline-none focus:border-[#E8A0A0] transition-colors font-medium text-sm"
+                    className="w-full bg-white/80 border border-[#E8A0A0]/30 rounded-2xl px-5 py-3 outline-none focus:border-[#E8A0A0] transition-all font-medium text-base shadow-sm"
                     value={editName}
                     onChange={e => setEditName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSaveName()}
                     placeholder="Display name"
                     autoFocus
                   />
-                  <button type="button" className="px-4 py-2 text-xs font-medium text-gray-500 hover:text-gray-700" onClick={() => setIsEditingName(false)}>Cancel</button>
-                  <button 
-                    type="button" 
-                    className="px-6 py-2 rounded-full bg-gradient-to-r from-[#E8A0A0] to-[#C9B8D8] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50" 
-                    onClick={handleSaveName} 
-                    disabled={saving}
-                  >
-                    {saving ? 'Saving...' : 'Save ✨'}
-                  </button>
+                  <div className="flex justify-end items-center gap-2">
+                    <button 
+                      type="button" 
+                      className="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors" 
+                      onClick={() => setIsEditingName(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="button" 
+                      className="px-8 py-2.5 rounded-full bg-gradient-to-r from-[#E8A0A0] to-[#C9B8D8] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50" 
+                      onClick={handleSaveName} 
+                      disabled={saving}
+                    >
+                      {saving ? 'Saving...' : 'Save ✨'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
