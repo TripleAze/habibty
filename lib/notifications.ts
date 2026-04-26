@@ -61,6 +61,10 @@ export async function sendNotification(
 export function subscribeToNotifications(
   callback: (notifications: AppNotification[]) => void
 ): () => void {
+  if (!auth) {
+    callback([]);
+    return () => {};
+  }
   let unsubSnapshot: (() => void) | null = null;
 
   const unsubAuth = onAuthStateChanged(auth, (user) => {
