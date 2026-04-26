@@ -39,7 +39,7 @@ html, body {
   background: linear-gradient(160deg, #FAD0DC 0%, #EDD5F0 40%, #D8E8F8 100%);
   background-attachment: fixed;
   padding-bottom: 100px;
-  padding-top: 60px; /* Space for the persistent AppHeader */
+  padding-top: 56px; /* Space for the persistent AppHeader */
 }
 
 /* ─── APP HEADER ──────────────────────────────────────────────── */
@@ -82,7 +82,7 @@ html, body {
 
 /* ─── HOME / INBOX HEADER ─────────────────────────────────*/
 .home-header {
-  padding: 52px 24px 20px;
+  padding: 12px 24px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -565,7 +565,7 @@ html, body {
 
 /* ─── CREATE SCREEN ──────────────────────────────────────*/
 .create-header {
-  padding: 52px 24px 24px;
+  padding: 12px 24px 24px;
   display: flex;
   flex-direction: column;
 }
@@ -759,7 +759,7 @@ html, body {
 
 /* ─── SCHEDULED / SENT SCREEN ───────────────────────────*/
 .sched-header {
-  padding: 60px 24px 24px;
+  padding: 12px 24px 24px;
   display: flex;
   flex-direction: column;
 }
