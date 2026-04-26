@@ -418,7 +418,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
 
         .rev-replies-label { font-size: 9px; uppercase; letter-spacing: 0.12em; color: #C9B8D8; margin-bottom: 8px; font-weight: 700; }
         .rev-reply-item { padding: 8px 12px; border-radius: 12px; background: rgba(247, 232, 238, 0.45); margin-bottom: 6px; display: flex; gap: 10px; align-items: flex-start; }
-        .rev-reply-avatar { width: 20px; height: 20px; border-radius: 50%; background: #E8A0A0; flex-shrink: 0; font-size: 9px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .rev-reply-avatar { position: relative; width: 20px; height: 20px; border-radius: 50%; background: #E8A0A0; flex-shrink: 0; font-size: 9px; font-weight: bold; color: white; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .rev-reply-body { flex: 1; }
         .rev-reply-name { font-size: 11px; font-weight: 600; color: #3D2B3D; display: block; margin-bottom: 1px; }
         .rev-reply-text { font-size: 13px; color: #7A5C7A; line-height: 1.4; }
@@ -610,7 +610,11 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
                   </div>
                   <div className="rev-reply-body">
                     <span className="rev-reply-name">{reply.userName}</span>
-                    <p className="rev-reply-text">{reply.text}</p>
+                    {reply.type === 'voice' && reply.mediaUrl ? (
+                      <MediaPlayer src={reply.mediaUrl} type="audio" />
+                    ) : (
+                      <p className="rev-reply-text">{reply.text}</p>
+                    )}
                   </div>
                 </div>
               ))}
