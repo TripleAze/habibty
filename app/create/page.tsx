@@ -454,11 +454,11 @@ export default function CreatePage() {
                   )}
                   
                   {locationResults.length > 0 && locationSearch && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-md border border-[#E8A0A0]/10 rounded-xl shadow-xl z-50 overflow-hidden animate-slide-down">
-                      {locationResults.map((res: any) => (
+                    <div className="absolute top-full left-0 right-0 mt-3 bg-white/90 backdrop-blur-xl border border-[#E8A0A0]/20 rounded-2xl shadow-[0_20px_50px_rgba(232,160,160,0.2)] z-[100] overflow-hidden animate-slide-up max-h-[280px] overflow-y-auto">
+                      {locationResults.map((res: any, idx: number) => (
                         <div 
                           key={res.place_id}
-                          className="p-3 border-b border-gray-50 hover:bg-[#E8A0A0]/5 cursor-pointer transition-colors"
+                          className={`p-4 hover:bg-[#E8A0A0]/8 cursor-pointer transition-all active:bg-[#E8A0A0]/15 ${idx !== locationResults.length - 1 ? 'border-b border-gray-100/50' : ''}`}
                           onClick={() => {
                             setUnlockLocation({
                               lat: parseFloat(res.lat),
@@ -471,8 +471,13 @@ export default function CreatePage() {
                             showToast(`${res.display_name.split(',')[0]} set! 📍`);
                           }}
                         >
-                          <p className="text-[11px] font-bold text-[#3D2B3D] truncate">{res.display_name.split(',')[0]}</p>
-                          <p className="text-[9px] text-gray-400 truncate">{res.display_name}</p>
+                          <div className="flex items-start gap-3">
+                            <span className="text-lg mt-0.5">📍</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-bold text-[#3D2B3D] truncate">{res.display_name.split(',')[0]}</p>
+                              <p className="text-[10px] text-[#7A5C7A]/70 truncate mt-0.5">{res.display_name}</p>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
