@@ -146,5 +146,10 @@ service cloud.firestore {
         resource.data.get('createdBy', '') == request.auth.uid
       );
     }
+
+    match /rapid_fire_questions/{qId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+    }
   }
 }
