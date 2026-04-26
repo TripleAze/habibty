@@ -25,14 +25,14 @@ export async function unpairPartner(uid: string, partnerId: string): Promise<{ o
 
     // Clear partnerId for current user only if it matches
     if (userSnap.exists() && userSnap.data().partnerId === partnerId) {
-      batch.update(doc(db, 'users', uid), { partnerId: deleteField() });
+      batch.update(doc(db, 'users', uid), { partnerId: deleteField(), pairedAt: deleteField() });
       hasWork = true;
     }
     
     // Clear partnerId for the partner ONLY if they are still pointing to current user
     // This avoids "insufficient permissions" errors if they've already unpaired us.
     if (partnerSnap.exists() && partnerSnap.data().partnerId === uid) {
-      batch.update(doc(db, 'users', partnerId), { partnerId: deleteField() });
+      batch.update(doc(db, 'users', partnerId), { partnerId: deleteField(), pairedAt: deleteField() });
       hasWork = true;
     }
     

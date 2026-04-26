@@ -25,6 +25,8 @@ const dmSans = DM_Sans({
   display: 'swap',
 });
 
+import { HeaderProvider } from '@/lib/HeaderContext';
+
 export default function RootLayout({
   children,
 }: {
@@ -33,9 +35,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${cormorant.variable} ${dmSans.variable}`} suppressHydrationWarning>
-        <AppLifecycle />
-        <AppHeader />
-        {children}
+        <HeaderProvider>
+          <AppLifecycle />
+          <AppHeader />
+          {children}
+        </HeaderProvider>
       </body>
     </html>
   );

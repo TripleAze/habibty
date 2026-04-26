@@ -78,6 +78,13 @@ function TicTacToeInner() {
     return () => unsub();
   }, [gameId]);
 
+  // Auto-redirect to rematch
+  useEffect(() => {
+    if (game?.rematchId) {
+      router.replace(`/games/tictactoe?id=${game.rematchId}`);
+    }
+  }, [game?.rematchId, router]);
+
   // Lock body scroll while in game
   useEffect(() => {
     document.body.style.overflow = 'hidden';

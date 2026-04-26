@@ -8,8 +8,10 @@ import { auth, db } from '@/lib/firebase';
 import { subscribeToMoments, Moment } from '@/lib/moments';
 import BottomNav from '@/components/BottomNav';
 import ListSkeleton from '@/components/skeleton/ListSkeleton';
+import { useHeader } from '@/lib/HeaderContext';
 
 export default function MomentsPage() {
+  useHeader({ hide: true });
   const router = useRouter();
   const [moments, setMoments] = useState<Moment[]>([]);
   const [loading, setLoading] = useState(true);

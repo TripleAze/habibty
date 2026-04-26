@@ -32,6 +32,7 @@ export default function PairPage() {
       
       // Use real-time listener instead of a one-time getDoc
       unsubscribeDoc = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+        setChecking(false);
         if (snap.exists()) {
           const data = snap.data();
           if (data.partnerId) {
@@ -41,7 +42,6 @@ export default function PairPage() {
           }
           setMyCode(data.inviteCode || '');
         }
-        setChecking(false);
       });
     });
 
@@ -81,10 +81,15 @@ export default function PairPage() {
         return;
       }
 
-      // Pair both users
+      // Pair both users atomically
+      const { writeBatch } = await import('firebase/firestore');
+      const batch = writeBatch(db);
       const pairedAt = Date.now();
-      await updateDoc(doc(db, 'users', uid), { partnerId, pairedAt });
-      await updateDoc(doc(db, 'users', partnerId), { partnerId: uid, pairedAt });
+      
+      batch.update(doc(db, 'users', uid), { partnerId, pairedAt });
+      batch.update(doc(db, 'users', partnerId), { partnerId: uid, pairedAt });
+
+      await batch.commit();
 
       setStatus('Paired! Taking you to your inbox 💌');
       setTimeout(() => router.replace('/inbox'), 1500);

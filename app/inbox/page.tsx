@@ -15,8 +15,10 @@ import { Message } from '@/types';
 import { MessageCardSkeleton, ListSkeleton } from '@/components/skeleton';
 import { subscribeToPresence, Presence, getPresenceStatusText } from '@/lib/presence';
 import { Suspense } from 'react';
+import { useHeader } from '@/lib/HeaderContext';
 
 function InboxInternal() {
+  useHeader({ hide: true });
   const router = useRouter();
   const searchParams = useSearchParams();
   const openId = searchParams.get('open');

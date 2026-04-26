@@ -45,6 +45,7 @@ export interface GameState {
   winnerSymbol: string | null;
   isDraw: boolean;
   status: 'waiting' | 'playing' | 'finished';
+  rematchId?: string;
   createdAt: number;
 }
 
@@ -156,6 +157,10 @@ export async function rematch(gameId: string, initiatorUid: string): Promise<str
     status: 'playing',
     createdAt: Date.now(),
   });
+
+  // Point the old game to the new one so the partner can follow
+  await updateDoc(ref, { rematchId: newGameId });
+
   return newGameId;
 }
 

@@ -21,6 +21,7 @@ import { auth, db } from '@/lib/firebase';
 import { uploadMedia } from '@/lib/imagekit';
 import { unpairPartner } from '@/lib/pair';
 import BottomNav from '@/components/BottomNav';
+import { useHeader } from '@/lib/HeaderContext';
 
 function SkeletonRow() {
   return (
@@ -35,6 +36,7 @@ function SkeletonRow() {
 }
 
 export default function ProfilePage() {
+  useHeader({ hide: true });
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 

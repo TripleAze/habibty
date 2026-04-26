@@ -12,6 +12,7 @@ import { auth, db } from '@/lib/firebase';
 import ListSkeleton from '@/components/skeleton/ListSkeleton'; // Fixed import
 import dynamic from 'next/dynamic';
 const RevealModal = dynamic(() => import('@/components/RevealModal'), { ssr: false });
+import { useHeader } from '@/lib/HeaderContext';
 
 function getEffectiveStatus(message: Message, now: number): MessageStatus {
   if (message.status === 'opened') return 'opened';
@@ -82,6 +83,7 @@ function formatMeta(message: Message, now: number): string {
 }
 
 function ScheduledInternal() {
+  useHeader({ hide: true });
   const router = useRouter();
   const searchParams = useSearchParams();
   const openId = searchParams.get('open');

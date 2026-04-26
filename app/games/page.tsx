@@ -9,10 +9,12 @@ import { auth, db } from '@/lib/firebase';
 import { createGame, joinGame } from '@/lib/games';
 import { createWhotGame, joinWhotGame } from '@/lib/whot';
 import BottomNav from '@/components/BottomNav';
+import { useHeader } from '@/lib/HeaderContext';
 
 type GameType = 'tictactoe' | 'whot' | 'wordle' | 'truthordare' | 'rapidfire' | 'wouldyourather';
 
 export default function GamesPage() {
+  useHeader({ hide: true });
   const router = useRouter();
   const [uid, setUid] = useState('');
   const [displayName, setDisplayName] = useState('');

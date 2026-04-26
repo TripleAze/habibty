@@ -12,6 +12,7 @@ import { addMessage } from '@/lib/messages';
 import { MessageType, DeliveryType, UnlockConditionType, Message } from '@/types';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import { MediaSkeleton } from '@/components/skeleton';
+import { useHeader } from '@/lib/HeaderContext';
 
 const MOOD_CHIPS = [
   'Sad',
@@ -24,6 +25,7 @@ const MOOD_CHIPS = [
 ];
 
 export default function CreatePage() {
+  useHeader({ hide: true });
   const router = useRouter();
 
   // Auth + pairing state

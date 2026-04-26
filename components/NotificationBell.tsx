@@ -81,15 +81,24 @@ export default function NotificationBell() {
         onClick={handleOpen}
         className="relative p-2 rounded-full hover:bg-white/40 transition-colors"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3D2B3D" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7A5C7A" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#E8A0A0] text-white text-[9px] font-bold flex items-center justify-center rounded-full border border-white">
-            {unreadCount}
-          </span>
+          <span className="absolute top-[8px] right-[8px] w-[8px] h-[8px] bg-[#E8A0A0] rounded-full pulse-dot" />
         )}
       </button>
+
+      <style jsx>{`
+        .pulse-dot {
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.3); }
+          100% { transform: scale(1); }
+        }
+      `}</style>
 
       {isOpen && (
         <div className="notification-dropdown fixed sm:absolute top-16 sm:top-full left-4 right-4 sm:left-auto sm:right-0 mt-3 w-auto sm:w-72 bg-white/95 backdrop-blur-xl border border-[#E8A0A0]/20 rounded-2xl shadow-2xl z-[200] overflow-hidden animate-slide-up">

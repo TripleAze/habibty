@@ -21,7 +21,6 @@ export default function MessageActions({
 }: MessageActionsProps) {
   const [replyText, setReplyText] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
-  const [showReplyInput, setShowReplyInput] = useState(false);
 
   const handleReaction = useCallback(
     async (emoji: string) => {
@@ -48,7 +47,6 @@ export default function MessageActions({
       try {
         await addReply(messageId, replyText.trim());
         setReplyText('');
-        setShowReplyInput(false);
         onReplySent();
       } catch (error) {
         console.error('Error sending reply:', error);
@@ -60,167 +58,97 @@ export default function MessageActions({
   );
 
   return (
-    <div className="message-actions-panel">
+    <div className="msg-actions-root">
       <style>{`
-        .message-actions-panel {
-          margin-top: 24px;
-          padding-top: 24px;
-          border-top: 1px solid rgba(232, 160, 160, 0.2);
+        .msg-actions-root {
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
         }
 
-        .actions-section {
-          margin-bottom: 20px;
-        }
-
-        .actions-label {
-          font-size: 11px;
+        .msg-actions-label {
+          font-size: 10px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
           color: #C9B8D8;
-          font-weight: 500;
+          font-weight: 700;
           margin-bottom: 12px;
         }
 
-        .reaction-bar {
+        .msg-reaction-list {
           display: flex;
           gap: 8px;
-          flex-wrap: wrap;
+          overflow-x: auto;
+          padding-bottom: 4px;
+          scrollbar-width: none;
         }
+        .msg-reaction-list::-webkit-scrollbar { display: none; }
 
-        .reaction-btn {
+        .msg-emoji-btn {
           width: 44px;
           height: 44px;
           border-radius: 50%;
-          border: 2px solid rgba(232, 160, 160, 0.3);
-          background: white;
+          border: 1.5px solid rgba(232, 160, 160, 0.15);
+          background: #FFF;
           font-size: 20px;
-          cursor: pointer;
-          transition: all 0.2s ease;
           display: flex;
           align-items: center;
           justify-content: center;
+          cursor: pointer;
+          transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          flex-shrink: 0;
         }
-
-        .reaction-btn:hover {
+        .msg-emoji-btn:hover {
           transform: scale(1.1);
           border-color: #E8A0A0;
         }
-
-        .reaction-btn.selected {
-          background: linear-gradient(135deg, #E8A0A0, #F2C4CE);
+        .msg-emoji-btn.active {
+          background: #FAD0DC;
           border-color: #E8A0A0;
-          transform: scale(1.15);
-          box-shadow: 0 4px 12px rgba(232, 160, 160, 0.4);
+          transform: scale(1.1);
         }
 
-        .reply-section {
-          margin-top: 20px;
-        }
-
-        .reply-input-wrapper {
+        .msg-reply-box {
           display: flex;
-          gap: 8px;
-          margin-top: 12px;
+          gap: 10px;
+          background: #F8F8F8;
+          border-radius: 100px;
+          padding: 6px;
+          padding-left: 16px;
+          border: 1px solid rgba(0,0,0,0.03);
         }
-
-        .reply-input {
+        .msg-reply-input {
           flex: 1;
-          padding: 12px 16px;
-          border-radius: 20px;
-          border: 1px solid rgba(232, 160, 160, 0.3);
-          background: rgba(247, 232, 238, 0.5);
-          font-size: 14px;
-          font-family: var(--font-dm-sans), sans-serif;
-          color: #3D2B3D;
-          outline: none;
-          transition: all 0.2s;
-        }
-
-        .reply-input:focus {
-          border-color: #E8A0A0;
-          background: rgba(247, 232, 238, 0.8);
-        }
-
-        .reply-send-btn {
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          border: none;
-          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
-          color: white;
-          font-size: 18px;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .reply-send-btn:hover {
-          transform: scale(1.08);
-        }
-
-        .reply-send-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .show-reply-btn {
-          width: 100%;
-          padding: 12px;
-          border-radius: 16px;
-          border: 1px dashed rgba(232, 160, 160, 0.5);
           background: transparent;
-          color: #7A5C7A;
-          font-size: 14px;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        }
-
-        .show-reply-btn:hover {
-          background: rgba(232, 160, 160, 0.1);
-          border-color: #E8A0A0;
-        }
-
-        .play-together-btn {
-          width: 100%;
-          padding: 14px;
-          border-radius: 16px;
           border: none;
-          background: linear-gradient(135deg, #C9B8D8, #E8A0A0);
+          outline: none;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 14px;
+          color: #3D2B3D;
+        }
+        .msg-reply-send {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: #E8A0A0;
           color: white;
-          font-size: 15px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s;
+          border: none;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
-          margin-top: 16px;
+          cursor: pointer;
+          transition: opacity 0.2s;
         }
-
-        .play-together-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(201, 184, 216, 0.4);
-        }
+        .msg-reply-send:disabled { opacity: 0.5; }
       `}</style>
 
-      {/* Reactions Section */}
-      <div className="actions-section">
-        <p className="actions-label">React</p>
-        <div className="reaction-bar">
+      <div>
+        <p className="msg-actions-label">React</p>
+        <div className="msg-reaction-list">
           {REACTION_EMOJIS.map((emoji) => (
             <button
               key={emoji}
-              type="button"
-              className={`reaction-btn ${
-                userReaction?.emoji === emoji ? 'selected' : ''
-              }`}
+              className={`msg-emoji-btn ${userReaction?.emoji === emoji ? 'active' : ''}`}
               onClick={() => handleReaction(emoji)}
             >
               {emoji}
@@ -229,46 +157,20 @@ export default function MessageActions({
         </div>
       </div>
 
-      {/* Reply Section */}
-      <div className="reply-section">
-        <p className="actions-label">Reply</p>
-        {showReplyInput ? (
-          <form className="reply-input-wrapper" onSubmit={handleSendReply}>
-            <input
-              type="text"
-              className="reply-input"
-              placeholder="Write a reply..."
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              autoFocus
-            />
-            <button
-              type="submit"
-              className="reply-send-btn"
-              disabled={sendingReply || !replyText.trim()}
-            >
-              {sendingReply ? '...' : '➤'}
-            </button>
-          </form>
-        ) : (
-          <button
-            type="button"
-            className="show-reply-btn"
-            onClick={() => setShowReplyInput(true)}
-          >
-            💬 Write a reply
+      <div>
+        <p className="msg-actions-label">Reply</p>
+        <form className="msg-reply-box" onSubmit={handleSendReply}>
+          <input
+            className="msg-reply-input"
+            placeholder="Type a response..."
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+          />
+          <button className="msg-reply-send" disabled={sendingReply || !replyText.trim()}>
+            ➤
           </button>
-        )}
+        </form>
       </div>
-
-      {/* Play Together Button */}
-      <button
-        type="button"
-        className="play-together-btn"
-        onClick={onPlayTogether}
-      >
-        🎮 Play Together
-      </button>
     </div>
   );
 }
