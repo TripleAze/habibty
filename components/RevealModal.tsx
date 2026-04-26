@@ -474,19 +474,44 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         }
         .rev-emoji-btn.active { background: linear-gradient(135deg, #E8A0A0, #F2C4CE); border-color: #E8A0A0; color: white; }
         
-        .rev-reply-toggle {
-          width: 38px;
-          height: 38px;
-          border-radius: 50%;
-          background: rgba(201, 184, 216, 0.12);
-          border: 1.5px solid rgba(201, 184, 216, 0.3);
+        .rev-play-secondary {
+          padding: 6px 14px;
+          border-radius: 100px;
+          background: rgba(201, 184, 216, 0.15);
+          color: #7A5C7A;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          border: 1px solid rgba(201, 184, 216, 0.3);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+        .rev-play-secondary:hover { background: rgba(201, 184, 216, 0.25); }
+
+        .rev-reply-primary {
+          width: 100%;
+          padding: 16px;
+          border-radius: 100px;
+          background: linear-gradient(135deg, #E8A0A0 0%, #C9B8D8 100%);
+          color: white;
+          font-size: 15px;
+          font-weight: 700;
+          letter-spacing: 0.02em;
+          border: none;
           display: flex;
           align-items: center;
           justify-content: center;
+          gap: 10px;
+          margin-top: 10px;
           cursor: pointer;
+          box-shadow: 0 8px 24px rgba(232, 160, 160, 0.3);
           transition: all 0.2s;
         }
-        .rev-reply-toggle.active { background: #C9B8D8; }
+        .rev-reply-primary:active { transform: scale(0.97); opacity: 0.9; }
 
         .rev-input-row { display: flex; gap: 8px; margin-top: 12px; animation: rev-slide-up-fade 0.22s ease-out; }
         @keyframes rev-slide-up-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
@@ -494,25 +519,6 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         .rev-input { flex: 1; padding: 10px 16px; border-radius: 100px; border: 1px solid rgba(232, 160, 160, 0.3); background: rgba(247, 232, 238, 0.5); font-size: 14px; outline: none; transition: border-color 0.2s; }
         .rev-input:focus { border-color: #E8A0A0; }
         .rev-send { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #E8A0A0, #C9B8D8); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-        .rev-play-together {
-          width: 100%;
-          padding: 13px;
-          border-radius: 100px;
-          background: linear-gradient(135deg, #C9B8D8 0%, #E8A0A0 100%);
-          color: white;
-          font-size: 14px;
-          font-weight: 500;
-          letter-spacing: 0.02em;
-          border: none;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          margin-top: 10px;
-          cursor: pointer;
-          box-shadow: 0 4px 16px rgba(201, 184, 216, 0.35);
-        }
 
         /* Desktop Behavior */
         @media (min-width: 768px) {
@@ -680,24 +686,27 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
             </div>
           )}
 
-          {/* Action Row */}
-          <div className="rev-action-row">
-            {REACTION_EMOJIS.slice(0, 4).map((emoji) => (
-              <button
-                key={emoji}
-                className={`rev-emoji-btn ${userReaction?.emoji === emoji ? 'active' : ''}`}
-                onClick={() => handleReactionToggle(emoji)}
-              >
-                {emoji}
-              </button>
-            ))}
-            <button 
-              className={`rev-reply-toggle ${showReplyInput ? 'active' : ''}`}
-              onClick={() => setShowReplyInput(!showReplyInput)}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={showReplyInput ? '#fff' : '#7A5C7A'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <div className="rev-action-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {REACTION_EMOJIS.slice(0, 4).map((emoji) => (
+                <button
+                  key={emoji}
+                  className={`rev-emoji-btn ${userReaction?.emoji === emoji ? 'active' : ''}`}
+                  onClick={() => handleReactionToggle(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+
+            <button className="rev-play-secondary" onClick={() => {
+              onClose();
+              setTimeout(() => router.push('/games'), 300);
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h2m-1-1v2"/>
               </svg>
+              <span>Play Together ▸</span>
             </button>
           </div>
 
@@ -717,15 +726,15 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
             </form>
           )}
 
-          {/* Play Together */}
-          <button className="rev-play-together" onClick={() => {
-            onClose();
-            setTimeout(() => router.push('/games'), 300);
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h2m-1-1v2"/>
+          {/* Primary Reply CTA */}
+          <button 
+            className="rev-reply-primary"
+            onClick={() => setShowReplyInput(!showReplyInput)}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
-            Play Together
+            <span>{showReplyInput ? 'Close Reply' : 'Reply to message'}</span>
           </button>
         </div>
       </div>
