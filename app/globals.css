@@ -567,8 +567,15 @@ html, body {
 .create-header {
   padding: 52px 24px 24px;
   display: flex;
+  flex-direction: column;
+}
+
+.header-nav-row {
+  display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 24px;
 }
 
 .back-btn {
@@ -754,8 +761,7 @@ html, body {
 .sched-header {
   padding: 60px 24px 24px;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
 }
 
 .timeline { padding: 0 20px; }

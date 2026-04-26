@@ -172,17 +172,21 @@ function ScheduledInternal() {
   return (
     <div className="app-container">
       <div className="sched-header">
-        <Link href="/" className="back-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
-            <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
-          </svg>
-          Back
-        </Link>
-        <NotificationBell />
-        <p className="home-label">Memories & Magic</p>
-        <h1 className="home-title" style={{ fontSize: '28px' }}>
-          Your <em>journey</em> <span>✨</span>
-        </h1>
+        <div className="header-nav-row">
+          <Link href="/" className="back-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+              <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Back
+          </Link>
+          <NotificationBell />
+        </div>
+        <div className="header-text-block">
+          <p className="home-label">Memories & Magic</p>
+          <h1 className="home-title" style={{ fontSize: '28px' }}>
+            Your <em>journey</em> <span>✨</span>
+          </h1>
+        </div>
       </div>
 
       <div className="timeline-section">

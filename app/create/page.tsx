@@ -247,10 +247,12 @@ export default function CreatePage() {
   return (
     <div className="app-container">
       <div className="create-header">
-        <Link href="/inbox" className="back-btn">
-          ← Back
-        </Link>
-        <NotificationBell />
+        <div className="header-nav-row">
+          <Link href="/inbox" className="back-btn">
+            ← Back
+          </Link>
+          <NotificationBell />
+        </div>
         <h1 className="create-title">
           Create a
           <br />

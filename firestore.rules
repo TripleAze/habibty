@@ -62,14 +62,19 @@ service cloud.firestore {
       }
     }
 
-    // Games collection - 2 players only, restricted read/write
+    // Games collection - participants cross-status access
     match /games/{gameId} {
-      // Allow read if you are a participant OR the game is waiting (so 2nd player can find it)
-      // Fallback: allow if you are the creator (handles initialization quirks)
-      allow read: if request.auth != null && (
+      // Allow read if you are a participant, the creator, OR the game is waiting
+      allow get: if request.auth != null && (
         resource.data.status == 'waiting' ||
-        request.auth.uid in resource.data.players ||
-        request.auth.uid == resource.data.creatorUid
+        request.auth.uid in resource.data.get('players', []) ||
+        request.auth.uid == resource.data.get('creatorUid', '')
+      );
+      
+      // Allow list (queries) for finding waiting games or your own active games
+      allow list: if request.auth != null && (
+        resource.data.get('status', 'waiting') == 'waiting' ||
+        request.auth.uid in resource.data.get('players', [])
       );
 
       allow create: if request.auth != null;
