@@ -72,8 +72,9 @@ export default function MomentsPage() {
   if (loading) {
     return (
       <div className="app-container">
-        <div className="home-header">
-          <div className="home-header-left">
+        <div className="home-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(232,160,160,0.1)' }} />
+          <div className="home-header-left" style={{ flex: 1 }}>
             <p className="home-label">Memories</p>
             <h1 className="home-title">Our <em>journey</em></h1>
           </div>
@@ -87,8 +88,31 @@ export default function MomentsPage() {
 
   return (
     <div className="app-container">
-      <div className="home-header">
-        <div className="home-header-left">
+      <div className="home-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <button 
+          onClick={() => router.push('/profile')}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: 'white',
+            border: '1px solid rgba(232, 160, 160, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(232, 160, 160, 0.1)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            color: '#E8A0A0'
+          }}
+          onMouseEnter={e => e.currentTarget.style.transform = 'translateX(-3px)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div className="home-header-left" style={{ flex: 1 }}>
           <p className="home-label">Our Journey</p>
           <h1 className="home-title">Shared <em>memories</em></h1>
         </div>
