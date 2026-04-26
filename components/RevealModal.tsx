@@ -419,7 +419,33 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           opacity: 1;
         }
 
-        .rev-drag-handle { width: 40px; height: 4px; border-radius: 2px; background: rgba(201, 184, 216, 0.45); margin: 12px auto 16px; cursor: ns-resize; }
+        .rev-drag-handle-wrapper { 
+          display: flex; 
+          align-items: center; 
+          justify-content: center; 
+          padding: 8px 0;
+          position: relative;
+        }
+        .rev-drag-handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(201, 184, 216, 0.45); cursor: ns-resize; }
+        
+        .rev-hide-btn {
+          position: absolute;
+          right: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: rgba(247, 232, 238, 0.6);
+          border: none;
+          color: #7A5C7A;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .rev-hide-btn:active { transform: translateY(-50%) scale(0.9); background: rgba(247, 232, 238, 0.9); }
 
         .rev-reactions-thread { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
         .rev-reaction-chip { padding: 3px 9px; border-radius: 100px; background: rgba(247, 232, 238, 0.7); font-size: 15px; }
@@ -568,9 +594,20 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           <div 
             className={`rev-swipe-hint ${isFinishingTyping && phase === 'content' ? '' : 'hide'}`}
             onClick={(e) => { e.stopPropagation(); setPhase('actions'); }}
+            style={{
+              padding: '10px 24px',
+              borderRadius: '100px',
+              background: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(232, 160, 160, 0.2)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+              cursor: 'pointer',
+              zIndex: 101,
+              pointerEvents: 'all'
+            }}
           >
-            <span className="rev-hint-arrow">↑</span>
-            <span className="rev-hint-text">REACT & REPLY</span>
+            <span className="rev-hint-arrow" style={{ fontSize: 18, marginBottom: 2 }}>↑</span>
+            <span className="rev-hint-text" style={{ fontWeight: 700, color: '#E8A0A0' }}>Tap to React & Reply</span>
           </div>
 
           {/* Location Lock Screen */}
@@ -594,7 +631,14 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
 
         {/* Layer 2: Actions Sheet */}
         <div className="rev-actions-sheet">
-          <div className="rev-drag-handle" />
+          <div className="rev-drag-handle-wrapper">
+            <div className="rev-drag-handle" />
+            <button className="rev-hide-btn" onClick={() => setPhase('content')}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+              </svg>
+            </button>
+          </div>
 
           {/* Reactions Thread */}
           {reactions.length > 0 && (
