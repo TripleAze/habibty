@@ -79,20 +79,20 @@ function ResultsScreen({ game, uid, router }: { game: GameState; uid: string; ro
   const myAnswers = game.answers[uid] || {};
   const opponentAnswers = game.answers[opponentUid] || {};
 
-  const allQuestions = game.questions;
+  const allQuestions = game.questions.slice(0, QUESTIONS_PER_ROUND);
   const matches = allQuestions.filter((q, i) => {
     const qKey = q.id;
     return myAnswers[qKey] && opponentAnswers[qKey] && myAnswers[qKey] === opponentAnswers[qKey];
   }).length;
 
-  const matchPercent = Math.round((matches / allQuestions.length) * 100);
+  const matchPercent = Math.round((matches / QUESTIONS_PER_ROUND) * 100);
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 20px 40px', overflow: 'auto' }}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 8 }}>Results</p>
         <p style={{ fontSize: 48, fontWeight: 700, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{matchPercent}% Match</p>
-        <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)' }}>You agreed on {matches} of {allQuestions.length} questions</p>
+        <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)' }}>You agreed on {matches} of {QUESTIONS_PER_ROUND} questions</p>
       </div>
 
       {/* Question by question comparison */}
@@ -153,7 +153,7 @@ function RapidFireInner() {
   // Generate questions once
   useEffect(() => {
     if (questionsRef.current.length === 0) {
-      const shuffled = [...RAPID_FIRE_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, QUESTIONS_PER_ROUND * 2);
+      const shuffled = [...RAPID_FIRE_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, QUESTIONS_PER_ROUND);
       questionsRef.current = shuffled;
     }
   }, []);
