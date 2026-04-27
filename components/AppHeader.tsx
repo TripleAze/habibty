@@ -27,11 +27,13 @@ export default function AppHeader() {
           top: 0;
           left: 0;
           right: 0;
-          height: 56px;
+          height: calc(56px + env(safe-area-inset-top, 0px));
+          padding-top: env(safe-area-inset-top, 0px);
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 0 20px;
+          padding-left: 20px;
+          padding-right: 20px;
           z-index: 1000;
           transition: all 0.3s ease;
           background: rgba(255, 255, 255, 0);

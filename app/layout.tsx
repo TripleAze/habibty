@@ -1,16 +1,22 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
+export const viewport = {
+  themeColor: '#FAD0DC',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
 export const metadata: Metadata = {
   title: '💌 For You',
   description: 'A romantic message app for someone special',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'Habibty',
   },
-  themeColor: '#E8A0A0',
 };
 
 import { Cormorant_Garamond, DM_Sans } from 'next/font/google';

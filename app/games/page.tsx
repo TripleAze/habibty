@@ -213,79 +213,81 @@ export default function GamesPage() {
   return (
     <>
       <div className="app-container">
-        <div className="home-header">
-          <div className="home-header-left">
-            <p className="home-label">Games</p>
-            <h1 className="home-title">Play <em>together</em></h1>
+        <div className="page-content-wrapper">
+          <div className="home-header">
+            <div className="home-header-left">
+              <p className="home-label">Games</p>
+              <h1 className="home-title">Play <em>together</em></h1>
+            </div>
+            <NotificationBell />
           </div>
-          <NotificationBell />
-        </div>
 
-        <div className="section-label">Available games</div>
+          <div className="section-label">Available games</div>
 
-        <div className="games-grid">
-          {games.map((g, i) => (
-            <div 
-              key={g.type} 
-              className="game-card" 
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
-              <div className="game-card-header">
-                <div className="game-icon-wrap" style={{ background: g.bg, border: `1px solid ${g.border}` }}>
-                  {g.icon
-                    ? <div className="relative w-full h-full"><Image src={g.icon} alt={g.name} fill className="object-contain" unoptimized /></div>
-                    : <span style={{ color: g.color, fontSize: '20px' }}>{g.symbol || g.name[0]}</span>
-                  }
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div className="game-name-row">
-                    <div className="game-name">{g.name}</div>
-                    {g.new && <span className="new-game-badge">NEW</span>}
+          <div className="games-grid">
+            {games.map((g, i) => (
+              <div 
+                key={g.type} 
+                className="game-card" 
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                <div className="game-card-header">
+                  <div className="game-icon-wrap" style={{ background: g.bg, border: `1px solid ${g.border}` }}>
+                    {g.icon
+                      ? <div className="relative w-full h-full"><Image src={g.icon} alt={g.name} fill className="object-contain" unoptimized /></div>
+                      : <span style={{ color: g.color, fontSize: '20px' }}>{g.symbol || g.name[0]}</span>
+                    }
                   </div>
-                  <div className="game-desc">{g.desc}</div>
+                  <div style={{ flex: 1 }}>
+                    <div className="game-name-row">
+                      <div className="game-name">{g.name}</div>
+                      {g.new && <span className="new-game-badge">NEW</span>}
+                    </div>
+                    <div className="game-desc">{g.desc}</div>
+                  </div>
                 </div>
-              </div>
 
-              {activeGame === g.type ? (
-                <div className="join-panel mt-auto">
-                  <div className="join-row">
-                    <input
-                      className="join-input"
-                      type="text"
-                      maxLength={6}
-                      placeholder="Enter code"
-                      value={joinCode}
-                      onChange={e => { setJoinCode(e.target.value); setError(''); }}
-                      onKeyDown={e => e.key === 'Enter' && handleJoin(g.type)}
-                      autoFocus
-                    />
-                    <button className="join-confirm" onClick={() => handleJoin(g.type)} disabled={loading || !joinCode.trim()}>
+                {activeGame === g.type ? (
+                  <div className="join-panel mt-auto">
+                    <div className="join-row">
+                      <input
+                        className="join-input"
+                        type="text"
+                        maxLength={6}
+                        placeholder="Enter code"
+                        value={joinCode}
+                        onChange={e => { setJoinCode(e.target.value); setError(''); }}
+                        onKeyDown={e => e.key === 'Enter' && handleJoin(g.type)}
+                        autoFocus
+                      />
+                      <button className="join-confirm" onClick={() => handleJoin(g.type)} disabled={loading || !joinCode.trim()}>
+                        Join
+                      </button>
+                    </div>
+                    {error && <p className="lobby-error">{error}</p>}
+                    <span className="join-cancel" onClick={resetGame}>Cancel</span>
+                  </div>
+                ) : (
+                  <div className="game-actions">
+                    <button
+                      className="btn-game btn-game-primary"
+                      onClick={() => handleCreate(g.type)}
+                      disabled={loading}
+                    >
+                      <span>{g.type === 'wordle' ? 'Set up word' : 'Create Game'}</span>
+                      <span>✨</span>
+                    </button>
+                    <button
+                      className="btn-game btn-game-secondary"
+                      onClick={() => { setActiveGame(g.type); setError(''); }}
+                    >
                       Join
                     </button>
                   </div>
-                  {error && <p className="lobby-error">{error}</p>}
-                  <span className="join-cancel" onClick={resetGame}>Cancel</span>
-                </div>
-              ) : (
-                <div className="game-actions">
-                  <button
-                    className="btn-game btn-game-primary"
-                    onClick={() => handleCreate(g.type)}
-                    disabled={loading}
-                  >
-                    <span>{g.type === 'wordle' ? 'Set up word' : 'Create Game'}</span>
-                    <span>✨</span>
-                  </button>
-                  <button
-                    className="btn-game btn-game-secondary"
-                    onClick={() => { setActiveGame(g.type); setError(''); }}
-                  >
-                    Join
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         <BottomNav activeTab="games" />

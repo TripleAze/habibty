@@ -39,7 +39,7 @@ html, body {
   background: linear-gradient(160deg, #FAD0DC 0%, #EDD5F0 40%, #D8E8F8 100%);
   background-attachment: fixed;
   padding-bottom: 100px;
-  padding-top: 56px; /* Space for the persistent AppHeader */
+  padding-top: max(56px, calc(56px + env(safe-area-inset-top)));
 }
 
 /* ─── APP HEADER ──────────────────────────────────────────────── */
@@ -838,7 +838,9 @@ html, body {
   -webkit-backdrop-filter: blur(16px);
   border-top: 0.5px solid rgba(232, 160, 160, 0.2);
   display: flex;
-  padding: 10px 0 18px;
+  padding: 10px 0 max(18px, env(safe-area-inset-bottom));
+  padding-bottom: max(18px, env(safe-area-inset-bottom));
+  height: calc(68px + env(safe-area-inset-bottom, 0px));
   z-index: 50;
 }
 
@@ -998,34 +1000,88 @@ html, body {
 /* ─── RESPONSIVE ──────────────────────────────────────── */
 @media (min-width: 1024px) {
   .app-container {
-    padding-bottom: 40px;
-    padding-left: 260px; /* Fixed sidebar width */
-    max-width: 1600px;
-    margin: 0 auto;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 240px; /* New narrower sidebar width */
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    background-attachment: fixed;
+  }
+
+  /* Content wrapper for centering */
+  .page-content-wrapper {
+    flex: 1;
+    width: 100%;
+    max-width: 900px;
+    padding: 40px 48px;
     min-height: 100vh;
   }
 
-  /* Desktop Sidebar */
+  /* Sidebar styling */
   .bottom-nav {
     top: 0;
     bottom: 0;
     left: 0;
     right: auto;
-    width: 260px; /* Fixed width */
+    width: 240px;
     height: 100vh;
     flex-direction: column;
-    padding: 32px 0;
+    padding: 0;
     border-top: none;
-    border-right: 1px solid rgba(232, 160, 160, 0.2);
-    background: rgba(255, 253, 250, 0.85); /* Slightly warmer background */
+    border-right: 0.5px solid rgba(232, 160, 160, 0.15);
+    background: rgba(255, 253, 250, 0.92);
     backdrop-filter: blur(32px);
     -webkit-backdrop-filter: blur(32px);
     align-items: flex-start;
-    overflow: hidden;
-    z-index: 100;
-    box-shadow: 10px 0 30px -15px rgba(232, 160, 160, 0.15);
+    z-index: 1000;
+    box-shadow: none;
+    justify-content: flex-start;
   }
 
+  /* Desktop Logo Header */
+  .desktop-sidebar-logo {
+    padding: 32px 20px 24px;
+    width: 100%;
+  }
+  
+  .desktop-logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .desktop-logo-heart {
+    font-size: 20px;
+    background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .desktop-logo-text {
+    font-family: var(--font-cormorant), serif;
+    font-size: 24px;
+    font-weight: 600;
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  .desktop-sidebar-divider {
+    height: 0.5px;
+    width: 100%;
+    background: rgba(232, 160, 160, 0.15);
+  }
+
+  .nav-items-container {
+    flex: 1;
+    width: 100%;
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Desktop Nav Items */
   .nav-item {
     flex: none;
     flex-direction: row;

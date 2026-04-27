@@ -5,7 +5,7 @@
   "start_url": "/inbox",
   "display": "standalone",
   "background_color": "#FAD0DC",
-  "theme_color": "#E8A0A0",
+  "theme_color": "#FAD0DC",
   "orientation": "portrait",
   "icons": [
     {
