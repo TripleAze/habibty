@@ -64,6 +64,12 @@ export default function ProfilePage() {
   const [pairedAt, setPairedAt] = useState<number | null>(null);
   const hasLoadedRef = useRef(false);
 
+  // PWA Install prompt state
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [showIOSHint, setShowIOSHint] = useState(false);
+  const [iosDismissed, setIosDismissed] = useState(false);
+
   useEffect(() => {
     if (!auth) { setChecking(false); return; }
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -92,7 +98,7 @@ export default function ProfilePage() {
 
             // Fetch Stats
             const { collection, query, where, getCountFromServer, or, and } = await import('firebase/firestore');
-            
+
             // Message Count
             const msgQ = query(
               collection(db, 'messages'),
@@ -123,6 +129,50 @@ export default function ProfilePage() {
     });
     return () => unsub();
   }, [router]);
+
+  // PWA Install prompt logic
+  useEffect(() => {
+    // Check if already installed (running as standalone app)
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+      return;
+    }
+
+    // Check if iOS device
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
+
+    if (isIOS && !isInStandaloneMode) {
+      const dismissed = localStorage.getItem('ios-install-dismissed');
+      if (!dismissed) {
+        setShowIOSHint(true);
+      }
+    }
+
+    const handler = (e: Event) => {
+      (e as any).preventDefault();
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const result = await installPrompt.userChoice;
+    if (result.outcome === 'accepted') {
+      setInstallPrompt(null);
+      setIsInstalled(true);
+    }
+  };
+
+  const dismissIOSHint = () => {
+    setShowIOSHint(false);
+    setIosDismissed(true);
+    localStorage.setItem('ios-install-dismissed', 'true');
+  };
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -402,6 +452,82 @@ export default function ProfilePage() {
         <div className="profile-card-group" style={{ animationDelay: '0.2s' }}>
           <div className="pf-section-label px-1">System</div>
           <div className="profile-card">
+            {/* PWA Install Button */}
+            {!isInstalled && installPrompt && (
+              <button
+                onClick={handleInstall}
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  borderRadius: '100px',
+                  background: 'linear-gradient(135deg, #E8A0A0, #C9B8D8)',
+                  border: 'none',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginBottom: '10px',
+                  fontFamily: "'DM Sans', sans-serif",
+                  boxShadow: '0 4px 16px rgba(232,160,160,0.3)',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2v13M8 11l4 4 4-4"/>
+                  <path d="M3 19h18"/>
+                </svg>
+                Install Habibty App
+              </button>
+            )}
+
+            {isInstalled && (
+              <div style={{
+                textAlign: 'center',
+                fontSize: '12px',
+                color: 'rgba(122,92,122,0.5)',
+                fontStyle: 'italic',
+                fontFamily: "'Cormorant Garamond', serif",
+                marginBottom: '10px',
+                padding: '8px',
+              }}>
+                ✓ App is installed
+              </div>
+            )}
+
+            {/* iOS Install Hint */}
+            {showIOSHint && !isInstalled && !iosDismissed && (
+              <div style={{
+                background: 'rgba(247,232,238,0.8)',
+                border: '1px solid rgba(232,160,160,0.3)',
+                borderRadius: '16px',
+                padding: '14px 16px',
+                marginBottom: '10px',
+                fontSize: '12px',
+                color: '#7A5C7A',
+                lineHeight: '1.6',
+              }}>
+                <strong style={{ display: 'block', marginBottom: '4px' }}>Install on iPhone</strong>
+                Tap the Share button <strong>⬆</strong> in Safari, then tap <strong>"Add to Home Screen"</strong>
+                <button
+                  onClick={dismissIOSHint}
+                  style={{
+                    display: 'block',
+                    marginTop: '8px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#E8A0A0',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
             {!showSignOutConfirm ? (
               <button className="w-full flex items-center justify-center gap-2 p-5 text-red-400 hover:bg-red-50 transition-colors" onClick={() => setShowSignOutConfirm(true)}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
