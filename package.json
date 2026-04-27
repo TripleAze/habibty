@@ -26,6 +26,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.27",
+    "minimatch": "^10.2.5",
     "postcss": "^8.5.9",
     "tailwindcss": "^3.4.19",
     "typescript": "^5"
