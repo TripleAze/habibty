@@ -39,7 +39,7 @@ export default function AppHeader() {
           background: rgba(255, 255, 255, 0);
           backdrop-filter: blur(0);
           -webkit-backdrop-filter: blur(0);
-          border-bottom: 1px solid transparent;
+          border-bottom: none;
         }
         
         .app-header-root.scrolled {
