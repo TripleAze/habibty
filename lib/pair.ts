@@ -1,5 +1,6 @@
-import { doc, getDoc, writeBatch, deleteField } from 'firebase/firestore';
-import { db } from './firebase';
+import { doc, getDoc, writeBatch, deleteField, onSnapshot, Timestamp } from 'firebase/firestore';
+import { db, auth } from './firebase';
+import { useState, useEffect } from 'react';
 
 /**
  * Atomically unpairs two users by clearing the partnerId field on both documents.
@@ -8,6 +9,70 @@ import { db } from './firebase';
  * @param uid Current user ID
  * @param partnerId Partner's user ID
  */
+export interface Partner {
+  uid: string;
+  name: string;
+  photoURL?: string;
+  email?: string;
+}
+
+/**
+ * Hook to get partner information
+ */
+export function usePair() {
+  const [partner, setPartner] = useState<Partner | null>(null);
+  const [daysTogether, setDaysTogether] = useState<number>(0);
+
+  useEffect(() => {
+    const currentUserId = auth?.currentUser?.uid;
+    if (!currentUserId) return;
+
+    // Subscribe to user document changes
+    const unsubscribe = onSnapshot(doc(db, 'users', currentUserId), (userSnap) => {
+      const userData = userSnap.data();
+      const partnerId = userData?.partnerId;
+      const pairedAt = userData?.pairedAt;
+
+      if (!partnerId) {
+        setPartner(null);
+        setDaysTogether(0);
+        return;
+      }
+
+      // Calculate days together
+      if (pairedAt && pairedAt instanceof Timestamp) {
+        const now = Timestamp.now();
+        const diffMs = now.toMillis() - pairedAt.toMillis();
+        setDaysTogether(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+      }
+
+      // Fetch partner data
+      getDoc(doc(db, 'users', partnerId)).then((partnerSnap) => {
+        if (partnerSnap.exists()) {
+          const data = partnerSnap.data();
+          setPartner({
+            uid: partnerSnap.id,
+            name: data.displayName || 'Partner',
+            photoURL: data.photoURL,
+            email: data.email,
+          });
+        }
+      });
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const unpair = async () => {
+    const currentUserId = auth?.currentUser?.uid;
+    if (currentUserId && partner) {
+      await unpairPartner(currentUserId, partner.uid);
+    }
+  };
+
+  return { partner, unpair, daysTogether };
+}
+
 export async function unpairPartner(uid: string, partnerId: string): Promise<{ ok: boolean; error?: string }> {
   if (!uid || !partnerId) {
     return { ok: false, error: 'User IDs are required for unpairing.' };

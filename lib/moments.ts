@@ -6,9 +6,12 @@ import {
   where,
   orderBy,
   limit,
-  onSnapshot
+  onSnapshot,
+  doc,
+  getDoc,
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
+import { useState, useEffect } from 'react';
 
 export type MomentType = 
   | 'message_sent' 
@@ -62,6 +65,63 @@ export async function addMoment(
   } catch (error) {
     console.error('Error adding moment:', error);
   }
+}
+
+/**
+ * Hook to subscribe to the shared moments timeline
+ */
+export function useMoments() {
+  const [moments, setMoments] = useState<Moment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const currentUserId = auth?.currentUser?.uid;
+    if (!currentUserId) {
+      setMoments([]);
+      setLoading(false);
+      return;
+    }
+
+    // Get partnerId first
+    getDoc(doc(db, 'users', currentUserId)).then((userSnap) => {
+      const partnerId = userSnap.data()?.partnerId;
+      if (!partnerId) {
+        setMoments([]);
+        setLoading(false);
+        return;
+      }
+
+      const pairId = getPairId(currentUserId, partnerId);
+
+      const q = query(
+        collection(db, MOMENTS_COLLECTION),
+        where('pairId', '==', pairId),
+        limit(50)
+      );
+
+      return onSnapshot(q, (snap) => {
+        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Moment));
+        // Sort locally by createdAt
+        data.sort((a, b) => {
+          const t1 = a.createdAt?.toDate?.()?.getTime() || 0;
+          const t2 = b.createdAt?.toDate?.()?.getTime() || 0;
+          return t2 - t1;
+        });
+        setMoments(data);
+        setLoading(false);
+      }, (err) => {
+        console.error('Moments subscription error:', err);
+        setMoments([]);
+        setLoading(false);
+      });
+    }).catch((err) => {
+      console.error('Error getting partner for moments:', err);
+      setMoments([]);
+      setLoading(false);
+    });
+  }, []);
+
+  return { moments, loading };
 }
 
 /**

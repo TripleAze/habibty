@@ -1,7 +1,9 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
-import { getAuth, Auth } from 'firebase/auth';
+import { getAuth, Auth, signOut as firebaseSignOut, onAuthStateChanged, User } from 'firebase/auth';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { useState, useEffect } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -33,6 +35,27 @@ if (isFirebaseConfigured && getApps().length === 0) {
 } else {
   // Fallback for development without Firebase
   db = {} as Firestore;
+}
+
+// useAuth hook
+export function useAuth() {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (!auth) return;
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+    return unsubscribe;
+  }, []);
+
+  const signOut = async () => {
+    if (auth && user) {
+      await firebaseSignOut(auth);
+    }
+  };
+
+  return { user, signOut };
 }
 
 export { app, db, auth, isFirebaseConfigured };

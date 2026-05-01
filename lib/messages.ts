@@ -7,14 +7,74 @@ import {
   updateDoc,
   query,
   where,
+  onSnapshot,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured, auth } from './firebase';
 import { Message, MessageStatus } from '@/types';
+import { useState, useEffect } from 'react';
 
 const MESSAGES_COLLECTION = 'messages';
 
 // In-memory fallback for when Firebase isn't configured
 let localMessages: Message[] = getMockMessages();
+
+/**
+ * Hook to subscribe to messages in real-time
+ */
+export function useMessages() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const currentUserId = auth?.currentUser?.uid;
+    if (!currentUserId || !isFirebaseConfigured) {
+      setMessages(localMessages);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    // Get partnerId first
+    getDoc(doc(db, 'users', currentUserId)).then((userSnap) => {
+      const partnerId = userSnap.data()?.partnerId;
+      if (!partnerId) {
+        setMessages([]);
+        setLoading(false);
+        return;
+      }
+
+      // Subscribe to messages
+      const q = query(
+        collection(db, MESSAGES_COLLECTION),
+        where('receiverId', '==', currentUserId)
+      );
+
+      return onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as Message[];
+
+        // Filter by partnerId in JS
+        const filtered = data.filter(m => m.senderId === partnerId);
+        setMessages(filtered.sort((a, b) => b.createdAt - a.createdAt));
+        setLoading(false);
+      }, (error) => {
+        console.error('Error fetching messages:', error);
+        setMessages(localMessages);
+        setLoading(false);
+      });
+    }).catch((error) => {
+      console.error('Error getting partner:', error);
+      setMessages(localMessages);
+      setLoading(false);
+    });
+  }, []);
+
+  return { messages, loading };
+}
 
 export async function getMessages(): Promise<Message[]> {
   if (!isFirebaseConfigured) {
