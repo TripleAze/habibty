@@ -8,6 +8,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { subscribeToPresence, Presence, getPresenceStatusText } from '@/lib/presence';
 import { BottomNavProps } from '@/types';
+import { Mail, Gamepad2, Plus, Clock, User } from 'lucide-react';
 
 export default function BottomNav({ activeTab }: BottomNavProps) {
   const stroke = (tab: string) => activeTab === tab ? '#E8A0A0' : '#C0A0B0';
@@ -55,39 +56,32 @@ export default function BottomNav({ activeTab }: BottomNavProps) {
 
       <div className="nav-items-container font-sans">
         <Link href="/inbox" className={`nav-item ${activeTab === 'inbox' ? 'active' : ''}`}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={stroke('inbox')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 4H4a1 1 0 00-1 1v14a1 1 0 001 1h16a1 1 0 001-1V5a1 1 0 00-1-1z"/><path d="M3 7l9 6 9-6"/>
-          </svg>
-          <span className="nav-label">Inbox</span>
-        </Link>
-
-        <Link href="/scheduled" className={`nav-item ${activeTab === 'sent' ? 'active' : ''}`}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={stroke('sent')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/>
-          </svg>
-          <span className="nav-label">Sent Letters</span>
+          <Mail size={20} stroke={stroke('inbox')} strokeWidth={1.8} />
+          <span className="nav-label">Letters</span>
         </Link>
 
         <Link href="/games" className={`nav-item ${activeTab === 'games' ? 'active' : ''}`}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={stroke('games')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3l-4 4-4-4"/><circle cx="9" cy="14" r="1.5"/><path d="M13 14h4M13 17h4"/>
-          </svg>
-          <span className="nav-label">Games Room</span>
+          <Gamepad2 size={20} stroke={stroke('games')} strokeWidth={1.8} />
+          <span className="nav-label">Play</span>
         </Link>
 
-        {/* Primary Action - styled differently per breakpoint via CSS */}
-        <Link href="/create" className="nav-fab nav-item">
-          <div className="nav-fab-inner">
-            <span className="text-white text-base">✦</span>
-            <span className="nav-fab-label">Write a letter</span>
+        <Link href="/create" className="nav-fab-wrapper">
+          <div className="nav-fab">
+            <div className="nav-fab-inner">
+              <Plus size={24} color="white" strokeWidth={2.5} />
+            </div>
+            <span className="nav-label fab-label">Write</span>
           </div>
         </Link>
 
+        <Link href="/scheduled" className={`nav-item ${activeTab === 'sent' ? 'active' : ''}`}>
+          <Clock size={20} stroke={stroke('sent')} strokeWidth={1.8} />
+          <span className="nav-label">Queue</span>
+        </Link>
+
         <Link href="/profile" className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={stroke('profile')} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-          </svg>
-          <span className="nav-label">My Profile</span>
+          <User size={20} stroke={stroke('profile')} strokeWidth={1.8} />
+          <span className="nav-label">Us</span>
         </Link>
       </div>
 

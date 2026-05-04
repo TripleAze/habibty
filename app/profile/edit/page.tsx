@@ -6,6 +6,7 @@ import { ChevronLeft, Camera, Check, AlertCircle } from "lucide-react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { updateProfile } from "firebase/auth";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -31,17 +32,24 @@ export default function EditProfilePage() {
     setLoading(true);
     setError(null);
     try {
+      // 1. Update Firestore
       await updateDoc(doc(db, "users", user.uid), {
         displayName: name.trim(),
       });
+
+      // 2. Update Auth Profile (so it reflects in useAuth immediately)
+      await updateProfile(user, {
+        displayName: name.trim(),
+      });
+
       setSaved(true);
       setTimeout(() => {
         setSaved(false);
         router.push("/profile");
       }, 1500);
     } catch (err: any) {
-      console.error(err);
-      setError("Update blocked or failed. Please check your connection or ad-blocker.");
+      console.error("Profile update failed:", err);
+      setError("Update blocked or failed. Please check your ad-blocker or connection.");
     } finally {
       setLoading(false);
     }
