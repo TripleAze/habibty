@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Plus, Filter } from "lucide-react";
 import MessageCard from "@/components/MessageCard";
 import { useMessages } from "@/lib/messages";
-import { useAuth } from "@/lib/firebase";
+import { auth, db } from '@/lib/firebase';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 const TABS = [
   { id: "all", label: "All Letters" },

@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Unlink,
 } from "lucide-react";
-import { useAuth } from "@/lib/firebase";
+import { useAuth } from '@/lib/hooks/useAuth';
+import { db } from '@/lib/firebase';
 import { usePair } from "@/lib/pair";
 
 export default function ProfilePage() {

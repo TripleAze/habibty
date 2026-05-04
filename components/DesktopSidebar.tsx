@@ -12,7 +12,7 @@ import {
   LogOut,
   Bell,
 } from "lucide-react";
-import { useAuth } from "@/lib/firebase";
+import { useAuth } from '@/lib/hooks/useAuth';
 
 interface DesktopSidebarProps {
   partnerName?: string;
