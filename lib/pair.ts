@@ -1,4 +1,5 @@
 import { doc, getDoc, writeBatch, deleteField, onSnapshot, Timestamp } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { useState, useEffect } from 'react';
 
@@ -24,43 +25,66 @@ export function usePair() {
   const [daysTogether, setDaysTogether] = useState<number>(0);
 
   useEffect(() => {
-    const currentUserId = auth?.currentUser?.uid;
-    if (!currentUserId) return;
+    if (!auth) return;
 
-    // Subscribe to user document changes
-    const unsubscribe = onSnapshot(doc(db, 'users', currentUserId), (userSnap) => {
-      const userData = userSnap.data();
-      const partnerId = userData?.partnerId;
-      const pairedAt = userData?.pairedAt;
+    let unsubscribeDoc: (() => void) | null = null;
 
-      if (!partnerId) {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubscribeDoc) {
+        unsubscribeDoc();
+        unsubscribeDoc = null;
+      }
+
+      if (!user) {
         setPartner(null);
         setDaysTogether(0);
         return;
       }
 
-      // Calculate days together
-      if (pairedAt && pairedAt instanceof Timestamp) {
-        const now = Timestamp.now();
-        const diffMs = now.toMillis() - pairedAt.toMillis();
-        setDaysTogether(Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-      }
+      // Subscribe to user document changes
+      unsubscribeDoc = onSnapshot(doc(db, 'users', user.uid), (userSnap) => {
+        if (!userSnap.exists()) return;
+        
+        const userData = userSnap.data();
+        const partnerId = userData?.partnerId;
+        const pairedAt = userData?.pairedAt;
 
-      // Fetch partner data
-      getDoc(doc(db, 'users', partnerId)).then((partnerSnap) => {
-        if (partnerSnap.exists()) {
-          const data = partnerSnap.data();
-          setPartner({
-            uid: partnerSnap.id,
-            name: data.displayName || 'Partner',
-            photoURL: data.photoURL,
-            email: data.email,
-          });
+        if (!partnerId) {
+          setPartner(null);
+          setDaysTogether(0);
+          return;
         }
+
+        // Calculate days together
+        if (pairedAt && pairedAt instanceof Timestamp) {
+          const now = Timestamp.now();
+          const diffMs = now.toMillis() - pairedAt.toMillis();
+          setDaysTogether(Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24))));
+        } else if (pairedAt && typeof pairedAt === 'number') {
+          // Fallback if pairedAt is a numeric timestamp
+          const diffMs = Date.now() - pairedAt;
+          setDaysTogether(Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24))));
+        }
+
+        // Fetch partner data
+        getDoc(doc(db, 'users', partnerId)).then((partnerSnap) => {
+          if (partnerSnap.exists()) {
+            const data = partnerSnap.data();
+            setPartner({
+              uid: partnerSnap.id,
+              name: data.displayName || 'Partner',
+              photoURL: data.photoURL,
+              email: data.email,
+            });
+          }
+        });
       });
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeDoc) unsubscribeDoc();
+    };
   }, []);
 
   const unpair = async () => {

@@ -10,6 +10,7 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured, auth } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { Message, MessageStatus } from '@/types';
 import { useState, useEffect } from 'react';
 
@@ -26,51 +27,78 @@ export function useMessages() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const currentUserId = auth?.currentUser?.uid;
-    if (!currentUserId || !isFirebaseConfigured) {
+    if (!auth || !isFirebaseConfigured) {
       setMessages(localMessages);
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    let unsubscribeAuth: (() => void) | null = null;
+    let unsubscribeMessages: (() => void) | null = null;
 
-    // Get partnerId first
-    getDoc(doc(db, 'users', currentUserId)).then((userSnap) => {
-      const partnerId = userSnap.data()?.partnerId;
-      if (!partnerId) {
+    unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubscribeMessages) {
+        unsubscribeMessages();
+        unsubscribeMessages = null;
+      }
+
+      if (!user) {
         setMessages([]);
         setLoading(false);
         return;
       }
 
-      // Subscribe to messages
-      const q = query(
-        collection(db, MESSAGES_COLLECTION),
-        where('receiverId', '==', currentUserId)
-      );
+      setLoading(true);
 
-      return onSnapshot(q, (snapshot) => {
-        const data = snapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          })) as Message[];
+      // Get partnerId first
+      getDoc(doc(db, 'users', user.uid)).then((userSnap) => {
+        if (!userSnap.exists()) {
+          setLoading(false);
+          return;
+        }
+        
+        const partnerId = userSnap.data()?.partnerId;
+        if (!partnerId) {
+          setMessages([]);
+          setLoading(false);
+          return;
+        }
 
-        // Filter by partnerId in JS
-        const filtered = data.filter(m => m.senderId === partnerId);
-        setMessages(filtered.sort((a, b) => b.createdAt - a.createdAt));
-        setLoading(false);
-      }, (error) => {
-        console.error('Error fetching messages:', error);
+        // Subscribe to messages where I am receiver OR sender (to count them all)
+        // Note: For the inbox, we usually only show received messages.
+        // But for the stats, we need both.
+        const q = query(
+          collection(db, MESSAGES_COLLECTION),
+          where('receiverId', '==', user.uid)
+        );
+
+        unsubscribeMessages = onSnapshot(q, (snapshot) => {
+          const data = snapshot.docs
+            .map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            })) as Message[];
+
+          // Filter by partnerId in JS
+          const filtered = data.filter(m => m.senderId === partnerId);
+          setMessages(filtered.sort((a, b) => b.createdAt - a.createdAt));
+          setLoading(false);
+        }, (error) => {
+          console.error('Error fetching messages:', error);
+          setMessages(localMessages);
+          setLoading(false);
+        });
+      }).catch((error) => {
+        console.error('Error getting partner:', error);
         setMessages(localMessages);
         setLoading(false);
       });
-    }).catch((error) => {
-      console.error('Error getting partner:', error);
-      setMessages(localMessages);
-      setLoading(false);
     });
+
+    return () => {
+      if (unsubscribeAuth) unsubscribeAuth();
+      if (unsubscribeMessages) unsubscribeMessages();
+    };
   }, []);
 
   return { messages, loading };

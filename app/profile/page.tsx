@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+
 import Link from "next/link";
 import {
   User,
@@ -17,15 +17,54 @@ import {
 import { useAuth } from '@/lib/hooks/useAuth';
 import { db } from '@/lib/firebase';
 import { usePair } from "@/lib/pair";
+import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
+import { useEffect, useState } from "react";
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const { partner, unpair, daysTogether } = usePair();
   const [showUnpairConfirm, setShowUnpairConfirm] = useState(false);
+  const [letterCount, setLetterCount] = useState<number>(0);
+  const [gameCount, setGameCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!user || !partner) return;
+
+    // Count letters (messages)
+    const qMessages = query(
+      collection(db, "messages"),
+      where("receiverId", "==", user.uid)
+    );
+    const unsubMessages = onSnapshot(qMessages, (snap) => {
+      // Filter by partnerId in JS to avoid complex index requirements
+      const count = snap.docs.filter(d => d.data().senderId === partner.uid).length;
+      
+      // Also fetch sent messages
+      const qSent = query(collection(db, "messages"), where("senderId", "==", user.uid));
+      getDocs(qSent).then(sentSnap => {
+        const sentCount = sentSnap.docs.filter(d => d.data().receiverId === partner.uid).length;
+        setLetterCount(count + sentCount);
+      });
+    });
+
+    // Count games
+    const qGames = query(
+      collection(db, "games"),
+      where("players", "array-contains", user.uid)
+    );
+    const unsubGames = onSnapshot(qGames, (snap) => {
+      setGameCount(snap.size);
+    });
+
+    return () => {
+      unsubMessages();
+      unsubGames();
+    };
+  }, [user, partner]);
 
   const stats = [
-    { label: "Letters", value: "48", icon: Mail, color: "text-rose-400" },
-    { label: "Games", value: "23", icon: Gamepad2, color: "text-lavender-300" },
+    { label: "Letters", value: letterCount.toString(), icon: Mail, color: "text-rose-400" },
+    { label: "Games", value: gameCount.toString(), icon: Gamepad2, color: "text-lavender-300" },
     { label: "Days", value: daysTogether?.toString() || "0", icon: Calendar, color: "text-green-400" },
   ];
 
