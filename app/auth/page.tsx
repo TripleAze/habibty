@@ -12,13 +12,14 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { Heart, Sparkles, Mail, Lock, User, ArrowRight } from 'lucide-react';
 
 export default function AuthPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState(''); // Only for signup
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState('');
@@ -27,10 +28,14 @@ export default function AuthPage() {
     if (!auth) { setChecking(false); return; }
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const snap = await getDoc(doc(db, 'users', user.uid));
-        if (snap.exists() && snap.data().partnerId) {
-          router.replace('/inbox');
-        } else {
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          if (snap.exists() && snap.data().partnerId) {
+            router.replace('/inbox');
+          } else {
+            router.replace('/pair');
+          }
+        } catch (e) {
           router.replace('/pair');
         }
       } else {
@@ -49,7 +54,12 @@ export default function AuthPage() {
       const result = await signInWithPopup(auth, provider);
       await createUserDocIfNeeded(result.user);
     } catch (err: any) {
-      setError(err.message?.includes('popup-closed') ? '' : 'Google sign-in failed');
+      console.error(err);
+      if (err.message?.includes('blocked')) {
+        setError('Network blocked. Please disable ad-blockers.');
+      } else {
+        setError(err.message?.includes('popup-closed') ? '' : 'Google sign-in failed');
+      }
       setLoading(false);
     }
   };
@@ -77,18 +87,22 @@ export default function AuthPage() {
   };
 
   const createUserDocIfNeeded = async (user: any, manualName?: string) => {
-    const userRef = doc(db, 'users', user.uid);
-    const snap = await getDoc(userRef);
-    if (!snap.exists()) {
-      const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      await setDoc(userRef, {
-        displayName: manualName || user.displayName || 'Habibi',
-        email: user.email,
-        photoURL: user.photoURL || null,
-        partnerId: null,
-        inviteCode,
-        createdAt: serverTimestamp(),
-      });
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) {
+        const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        await setDoc(userRef, {
+          displayName: manualName || user.displayName || 'Habibi',
+          email: user.email,
+          photoURL: user.photoURL || null,
+          partnerId: null,
+          inviteCode,
+          createdAt: serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      console.warn("Firestore blocked, skipping doc creation");
     }
     if (typeof window !== "undefined") sessionStorage.setItem("trigger_burst", "true");
   };
@@ -97,6 +111,106 @@ export default function AuthPage() {
 
   return (
     <div className="auth-root">
+      {/* Decorative Orbs */}
+      <div className="orb orb-1" />
+      <div className="orb orb-2" />
+      <div className="orb orb-3" />
+
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="logo-container">
+            <Heart className="logo-heart" fill="#E8A0A0" />
+            <Sparkles className="logo-sparkle" />
+          </div>
+          <h1 className="auth-title">
+            {mode === 'signin' ? 'Welcome Back' : 'Create Space'}
+          </h1>
+          <p className="auth-sub">
+            {mode === 'signin' 
+              ? 'Your shared world is waiting for you.' 
+              : 'Begin a private journey for just the two of you.'}
+          </p>
+        </div>
+
+        <button className="btn-google" onClick={handleGoogle} disabled={loading}>
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/pwa/google.svg" alt="Google" className="w-5 h-5" />
+          <span>Continue with Google</span>
+        </button>
+
+        <div className="divider">
+          <span>or use email</span>
+        </div>
+
+        <form className="form-container" onSubmit={handleEmailAuth}>
+          {mode === 'signup' && (
+            <div className="input-wrap">
+              <User className="input-icon" size={18} />
+              <input
+                type="text"
+                placeholder="Your name"
+                className="input-field"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+          )}
+          
+          <div className="input-wrap">
+            <Mail className="input-icon" size={18} />
+            <input
+              type="email"
+              placeholder="Email address"
+              className="input-field"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="input-wrap">
+            <Lock className="input-icon" size={18} />
+            <input
+              type="password"
+              placeholder="Password"
+              className="input-field"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button className="btn-primary" type="submit" disabled={loading}>
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Please wait...
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                {mode === 'signin' ? 'Enter Space' : 'Create Account'}
+                <ArrowRight size={18} />
+              </span>
+            )}
+          </button>
+        </form>
+
+        {error && (
+          <div className="error-box">
+            <p className="error-msg">{error}</p>
+          </div>
+        )}
+
+        <div className="auth-footer">
+          <p className="toggle-text">
+            {mode === 'signin' ? "New here?" : "Already paired?"}
+            <button className="toggle-link" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
+              {mode === 'signin' ? 'Create an account' : 'Sign in to your space'}
+            </button>
+          </p>
+        </div>
+      </div>
+
       <style jsx>{`
         .auth-root {
           min-height: 100vh;
@@ -104,85 +218,136 @@ export default function AuthPage() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(160deg, #FAD0DC 0%, #EDD5F0 55%, #D8E8F8 100%);
+          background: #FFF8F2;
           padding: 24px;
-          font-family: var(--font-dm-sans), sans-serif;
+          overflow: hidden;
           position: relative;
+        }
+
+        .orb {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          z-index: 0;
+          opacity: 0.5;
+        }
+
+        .orb-1 { width: 400px; height: 400px; background: #FAD0DC; top: -100px; left: -100px; animation: float 20s infinite alternate; }
+        .orb-2 { width: 350px; height: 350px; background: #EDD5F0; bottom: -50px; right: -50px; animation: float 25s infinite alternate-reverse; }
+        .orb-3 { width: 300px; height: 300px; background: #D8E8F8; top: 40%; left: 60%; animation: float 18s infinite alternate; }
+
+        @keyframes float {
+          from { transform: translate(0, 0); }
+          to { transform: translate(40px, 60px); }
         }
 
         .auth-card {
           width: 100%;
-          max-width: 400px;
-          text-align: center;
-          animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+          max-width: 420px;
+          background: rgba(255, 255, 255, 0.4);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          padding: 48px 32px;
+          border-radius: 40px;
+          border: 1px solid rgba(255, 255, 255, 0.7);
+          box-shadow: 0 24px 60px rgba(61, 43, 61, 0.08);
+          z-index: 10;
+          animation: cardIn 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes cardIn {
+          from { opacity: 0; transform: translateY(40px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .auth-header { text-align: center; margin-bottom: 40px; }
+
+        .logo-container {
+          position: relative;
+          display: inline-block;
+          margin-bottom: 16px;
+        }
+
+        .logo-heart { width: 48px; height: 48px; filter: drop-shadow(0 4px 8px rgba(232, 160, 160, 0.3)); }
+        
+        .logo-sparkle {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          color: #FFD700;
+          width: 20px;
+          height: 20px;
+          animation: sparkle 2s infinite;
+        }
+
+        @keyframes sparkle {
+          0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          50% { transform: scale(1.2) rotate(45deg); opacity: 0.7; }
         }
 
         .auth-title {
           font-family: var(--font-cormorant), serif;
-          font-size: 38px;
+          font-size: 36px;
+          font-weight: 600;
           color: #3D2B3D;
           margin-bottom: 8px;
         }
 
-        .auth-sub {
-          font-size: 15px;
-          color: #7A5C7A;
-          opacity: 0.8;
-          margin-bottom: 40px;
-        }
+        .auth-sub { font-size: 14px; color: #7A5C7A; opacity: 0.7; line-height: 1.5; }
 
-        .form-container {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          width: 100%;
-        }
+        .form-container { display: flex; flex-direction: column; gap: 14px; }
+
+        .input-wrap { position: relative; }
+        .input-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #C0A0B0; transition: color 0.3s; }
 
         .input-field {
           width: 100%;
-          padding: 18px 24px;
-          border-radius: 20px;
-          border: 1px solid rgba(255, 255, 255, 0.4);
-          background: rgba(255, 255, 255, 0.5);
-          backdrop-filter: blur(10px);
+          padding: 16px 16px 16px 48px;
+          border-radius: 18px;
+          border: 1px solid rgba(232, 160, 160, 0.15);
+          background: rgba(255, 255, 255, 0.6);
           font-size: 15px;
-          outline: none;
-          transition: all 0.3s ease;
           color: #3D2B3D;
+          transition: all 0.3s;
+          outline: none;
         }
 
         .input-field:focus {
           border-color: #E8A0A0;
-          background: rgba(255, 255, 255, 0.8);
-          box-shadow: 0 8px 20px rgba(232, 160, 160, 0.1);
+          background: white;
+          box-shadow: 0 8px 24px rgba(232, 160, 160, 0.1);
         }
+
+        .input-field:focus + .input-icon { color: #E8A0A0; }
 
         .btn-primary {
           width: 100%;
           padding: 18px;
-          border-radius: 100px;
-          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
+          border-radius: 20px;
+          background: linear-gradient(135deg, #FF9FB2 0%, #D4A9FF 100%);
           color: white;
           border: none;
-          font-weight: 700;
+          font-weight: 600;
           font-size: 16px;
           cursor: pointer;
           margin-top: 10px;
-          box-shadow: 0 10px 25px rgba(232, 160, 160, 0.3);
-          transition: all 0.3s ease;
+          box-shadow: 0 12px 28px rgba(255, 159, 178, 0.3);
+          transition: all 0.3s;
         }
 
         .btn-primary:hover:not(:disabled) {
           transform: translateY(-2px);
-          box-shadow: 0 15px 30px rgba(232, 160, 160, 0.4);
+          box-shadow: 0 16px 36px rgba(255, 159, 178, 0.4);
         }
+
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
 
         .btn-google {
           width: 100%;
-          padding: 16px;
-          border-radius: 100px;
-          background: rgba(255, 255, 255, 0.6);
-          border: 1px solid rgba(255, 255, 255, 0.8);
+          padding: 14px;
+          border-radius: 20px;
+          background: white;
+          border: 1px solid rgba(61, 43, 61, 0.1);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -191,129 +356,47 @@ export default function AuthPage() {
           font-weight: 500;
           color: #3D2B3D;
           cursor: pointer;
-          transition: all 0.3s ease;
-          margin-bottom: 24px;
+          transition: all 0.3s;
+          margin-bottom: 8px;
         }
 
-        .btn-google:hover {
-          background: white;
-        }
+        .btn-google:hover { background: #FAF9F9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
         .divider {
           display: flex;
           align-items: center;
-          gap: 15px;
+          gap: 12px;
           margin: 24px 0;
-          color: #7A5C7A;
-          font-size: 13px;
-          opacity: 0.5;
-        }
-
-        .divider::before, .divider::after {
-          content: "";
-          flex: 1;
-          height: 1px;
-          background: currentColor;
-        }
-
-        .toggle-text {
-          margin-top: 24px;
-          font-size: 14px;
-          color: #7A5C7A;
-        }
-
-        .toggle-link {
-          color: #E8A0A0;
-          font-weight: 700;
-          cursor: pointer;
-          text-decoration: none;
-          margin-left: 5px;
-        }
-
-        .error-msg {
-          margin-top: 15px;
-          color: #B06060;
-          font-size: 13px;
+          color: #C0A0B0;
+          font-size: 12px;
           font-weight: 500;
         }
 
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: rgba(232, 160, 160, 0.2); }
+
+        .error-box {
+          margin-top: 20px;
+          padding: 12px;
+          background: rgba(176, 96, 96, 0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(176, 96, 96, 0.1);
         }
 
-        .loading-dots:after {
-          content: ' .';
-          animation: dots 1s steps(5, end) infinite;
+        .error-msg { color: #B06060; font-size: 13px; font-weight: 500; text-align: center; }
+
+        .auth-footer { margin-top: 32px; text-align: center; }
+        .toggle-text { font-size: 14px; color: #7A5C7A; }
+        .toggle-link {
+          background: none;
+          border: none;
+          color: #E8A0A0;
+          font-weight: 700;
+          cursor: pointer;
+          margin-left: 6px;
+          padding: 0;
         }
-        @keyframes dots {
-          0%, 20% { color: rgba(0,0,0,0); text-shadow: .5em 0 0 rgba(0,0,0,0), 1em 0 0 rgba(0,0,0,0); }
-          40% { color: white; text-shadow: .5em 0 0 rgba(0,0,0,0), 1em 0 0 rgba(0,0,0,0); }
-          60% { text-shadow: .5em 0 0 white, 1em 0 0 rgba(0,0,0,0); }
-          80%, 100% { text-shadow: .5em 0 0 white, 1em 0 0 white; }
-        }
+        .toggle-link:hover { text-decoration: underline; }
       `}</style>
-
-      <div className="auth-card">
-        <h1 className="auth-title">{mode === 'signin' ? 'Welcome Back' : 'Join Habibty'}</h1>
-        <p className="auth-sub">
-          {mode === 'signin' ? 'Your love story continues here' : 'Start your private space for two'}
-        </p>
-
-        <button className="btn-google" onClick={handleGoogle} disabled={loading}>
-          <svg width="20" height="20" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          Continue with Google
-        </button>
-
-        <div className="divider">or</div>
-
-        <form className="form-container" onSubmit={handleEmailAuth}>
-          {mode === 'signup' && (
-            <input
-              type="text"
-              placeholder="Your name"
-              className="input-field"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          )}
-          <input
-            type="email"
-            placeholder="Email address"
-            className="input-field"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            className="input-field"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-
-          <button className="btn-primary" type="submit" disabled={loading}>
-            {loading ? <span className="loading-dots">Please wait</span> : (mode === 'signin' ? 'Sign In' : 'Create Account')}
-          </button>
-        </form>
-
-        {error && <p className="error-msg">{error}</p>}
-
-        <p className="toggle-text">
-          {mode === 'signin' ? "Don't have an account?" : "Already have an account?"}
-          <span className="toggle-link" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
-            {mode === 'signin' ? 'Sign Up' : 'Sign In'}
-          </span>
-        </p>
-      </div>
     </div>
   );
 }
