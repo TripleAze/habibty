@@ -20,11 +20,13 @@ import { usePair } from "@/lib/pair";
 import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import PWASettingsModal from "@/components/PWASettingsModal";
+import ConfirmModal from "@/components/ConfirmModal";
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const { partner, unpair, daysTogether } = usePair();
   const [showUnpairConfirm, setShowUnpairConfirm] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showPWASettings, setShowPWASettings] = useState(false);
   const [letterCount, setLetterCount] = useState<number>(0);
   const [gameCount, setGameCount] = useState<number>(0);
@@ -186,45 +188,23 @@ export default function ProfilePage() {
       <p className="pf-section-label">Danger Zone</p>
 
       <div className="profile-card">
-        {!showUnpairConfirm ? (
-          <button
-            onClick={() => setShowUnpairConfirm(true)}
-            className="profile-row w-full text-left text-red-400 hover:bg-red-50"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
-                <Unlink className="w-5 h-5 text-red-400" />
-              </div>
-              <div>
-                <p className="font-medium">Unpair Partner</p>
-                <p className="text-xs opacity-70">This cannot be undone</p>
-              </div>
+        <button
+          onClick={() => setShowUnpairConfirm(true)}
+          className="profile-row w-full text-left text-red-400 hover:bg-red-50"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+              <Unlink className="w-5 h-5 text-red-400" />
             </div>
-          </button>
-        ) : (
-          <div className="p-4">
-            <p className="text-sm text-red-500 mb-3">
-              Are you sure? All messages and memories will be lost.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowUnpairConfirm(false)}
-                className="flex-1 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={unpair}
-                className="flex-1 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
-              >
-                Yes, Unpair
-              </button>
+            <div>
+              <p className="font-medium">Unpair Partner</p>
+              <p className="text-xs opacity-70">Break the link to this space</p>
             </div>
           </div>
-        )}
+        </button>
 
         <button
-          onClick={signOut}
+          onClick={() => setShowSignOutConfirm(true)}
           className="profile-row w-full text-left text-red-400 hover:bg-red-50"
         >
           <div className="flex items-center gap-4">
@@ -241,6 +221,26 @@ export default function ProfilePage() {
       <PWASettingsModal 
         isOpen={showPWASettings} 
         onClose={() => setShowPWASettings(false)} 
+      />
+
+      <ConfirmModal
+        isOpen={showUnpairConfirm}
+        onClose={() => setShowUnpairConfirm(false)}
+        onConfirm={unpair}
+        title="Unpair Partner?"
+        message="Are you sure? You will lose access to all shared letters, games, and memories in this space."
+        confirmText="Yes, Unpair"
+        isDanger={true}
+      />
+
+      <ConfirmModal
+        isOpen={showSignOutConfirm}
+        onClose={() => setShowSignOutConfirm(false)}
+        onConfirm={signOut}
+        title="Sign Out?"
+        message="You will need to sign back in to access your love letters."
+        confirmText="Sign Out"
+        isDanger={true}
       />
     </div>
   );
