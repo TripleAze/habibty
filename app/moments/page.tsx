@@ -1,302 +1,111 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { subscribeToMoments, Moment } from '@/lib/moments';
-import BottomNav from '@/components/BottomNav';
-import ListSkeleton from '@/components/skeleton/ListSkeleton';
-import { useHeader } from '@/lib/HeaderContext';
-import NotificationBell from '@/components/NotificationBell';
+import { useEffect, useState } from "react";
+import { Heart, Mail, Gamepad2, MapPin, Trophy } from "lucide-react";
+import { useMoments } from "@/lib/moments";
+
+const EMOJI_MAP: Record<string, string> = {
+  message_opened: "💌",
+  reaction: "❤️",
+  game: "🎮",
+  message_sent: "📍",
+  milestone: "🏆",
+};
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  message_opened: Mail,
+  reaction: Heart,
+  game: Gamepad2,
+  message_sent: MapPin,
+  milestone: Trophy,
+};
 
 export default function MomentsPage() {
-  useHeader({ hide: true });
-  const router = useRouter();
-  const [moments, setMoments] = useState<Moment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [partnerId, setPartnerId] = useState<string | null>(null);
-  const [partnerName, setPartnerName] = useState('Partner');
+  const { moments, loading } = useMoments();
+  const [animatedItems, setAnimatedItems] = useState<number[]>([]);
 
   useEffect(() => {
-    if (!auth) return;
-    const unsubAuth = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.replace('/auth');
-        return;
-      }
-
-      try {
-        const userSnap = await getDoc(doc(db, 'users', user.uid));
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          if (userData.partnerId) {
-            setPartnerId(userData.partnerId);
-            const partnerSnap = await getDoc(doc(db, 'users', userData.partnerId));
-            if (partnerSnap.exists()) {
-              setPartnerName(partnerSnap.data().displayName || 'Partner');
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching user/partner:', err);
-      }
-      setLoading(false);
+    moments.forEach((__, i) => {
+      setTimeout(() => {
+        setAnimatedItems((prev) => [...prev, i]);
+      }, i * 150);
     });
-
-    return () => unsubAuth();
-  }, [router]);
-
-  useEffect(() => {
-    if (!partnerId) return;
-
-    const unsubMoments = subscribeToMoments(partnerId, (fetchedMoments) => {
-      setMoments(fetchedMoments);
-    });
-
-    return () => unsubMoments();
-  }, [partnerId]);
-
-  const formatMomentDate = (timestamp: any) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="app-container">
-        <div className="home-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(232,160,160,0.1)' }} />
-          <div className="home-header-left" style={{ flex: 1 }}>
-            <p className="home-label">Memories</p>
-            <h1 className="home-title">Our <em>journey</em></h1>
-          </div>
-        </div>
-        <div style={{ padding: '24px' }}>
-          <ListSkeleton variant="list" count={5} />
-        </div>
-      </div>
-    );
-  }
+  }, [moments]);
 
   return (
-    <div className="app-container">
-      <div className="home-header" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <button 
-          onClick={() => router.push('/profile')}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            background: 'white',
-            border: '1px solid rgba(232, 160, 160, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(232, 160, 160, 0.1)',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            color: '#E8A0A0'
-          }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'translateX(-3px)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-        </button>
-        <div className="home-header-left" style={{ flex: 1 }}>
+    <div className="timeline-section">
+      <div className="home-header mb-4">
+        <div className="home-header-left">
           <p className="home-label">Our Journey</p>
-          <h1 className="home-title">Shared <em>memories</em></h1>
+          <h1 className="home-title">
+            Our <em>Story</em>
+          </h1>
         </div>
-        <NotificationBell />
       </div>
 
-      <div className="moments-timeline">
-        {moments.length === 0 ? (
-          <div className="empty-moments">
-            <div className="empty-moments-icon">✨</div>
-            <h3 className="empty-moments-title">No memories yet</h3>
-            <p className="empty-moments-text">
-              Every message you send and game you play with <strong>{partnerName}</strong> will be remembered here.
-            </p>
-            <button className="empty-moments-btn" onClick={() => router.push('/create')}>
-              Send a letter
-            </button>
-          </div>
-        ) : (
-          <div className="timeline-container">
-            {moments.map((moment, idx) => (
-              <div key={moment.id} className="moment-item animation-fade-in" style={{ animationDelay: `${idx * 0.05}s` }}>
-                <div className="moment-line" />
-                <div className="moment-dot">
-                  {moment.emoji || '✨'}
+      {loading ? (
+        <div className="loading-state">
+          <div className="loading-spinner" />
+          <p>Loading memories...</p>
+        </div>
+      ) : moments.length === 0 ? (
+        <div className="empty-state">
+          <span className="empty-state-icon">📖</span>
+          <p className="empty-state-text">Your story is just beginning...</p>
+        </div>
+      ) : (
+        <div className="relative pl-8">
+          {/* Timeline Line */}
+          <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gradient-to-b from-rose-300 via-lavender-200 to-sky-200 rounded-full" />
+
+          {moments.map((moment, index) => {
+            const Icon = ICON_MAP[moment.type] || Heart;
+            const isAnimated = animatedItems.includes(index);
+
+            return (
+              <div
+                key={moment.id}
+                className={`relative mb-6 transition-all duration-500 ${
+                  isAnimated ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"
+                }`}
+              >
+                {/* Dot */}
+                <div className="absolute -left-8 top-0 w-8 h-8 rounded-full glass flex items-center justify-center text-lg shadow-md z-10">
+                  {EMOJI_MAP[moment.type] || "✨"}
                 </div>
-                <div className="moment-card">
-                  <div className="moment-header">
-                    <span className="moment-type">
-                      {moment.type.replace('_', ' ')}
-                    </span>
-                    <span className="moment-date">
-                      {formatMomentDate(moment.createdAt)}
-                    </span>
+
+                {/* Card */}
+                <div className="timeline-card ml-4 hover:bg-white/80 transition-all cursor-pointer">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1">
+                      <Icon className="w-4 h-4 text-rose-300" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif text-base text-gray-800 mb-1">
+                        {moment.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 mb-2">{moment.description}</p>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wider">
+                        {moment.createdAt?.toDate?.()?.toLocaleDateString() || ''}
+                      </p>
+                    </div>
                   </div>
-                  <h4 className="moment-title">{moment.title}</h4>
-                  {moment.description && (
-                    <p className="moment-desc">{moment.description}</p>
-                  )}
                 </div>
               </div>
-            ))}
-            <div className="timeline-start">
-              <span className="timeline-start-label">The beginning of something beautiful</span>
-            </div>
-          </div>
-        )}
+            );
+          })}
+        </div>
+      )}
+
+      {/* Stats Summary */}
+      <div className="mt-12 text-center">
+        <div className="inline-flex items-center gap-2 glass-strong px-6 py-3 rounded-full">
+          <Trophy className="w-5 h-5 text-rose-400" />
+          <span className="text-sm font-medium text-gray-700">
+            {moments.length} moments together
+          </span>
+        </div>
       </div>
-
-      <style>{`
-        .moments-timeline {
-          padding: 20px 24px 100px;
-        }
-        .timeline-container {
-          position: relative;
-          padding-left: 32px;
-        }
-        .moment-item {
-          position: relative;
-          margin-bottom: 24px;
-        }
-        .moment-line {
-          position: absolute;
-          left: -21px;
-          top: 24px;
-          bottom: -24px;
-          width: 2px;
-          background: linear-gradient(to bottom, rgba(232, 160, 160, 0.4), rgba(201, 184, 216, 0.2));
-        }
-        .moment-item:last-child .moment-line {
-          display: none;
-        }
-        .moment-dot {
-          position: absolute;
-          left: -32px;
-          top: 0;
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          background: #fff;
-          border: 2px solid #E8A0A0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 12px;
-          z-index: 2;
-          box-shadow: 0 2px 8px rgba(232, 160, 160, 0.2);
-        }
-        .moment-card {
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(232, 160, 160, 0.15);
-          border-radius: 20px;
-          padding: 16px;
-          box-shadow: 0 4px 15px rgba(201, 184, 216, 0.1);
-          transition: transform 0.2s ease;
-        }
-        .moment-card:hover {
-          transform: translateY(-2px);
-          border-color: rgba(232, 160, 160, 0.3);
-        }
-        .moment-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 6px;
-        }
-        .moment-type {
-          font-size: 9px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: #E8A0A0;
-          font-weight: 700;
-        }
-        .moment-date {
-          font-size: 10px;
-          color: #C9B8D8;
-          font-style: italic;
-        }
-        .moment-title {
-          font-family: var(--font-cormorant), serif;
-          font-size: 16px;
-          font-weight: 600;
-          color: #3D2B3D;
-          margin-bottom: 4px;
-        }
-        .moment-desc {
-          font-size: 12px;
-          color: #7A5C7A;
-          line-height: 1.5;
-        }
-        .timeline-start {
-          margin-top: 40px;
-          padding: 20px;
-          text-align: center;
-          border-top: 1px dashed rgba(232, 160, 160, 0.3);
-        }
-        .timeline-start-label {
-          font-family: var(--font-cormorant), serif;
-          font-size: 14px;
-          font-style: italic;
-          color: #C9B8D8;
-        }
-        .empty-moments {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 80px 40px;
-          text-align: center;
-          background: rgba(255, 255, 255, 0.5);
-          border-radius: 32px;
-          border: 1px dashed rgba(232, 160, 160, 0.3);
-        }
-        .empty-moments-icon {
-          font-size: 48px;
-          margin-bottom: 20px;
-          opacity: 0.8;
-        }
-        .empty-moments-title {
-          font-family: var(--font-cormorant), serif;
-          font-size: 24px;
-          margin-bottom: 12px;
-          color: #3D2B3D;
-        }
-        .empty-moments-text {
-          font-size: 14px;
-          color: #7A5C7A;
-          margin-bottom: 24px;
-          line-height: 1.6;
-        }
-        .empty-moments-btn {
-          padding: 12px 24px;
-          background: linear-gradient(135deg, #E8A0A0, #C9B8D8);
-          color: #fff;
-          border: none;
-          border-radius: 100px;
-          font-weight: 500;
-          cursor: pointer;
-          box-shadow: 0 4px 15px rgba(232, 160, 160, 0.3);
-        }
-      `}</style>
-
-      <BottomNav activeTab="profile" />
     </div>
   );
 }

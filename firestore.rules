@@ -138,6 +138,9 @@ service cloud.firestore {
       allow list: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // Would You Rather questions - shared game data
     match /would_you_rather_questions/{qId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
@@ -147,6 +150,7 @@ service cloud.firestore {
       );
     }
 
+    // Rapid Fire questions - shared game data
     match /rapid_fire_questions/{qId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;

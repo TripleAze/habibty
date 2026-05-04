@@ -24,8 +24,10 @@ export default function AuthPage() {
         // check if paired
         const snap = await getDoc(doc(db, 'users', user.uid));
         if (snap.exists() && snap.data().partnerId) {
+          if (typeof window !== "undefined") sessionStorage.setItem("trigger_burst", "true");
           router.replace('/inbox');
         } else {
+          if (typeof window !== "undefined") sessionStorage.setItem("trigger_burst", "true");
           router.replace('/pair');
         }
       } else {

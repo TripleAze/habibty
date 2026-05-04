@@ -37,6 +37,7 @@ export default function PairPage() {
           const data = snap.data();
           if (data.partnerId) {
             setStatus('Paired! Taking you to your inbox 💌');
+            if (typeof window !== "undefined") sessionStorage.setItem("trigger_burst", "true");
             setTimeout(() => router.replace('/inbox'), 1500);
             return; 
           }
@@ -92,6 +93,7 @@ export default function PairPage() {
       await batch.commit();
 
       setStatus('Paired! Taking you to your inbox 💌');
+      if (typeof window !== "undefined") sessionStorage.setItem("trigger_burst", "true");
       setTimeout(() => router.replace('/inbox'), 1500);
     } catch (err: any) {
       console.error('Pair error:', err);

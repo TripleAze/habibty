@@ -129,57 +129,92 @@ function WouldYouRatherInner() {
 
   // SELECTION LOGIC
   const selectNextQuestion = async (usedIds: string[], lastCat: string | null): Promise<WouldYouRatherQuestion> => {
-    const questionsCol = collection(db, 'would_you_rather_questions');
-    
-    // Priority 1: Custom questions not yet used
-    const customQ = await getDocs(query(questionsCol, where('isCustom', '==', true), where('isActive', '==', true), limit(30)));
-    const customPool = customQ.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreQuestion)).filter(q => !usedIds.includes(q.id));
-    
-    if (customPool.length > 0) {
-      return customPool[Math.floor(Math.random() * customPool.length)];
+    try {
+      const questionsCol = collection(db, 'would_you_rather_questions');
+
+      // Priority 1: Custom questions not yet used
+      const customQ = await getDocs(query(questionsCol, where('isCustom', '==', true), where('isActive', '==', true), limit(30)));
+      const customPool = customQ.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreQuestion)).filter(q => !usedIds.includes(q.id));
+
+      if (customPool.length > 0) {
+        return customPool[Math.floor(Math.random() * customPool.length)];
+      }
+
+      // Priority 2: Standard questions from Firestore
+      const standardQ = await getDocs(query(questionsCol, where('isCustom', '==', false), where('isActive', '==', true), limit(100)));
+      let standardPool = standardQ.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreQuestion)).filter(q => !usedIds.includes(q.id));
+
+      if (standardPool.length > 0) {
+        const filteredByCat = standardPool.filter(q => q.category !== lastCat);
+        const finalPool = filteredByCat.length > 0 ? filteredByCat : standardPool;
+        return finalPool[Math.floor(Math.random() * finalPool.length)];
+      }
+    } catch (err) {
+      console.error("Failed to fetch questions from Firestore:", err);
     }
 
-    // Priority 2: Standard questions from Firestore
-    const standardQ = await getDocs(query(questionsCol, where('isCustom', '==', false), where('isActive', '==', true), limit(100)));
-    let standardPool = standardQ.docs.map(d => ({ id: d.id, ...d.data() } as FirestoreQuestion)).filter(q => !usedIds.includes(q.id));
-
-    // Reset if exhausted
-    if (standardPool.length === 0) {
-      console.log("Resetting question pool!");
-      const fallback = WOULD_YOU_RATHER_QUESTIONS[Math.floor(Math.random() * WOULD_YOU_RATHER_QUESTIONS.length)];
-      return { ...fallback, id: fallback.id };
-    }
-
-    // Try to avoid repeating category
-    const filteredByCat = standardPool.filter(q => q.category !== lastCat);
-    const finalPool = filteredByCat.length > 0 ? filteredByCat : standardPool;
-    
-    return finalPool[Math.floor(Math.random() * finalPool.length)];
+    // Fallback: Local questions
+    console.log("Using local question fallbacks.");
+    const localPool = WOULD_YOU_RATHER_QUESTIONS.filter(q => !usedIds.includes(q.id));
+    const fallbackPool = localPool.length > 0 ? localPool : WOULD_YOU_RATHER_QUESTIONS;
+    const q = fallbackPool[Math.floor(Math.random() * fallbackPool.length)];
+    return { ...q, id: q.id };
   };
 
   const handleCreate = async () => {
-    const newId = await generateGameId();
-    const user = auth?.currentUser;
-    const initialQ = await selectNextQuestion([], null);
+    try {
+      const newId = await generateGameId();
+      const user = auth?.currentUser;
+      const initialQ = await selectNextQuestion([], null);
 
-    await setDoc(doc(db, 'games', newId), {
-      type: 'wouldyourather',
-      creatorUid: uid,
-      players: [uid],
-      playerNames: { [uid]: user?.displayName || 'You' },
-      playerPhotos: user?.photoURL ? { [uid]: user.photoURL } : {},
-      currentQuestion: initialQ,
-      usedQuestionIds: [initialQ.id],
-      lastCategory: initialQ.category,
-      responses: {},
-      revealed: false,
-      readyForNext: [],
-      status: 'waiting',
-      score: { matches: 0, total: 0 },
-      createdAt: serverTimestamp(),
-    });
-    router.replace(`/games/would-you-rather?id=${newId}`);
+      await setDoc(doc(db, 'games', newId), {
+        type: 'wouldyourather',
+        creatorUid: uid,
+        players: [uid],
+        playerNames: { [uid]: user?.displayName || 'You' },
+        playerPhotos: user?.photoURL ? { [uid]: user.photoURL } : {},
+        currentQuestion: initialQ,
+        usedQuestionIds: [initialQ.id],
+        lastCategory: initialQ.category,
+        responses: {},
+        revealed: false,
+        readyForNext: [],
+        status: 'waiting',
+        score: { matches: 0, total: 0 },
+        createdAt: serverTimestamp(),
+      });
+      router.replace(`/games/would-you-rather?id=${newId}`);
+    } catch (err) {
+      console.error("HandleCreate failed:", err);
+      alert("Failed to create game. Please check your connection or disable ad-blockers.");
+    }
   };
+
+  // No game ID in URL - show landing/create screen
+  if (!gameId && !game) {
+    return (
+      <>
+        {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
+        <GameScreen title="Would You Rather" onExit={() => setShowExit(true)}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
+            <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(232,160,160,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '1px solid rgba(232,160,160,0.3)' }}>
+              ⚖️
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <h2 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Would You Rather</h2>
+              <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>Discover how much you and your partner agree on impossible choices!</p>
+            </div>
+            <button onClick={handleCreate} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(232,160,160,0.2)' }}>
+              Create New Game
+            </button>
+            <button onClick={() => router.push('/games')} style={{ fontSize: 13, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Back to Games
+            </button>
+          </div>
+        </GameScreen>
+      </>
+    );
+  }
 
   const handleJoin = async () => {
     if (!gameId) return;

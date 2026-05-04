@@ -1,503 +1,197 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  getDocs, 
-  collection, 
-  query, 
-  where, 
-  getCountFromServer, 
-  or, 
-  and 
-} from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { uploadMedia } from '@/lib/imagekit';
-import { unpairPartner } from '@/lib/pair';
-import BottomNav from '@/components/BottomNav';
-import { useHeader } from '@/lib/HeaderContext';
-import NotificationBell from '@/components/NotificationBell';
-
-function SkeletonRow() {
-  return (
-    <div style={{
-      height: 16, borderRadius: 8,
-      background: 'linear-gradient(90deg, rgba(232,160,160,0.12) 25%, rgba(232,160,160,0.22) 50%, rgba(232,160,160,0.12) 75%)',
-      backgroundSize: '200% 100%',
-      animation: 'shimmer 1.4s infinite',
-      marginBottom: 8,
-    }} />
-  );
-}
+import { useState } from "react";
+import Link from "next/link";
+import {
+  User,
+  Bell,
+  Smartphone,
+  LogOut,
+  Heart,
+  Mail,
+  Gamepad2,
+  Calendar,
+  ChevronRight,
+  Unlink,
+} from "lucide-react";
+import { useAuth } from "@/lib/firebase";
+import { usePair } from "@/lib/pair";
 
 export default function ProfilePage() {
-  useHeader({ hide: true });
-  const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [uid, setUid] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [editName, setEditName] = useState('');
-  const [photoURL, setPhotoURL] = useState('');
-  const [email, setEmail] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
-  const [partnerName, setPartnerName] = useState('');
-  const [partnerId, setPartnerId] = useState('');
-
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [showInviteCode, setShowInviteCode] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [toast, setToast] = useState('');
-  const [checking, setChecking] = useState(true);
-  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const { user, signOut } = useAuth();
+  const { partner, unpair, daysTogether } = usePair();
   const [showUnpairConfirm, setShowUnpairConfirm] = useState(false);
-  const [unpairing, setUnpairing] = useState(false);
-  const [messageCount, setMessageCount] = useState(0);
-  const [gameCount, setGameCount] = useState(0);
-  const [pairedAt, setPairedAt] = useState<number | null>(null);
-  const hasLoadedRef = useRef(false);
 
-  // PWA Install prompt state
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [showIOSHint, setShowIOSHint] = useState(false);
-  const [iosDismissed, setIosDismissed] = useState(false);
-
-  useEffect(() => {
-    if (!auth) { setChecking(false); return; }
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (!user) { router.replace('/auth'); return; }
-      setUid(user.uid);
-      setEmail(user.email || '');
-      if (!hasLoadedRef.current) {
-        setDisplayName(user.displayName || '');
-        setPhotoURL(user.photoURL || '');
-      }
-      try {
-        const snap = await getDoc(doc(db, 'users', user.uid));
-        if (snap.exists()) {
-          const d = snap.data();
-          setInviteCode(d.inviteCode || '');
-          if (!hasLoadedRef.current) {
-            if (d.displayName) setDisplayName(d.displayName);
-            if (d.photoURL) setPhotoURL(d.photoURL);
-            hasLoadedRef.current = true;
-          }
-          if (d.partnerId) {
-            setPartnerId(d.partnerId);
-            setPairedAt(d.pairedAt || null);
-            const ps = await getDoc(doc(db, 'users', d.partnerId));
-            if (ps.exists()) setPartnerName(ps.data().displayName || 'your partner');
-
-            // Fetch Stats
-            const { collection, query, where, getCountFromServer, or, and } = await import('firebase/firestore');
-
-            // Message Count
-            const msgQ = query(
-              collection(db, 'messages'),
-              or(
-                and(where('senderId', '==', user.uid), where('receiverId', '==', d.partnerId)),
-                and(where('senderId', '==', d.partnerId), where('receiverId', '==', user.uid))
-              )
-            );
-            const msgCountSnap = await getCountFromServer(msgQ);
-            setMessageCount(msgCountSnap.data().count);
-
-            // Game Count
-            const gameQ = query(
-              collection(db, 'games'),
-              where('players', 'array-contains', user.uid)
-            );
-            // We fetch and filter in JS if complex, but simple version:
-            const gameSnap = await getDocs(gameQ);
-            const sharedGames = gameSnap.docs.filter((doc: any) => doc.data().players?.includes(d.partnerId)).length;
-            setGameCount(sharedGames);
-
-          } else {
-            setPartnerId(''); setPartnerName(''); setPairedAt(null);
-          }
-        } else { hasLoadedRef.current = true; }
-      } catch (err) { console.error(err); }
-      setChecking(false);
-    });
-    return () => unsub();
-  }, [router]);
-
-  // PWA Install prompt logic
-  useEffect(() => {
-    // Check if already installed (running as standalone app)
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-      return;
-    }
-
-    // Check if iOS device
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches;
-
-    if (isIOS && !isInStandaloneMode) {
-      const dismissed = localStorage.getItem('ios-install-dismissed');
-      if (!dismissed) {
-        setShowIOSHint(true);
-      }
-    }
-
-    const handler = (e: Event) => {
-      (e as any).preventDefault();
-      setInstallPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  const handleInstall = async () => {
-    if (!installPrompt) return;
-    installPrompt.prompt();
-    const result = await installPrompt.userChoice;
-    if (result.outcome === 'accepted') {
-      setInstallPrompt(null);
-      setIsInstalled(true);
-    }
-  };
-
-  const dismissIOSHint = () => {
-    setShowIOSHint(false);
-    setIosDismissed(true);
-    localStorage.setItem('ios-install-dismissed', 'true');
-  };
-
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 2500);
-  }, []);
-
-  const handleSaveName = async () => {
-    if (!auth?.currentUser || !editName.trim()) return;
-    setSaving(true);
-    try {
-      await updateProfile(auth.currentUser, { displayName: editName.trim() });
-      await setDoc(doc(db, 'users', auth.currentUser.uid), { displayName: editName.trim() }, { merge: true });
-      setDisplayName(editName.trim());
-      setIsEditingName(false);
-      showToast('Name updated ✨');
-    } catch { showToast('Failed to save'); }
-    finally { setSaving(false); }
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !auth?.currentUser) return;
-    setUploading(true);
-    try {
-      const res = await uploadMedia(file, `profile_${auth.currentUser.uid}`, 'little-letters');
-      if (res.url) {
-        const url = `${res.url}?tr=w-200,h-200,fo-auto&v=${Date.now()}`;
-        await updateProfile(auth.currentUser, { photoURL: url });
-        await setDoc(doc(db, 'users', auth.currentUser.uid), { photoURL: url }, { merge: true });
-        setPhotoURL(url);
-        showToast('Photo updated 📸');
-      }
-    } catch { showToast('Upload failed 😢'); }
-    finally { setUploading(false); }
-  };
-
-  const handleUnpair = async () => {
-    if (!auth?.currentUser || !partnerId) return;
-    setUnpairing(true);
-    try {
-      const res = await unpairPartner(auth.currentUser.uid, partnerId);
-      if (res.ok) {
-        setPartnerId(''); setPartnerName(''); setShowUnpairConfirm(false);
-        showToast('Unpaired 💔');
-      } else showToast(res.error || 'Failed to unpair');
-    } catch { showToast('Something went wrong'); }
-    finally { setUnpairing(false); }
-  };
-
-  const handleSignOut = useCallback(async () => {
-    if (!auth) return;
-    await signOut(auth);
-    router.replace('/');
-  }, [router]);
-
-  const copyCode = useCallback(() => {
-    navigator.clipboard.writeText(inviteCode);
-    showToast('Code copied 📋');
-  }, [inviteCode, showToast]);
-
-  // ── SKELETON ──────────────────────────────────────────
-  if (checking) return (
-    <>
-      <style>{`
-        @keyframes shimmer {
-          0%   { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
-      <div className="app-container">
-        <div style={{ padding: '52px 24px 20px' }}>
-          <div style={{ height: 10, width: 60, borderRadius: 6, background: 'rgba(232,160,160,0.2)', marginBottom: 10 }} />
-          <div style={{ height: 28, width: 160, borderRadius: 8, background: 'rgba(232,160,160,0.15)' }} />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 24px' }}>
-          <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(232,160,160,0.15)' }} />
-        </div>
-        <div style={{ padding: '0 20px' }}>
-          {[1,2,3].map(i => (
-            <div key={i} style={{ background: 'rgba(255,255,255,0.5)', borderRadius: 20, padding: '16px 20px', marginBottom: 10 }}>
-              <SkeletonRow />
-              <div style={{ height: 12, width: '60%', borderRadius: 6, background: 'rgba(232,160,160,0.1)' }} />
-            </div>
-          ))}
-        </div>
-      </div>
-    </>
-  );
+  const stats = [
+    { label: "Letters", value: "48", icon: Mail, color: "text-rose-400" },
+    { label: "Games", value: "23", icon: Gamepad2, color: "text-lavender-300" },
+    { label: "Days", value: daysTogether?.toString() || "0", icon: Calendar, color: "text-green-400" },
+  ];
 
   return (
-    <div className="app-container">
-      <div className="page-content-wrapper">
-        <div className="home-header">
-          <div className="home-header-left">
-            <p className="home-label">Settings</p>
-            <h1 className="home-title">Your <em>profile</em></h1>
-          </div>
-          <NotificationBell />
-        </div>
+    <div className="profile-section">
+      <h1 className="font-serif text-3xl font-bold text-gray-800 mb-6">Our Space</h1>
 
-        <div className="profile-section">
-          {/* Avatar Section */}
-          <div className="flex flex-col items-center mb-10 animation-fade-in">
-            <div 
-              className="relative group cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-[#E8A0A0] to-[#C9B8D8] shadow-lg transition-transform duration-300 group-hover:scale-105">
-                <div className="w-full h-full rounded-full overflow-hidden border-4 border-white bg-white relative">
-                  {photoURL ? (
-                    <Image src={photoURL} fill className="object-cover" alt="avatar" unoptimized />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-50 text-3xl font-serif">
-                      {displayName?.[0]?.toUpperCase() || 'H'}
-                    </div>
-                  )}
-                  {uploading && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center">
-                      <div className="loading-spinner" />
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="absolute bottom-1 right-1 bg-white p-2 rounded-full shadow-md border border-gray-100">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#E8A0A0]">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
-                </svg>
-              </div>
-            </div>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-          </div>
+      {/* Couple Card */}
+      <div className="profile-card mb-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-rose-100/50 to-transparent rounded-bl-full" />
 
-          {/* Account Group */}
-          <div className="profile-card-group">
-            <div className="pf-section-label px-1">Account Info</div>
-            <div className="profile-card">
-              {isEditingName ? (
-                <div className="p-5 bg-white/40 animate-slide-down">
-                  <div className="flex flex-col gap-3">
-                    <input
-                      className="w-full bg-white/80 border border-[#E8A0A0]/30 rounded-2xl px-5 py-3 outline-none focus:border-[#E8A0A0] transition-all font-medium text-base shadow-sm"
-                      value={editName}
-                      onChange={e => setEditName(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleSaveName()}
-                      placeholder="Display name"
-                      autoFocus
-                    />
-                    <div className="flex justify-end items-center gap-2">
-                      <button 
-                        type="button" 
-                        className="px-4 py-2 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors" 
-                        onClick={() => setIsEditingName(false)}
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        type="button" 
-                        className="px-8 py-2.5 rounded-full bg-gradient-to-r from-[#E8A0A0] to-[#C9B8D8] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50" 
-                        onClick={handleSaveName} 
-                        disabled={saving}
-                      >
-                        {saving ? 'Saving...' : 'Save ✨'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
+        <div className="p-6 relative z-10">
+          <div className="flex items-center justify-center gap-4 mb-6">
+            {/* You */}
+            <div className="text-center">
+              {user?.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt="You"
+                  className="w-20 h-20 rounded-2xl object-cover ring-4 ring-white/50 mx-auto mb-2"
+                />
               ) : (
-                <div className="profile-row">
-                  <div className="profile-row-content">
-                    <span className="profile-row-label">Your Name</span>
-                    <span className="profile-row-value">{displayName || 'Anonymous Player'}</span>
-                  </div>
-                  <button className="text-xs font-bold text-[#E8A0A0] px-4 py-2 rounded-full bg-[#E8A0A0]/10 hover:bg-[#E8A0A0]/20 transition-colors" onClick={() => { setEditName(displayName); setIsEditingName(true); }}>Edit</button>
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-100 to-lavender-100 flex items-center justify-center text-2xl ring-4 ring-white/50 mx-auto mb-2">
+                  {user?.displayName?.[0] || "Y"}
                 </div>
               )}
-              <div className="profile-row">
-                <div className="profile-row-content">
-                  <span className="profile-row-label">Email Address</span>
-                  <span className="profile-row-value text-gray-400 font-normal">{email}</span>
-                </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              </div>
+              <p className="text-sm font-medium text-gray-700">{user?.displayName || "You"}</p>
             </div>
-          </div>
 
-          {/* Relationship Group */}
-          <div className="profile-card-group" style={{ animationDelay: '0.05s' }}>
-            <div className="pf-section-label px-1">Relationship</div>
-            <div className="profile-card">
-              <div className="profile-row">
-                <div className="profile-row-content">
-                  <span className="profile-row-label">Partner</span>
-                  <span className="profile-row-value">{partnerName || 'Waiting for partner...'}</span>
-                </div>
-                {partnerId && (
-                  <button className="text-[10px] font-bold text-red-400 bg-red-50 px-3 py-1.5 rounded-lg active:scale-95 transition-transform" onClick={() => setShowUnpairConfirm(true)}>Unpair</button>
-                )}
+            {/* Heart */}
+            <div className="flex flex-col items-center">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-200 to-lavender-200 flex items-center justify-center mb-1">
+                <Heart className="w-5 h-5 text-rose-400 fill-rose-400" />
               </div>
-
-              {showUnpairConfirm && (
-                <div className="p-6 bg-red-50/50 border-t border-red-100 animate-slide-down">
-                  <p className="text-xs text-red-900/60 text-center mb-4 leading-relaxed">
-                    Are you sure you want to disconnect from <strong>{partnerName}</strong>? <br/>This action cannot be undone.
-                  </p>
-                  <div className="flex gap-3">
-                    <button className="flex-1 py-3 rounded-xl bg-red-500 text-white text-xs font-bold shadow-sm active:scale-95 transition-transform disabled:opacity-50" onClick={handleUnpair} disabled={unpairing}>
-                      {unpairing ? 'Disconnecting...' : 'Yes, Unpair'}
-                    </button>
-                    <button className="flex-1 py-3 rounded-xl bg-white border border-gray-200 text-gray-500 text-xs font-medium active:scale-95 transition-transform" onClick={() => setShowUnpairConfirm(false)}>Cancel</button>
-                  </div>
-                </div>
-              )}
-
-              <div className="profile-row cursor-pointer" onClick={() => setShowInviteCode(p => !p)}>
-                <div className="profile-row-content">
-                  <span className="profile-row-label">Invite Code</span>
-                  <span className="profile-row-value font-mono tracking-wider">
-                    {showInviteCode ? inviteCode : '••••••'}
-                  </span>
-                </div>
-                <button className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-3 py-1.5 rounded-lg border border-gray-100">{showInviteCode ? 'Hide' : 'Show'}</button>
-              </div>
-
-              {showInviteCode && (
-                <div className="p-4 bg-gray-50/50 border-t border-gray-100 animate-slide-down">
-                  <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
-                    <span className="flex-1 font-serif text-2xl tracking-[0.2em] text-center">{inviteCode}</span>
-                    <button className="px-4 py-2 rounded-lg bg-[#E8A0A0]/10 text-[#E8A0A0] text-xs font-bold hover:bg-[#E8A0A0]/20 transition-colors" onClick={copyCode}>Copy</button>
-                  </div>
-                  <p className="text-[10px] text-gray-400 text-center mt-3 italic font-serif">Share this code with your partner to connect your souls</p>
-                </div>
-              )}
+              <span className="text-xs text-gray-400">Since</span>
+              <span className="text-xs font-medium text-rose-400">{daysTogether || 0} days</span>
             </div>
-          </div>
 
-          {/* Relationship Stats */}
-          {partnerId && (
-            <div className="profile-card-group" style={{ animationDelay: '0.15s' }}>
-              <div className="pf-section-label px-1">Our Journey</div>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 border border-[#E8A0A0]/20 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-serif text-[#3D2B3D]">{messageCount}</span>
-                  <span className="text-[10px] uppercase tracking-wider text-gray-500 mt-1 font-medium">Letters Sent</span>
-                </div>
-                <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 border border-[#C9B8D8]/20 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-serif text-[#3D2B3D]">{gameCount}</span>
-                  <span className="text-[10px] uppercase tracking-wider text-gray-500 mt-1 font-medium">Games Played</span>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-[#FAD0DC]/30 to-[#EDD5F0]/30 rounded-2xl p-5 border border-white/40 mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center text-xl shadow-sm">
-                    🗓️
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-[#3D2B3D]">
-                      {pairedAt ? `${Math.floor((Date.now() - pairedAt) / (1000 * 60 * 60 * 24))} Days Together` : 'Starting Our Journey'}
-                    </h3>
-                    <p className="text-[11px] text-gray-500 mt-0.5">
-                      {pairedAt ? `Connected since ${new Date(pairedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : 'Your future awaits...'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <Link href="/moments" className="block w-full py-3 rounded-2xl bg-white border border-[#E8A0A0]/20 text-center shadow-sm hover:shadow-md transition-all mt-4 mb-8">
-                <span className="text-sm font-bold text-[#E8A0A0]">View Our Memories ✨</span>
-              </Link>
-            </div>
-          )}
-
-          {/* Security & System */}
-          <div className="profile-card-group" style={{ animationDelay: '0.2s' }}>
-            <div className="pf-section-label px-1">System</div>
-            <div className="profile-card">
-              {/* PWA Install Button */}
-              {!isInstalled && installPrompt && (
-                <button
-                  onClick={handleInstall}
-                  className="w-full p-3.5 rounded-full bg-gradient-to-r from-[#E8A0A0] to-[#C9B8D8] text-white text-sm font-medium flex items-center justify-center gap-2 mb-2.5 shadow-lg active:scale-95 transition-transform"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2v13M8 11l4 4 4-4"/><path d="M3 19h18"/>
-                  </svg>
-                  Install Habibty App
-                </button>
-              )}
-
-              {isInstalled && (
-                <div className="text-center text-xs text-gray-400 italic font-serif py-2 mb-2.5">
-                  ✓ App is installed
-                </div>
-              )}
-
-              {/* iOS Install Hint */}
-              {showIOSHint && !isInstalled && !iosDismissed && (
-                <div className="bg-[#F7E8EE]/80 border border-[#E8A0A0]/30 rounded-2xl p-3.5 mb-2.5 text-xs text-[#7A5C7A] leading-relaxed">
-                  <strong className="block mb-1">Install on iPhone</strong>
-                  Tap the Share button <strong>⬆</strong> in Safari, then tap <strong>"Add to Home Screen"</strong>
-                  <button onClick={dismissIOSHint} className="block mt-2 text-[#E8A0A0] text-[11px] font-bold">Dismiss</button>
-                </div>
-              )}
-
-              {!showSignOutConfirm ? (
-                <button className="w-full flex items-center justify-center gap-2 p-5 text-red-400 hover:bg-red-50 transition-colors" onClick={() => setShowSignOutConfirm(true)}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                  <span className="text-sm font-semibold">Sign Out</span>
-                </button>
+            {/* Partner */}
+            <div className="text-center">
+              {partner?.photoURL ? (
+                <img
+                  src={partner.photoURL}
+                  alt={partner.name}
+                  className="w-20 h-20 rounded-2xl object-cover ring-4 ring-white/50 mx-auto mb-2"
+                />
               ) : (
-                <div className="p-6 bg-gray-50/50 animate-slide-down">
-                  <p className="text-sm text-gray-500 text-center mb-4">Are you leaving us for now?</p>
-                  <div className="flex gap-3">
-                    <button className="flex-1 py-3 rounded-xl bg-gray-900 text-white text-xs font-bold shadow-sm active:scale-95 transition-transform" onClick={handleSignOut}>Sign Out</button>
-                    <button className="flex-1 py-3 rounded-xl bg-white border border-gray-200 text-gray-400 text-xs font-medium active:scale-95 transition-transform" onClick={() => setShowSignOutConfirm(false)}>Cancel</button>
-                  </div>
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-lavender-100 to-sky-100 flex items-center justify-center text-2xl ring-4 ring-white/50 mx-auto mb-2">
+                  {partner?.name?.[0] || "P"}
                 </div>
               )}
+              <p className="text-sm font-medium text-gray-700">{partner?.name || "Partner"}</p>
             </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4">
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center p-3 rounded-2xl bg-white/30">
+                <stat.icon className={`w-5 h-5 ${stat.color} mx-auto mb-1`} />
+                <p className="text-xl font-bold text-gray-800">{stat.value}</p>
+                <p className="text-xs text-gray-500">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {toast && <div className={`toast ${toast ? 'show' : ''}`}>{toast}</div>}
-      <BottomNav activeTab="profile" />
+      {/* Settings */}
+      <p className="pf-section-label">Settings</p>
+
+      <div className="profile-card mb-6">
+        <Link href="/profile/edit" className="profile-row">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
+              <User className="w-5 h-5 text-rose-400" />
+            </div>
+            <div>
+              <p className="font-medium text-gray-800">Edit Profile</p>
+              <p className="text-xs text-gray-500">Name, avatar, preferences</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </Link>
+
+        <button className="profile-row w-full text-left">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-lavender-50 flex items-center justify-center">
+              <Bell className="w-5 h-5 text-lavender-300" />
+            </div>
+            <div>
+              <p className="font-medium text-gray-800">Notifications</p>
+              <p className="text-xs text-gray-500">Manage alerts and sounds</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </button>
+
+        <button className="profile-row w-full text-left">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center">
+              <Smartphone className="w-5 h-5 text-sky-300" />
+            </div>
+            <div>
+              <p className="font-medium text-gray-800">PWA Settings</p>
+              <p className="text-xs text-gray-500">Install, offline mode</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </button>
+      </div>
+
+      {/* Danger Zone */}
+      <p className="pf-section-label">Danger Zone</p>
+
+      <div className="profile-card">
+        {!showUnpairConfirm ? (
+          <button
+            onClick={() => setShowUnpairConfirm(true)}
+            className="profile-row w-full text-left text-red-400 hover:bg-red-50"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+                <Unlink className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <p className="font-medium">Unpair Partner</p>
+                <p className="text-xs opacity-70">This cannot be undone</p>
+              </div>
+            </div>
+          </button>
+        ) : (
+          <div className="p-4">
+            <p className="text-sm text-red-500 mb-3">
+              Are you sure? All messages and memories will be lost.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowUnpairConfirm(false)}
+                className="flex-1 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={unpair}
+                className="flex-1 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                Yes, Unpair
+              </button>
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={signOut}
+          className="profile-row w-full text-left text-red-400 hover:bg-red-50"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+              <LogOut className="w-5 h-5 text-red-400" />
+            </div>
+            <div>
+              <p className="font-medium">Sign Out</p>
+            </div>
+          </div>
+        </button>
+      </div>
     </div>
   );
 }
