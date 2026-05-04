@@ -28,7 +28,7 @@ import AppHeader from "@/components/AppHeader";
 import FloatingParticles from "@/components/FloatingParticles";
 import DesktopSidebar from "@/components/DesktopSidebar";
 import EnhancedBottomNav from "@/components/EnhancedBottomNav";
-import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import { HeaderProvider } from "@/lib/HeaderContext";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -45,8 +45,6 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
-import { HeaderProvider } from "@/lib/HeaderContext";
-
 export default function RootLayout({
   children,
 }: {
@@ -61,7 +59,6 @@ export default function RootLayout({
         <HeaderProvider>
           <AppLifecycle />
           <FloatingParticles />
-          <PWAInstallPrompt />
 
           {/* Desktop Sidebar - hidden on mobile */}
           <DesktopSidebar />
