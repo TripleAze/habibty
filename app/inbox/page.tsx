@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Plus, Filter } from "lucide-react";
 import MessageCard from "@/components/MessageCard";
+import RevealModal from "@/components/RevealModal";
 import { useMessages } from "@/lib/messages";
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { Message } from "@/types";
 
 const TABS = [
   { id: "all", label: "All Letters" },
@@ -16,8 +19,18 @@ const TABS = [
 ];
 
 export default function InboxPage() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("all");
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const { messages, loading } = useMessages();
+
+  useEffect(() => {
+    const openId = searchParams.get('open');
+    if (openId && messages.length > 0) {
+      const msg = messages.find(m => m.id === openId);
+      if (msg) setSelectedMessage(msg);
+    }
+  }, [searchParams, messages]);
 
   const filteredMessages = messages.filter((msg) => {
     if (activeTab === "all") return true;
@@ -81,11 +94,21 @@ export default function InboxPage() {
         ) : (
           <div className="cards-grid">
             {filteredMessages.map((msg) => (
-              <MessageCard key={msg.id} message={msg} />
+              <MessageCard 
+                key={msg.id} 
+                message={msg} 
+                onClick={() => setSelectedMessage(msg)}
+              />
             ))}
           </div>
         )}
       </div>
+
+      <RevealModal
+        isOpen={!!selectedMessage}
+        onClose={() => setSelectedMessage(null)}
+        message={selectedMessage}
+      />
     </div>
   );
 }
