@@ -19,11 +19,13 @@ import { db } from '@/lib/firebase';
 import { usePair } from "@/lib/pair";
 import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import PWASettingsModal from "@/components/PWASettingsModal";
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const { partner, unpair, daysTogether } = usePair();
   const [showUnpairConfirm, setShowUnpairConfirm] = useState(false);
+  const [showPWASettings, setShowPWASettings] = useState(false);
   const [letterCount, setLetterCount] = useState<number>(0);
   const [gameCount, setGameCount] = useState<number>(0);
 
@@ -163,7 +165,10 @@ export default function ProfilePage() {
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </button>
 
-        <button className="profile-row w-full text-left">
+        <button 
+          onClick={() => setShowPWASettings(true)}
+          className="profile-row w-full text-left"
+        >
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center">
               <Smartphone className="w-5 h-5 text-sky-300" />
@@ -232,6 +237,11 @@ export default function ProfilePage() {
           </div>
         </button>
       </div>
+
+      <PWASettingsModal 
+        isOpen={showPWASettings} 
+        onClose={() => setShowPWASettings(false)} 
+      />
     </div>
   );
 }

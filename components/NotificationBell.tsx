@@ -118,7 +118,7 @@ export default function NotificationBell() {
           -webkit-backdrop-filter: blur(20px);
           border: 1px solid rgba(232, 160, 160, 0.2);
           border-radius: 20px;
-          shadow: 0 12px 40px rgba(61, 43, 61, 0.12);
+          box-shadow: 0 12px 40px rgba(61, 43, 61, 0.12);
           z-index: 2000;
           overflow: hidden;
           animation: notif-slide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);

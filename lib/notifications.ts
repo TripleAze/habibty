@@ -67,7 +67,7 @@ export function subscribeToNotifications(
   }
   let unsubSnapshot: (() => void) | null = null;
 
-  const unsubAuth = onAuthStateChanged(auth!, (user) => {
+  const unsubAuth = onAuthStateChanged(auth, (user) => {
     // Clean up previous listener if any
     if (unsubSnapshot) {
       unsubSnapshot();

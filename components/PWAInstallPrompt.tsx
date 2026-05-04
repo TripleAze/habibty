@@ -44,8 +44,8 @@ export default function PWAInstallPrompt() {
   if (!show) return null;
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-50 animate-slide-up">
-      <div className="glass-strong rounded-2xl p-4 shadow-2xl max-w-md mx-auto flex items-center gap-4">
+    <div className="fixed bottom-24 left-4 right-4 z-[999] animate-slide-up md:top-4 md:bottom-auto">
+      <div className="glass-strong rounded-2xl p-4 shadow-2xl max-w-md mx-auto flex items-center gap-4 border border-white/20">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-200 to-lavender-100 flex items-center justify-center text-2xl flex-shrink-0">
           <Heart className="w-6 h-6 text-rose-400" />
         </div>

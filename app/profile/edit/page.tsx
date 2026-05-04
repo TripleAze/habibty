@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Camera, Check } from "lucide-react";
+import { ChevronLeft, Camera, Check, AlertCircle } from "lucide-react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
@@ -13,6 +13,7 @@ export default function EditProfilePage() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -28,6 +29,7 @@ export default function EditProfilePage() {
   const handleSave = async () => {
     if (!user || !name.trim()) return;
     setLoading(true);
+    setError(null);
     try {
       await updateDoc(doc(db, "users", user.uid), {
         displayName: name.trim(),
@@ -37,8 +39,9 @@ export default function EditProfilePage() {
         setSaved(false);
         router.push("/profile");
       }, 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError("Update blocked or failed. Please check your connection or ad-blocker.");
     } finally {
       setLoading(false);
     }
@@ -80,6 +83,13 @@ export default function EditProfilePage() {
             placeholder="Your name"
           />
         </div>
+
+        {error && (
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-100 flex items-center gap-3 text-red-500 text-sm animate-shake">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <p>{error}</p>
+          </div>
+        )}
 
         <button
           onClick={handleSave}
