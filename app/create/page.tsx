@@ -26,7 +26,6 @@ const MOOD_CHIPS = [
 ];
 
 export default function CreatePage() {
-  useHeader({ hide: true });
   const router = useRouter();
 
   // Auth + pairing state
@@ -247,12 +246,6 @@ export default function CreatePage() {
   return (
     <div className="app-container">
       <div className="create-header">
-        <div className="header-nav-row">
-          <Link href="/inbox" className="back-btn">
-            ← Back
-          </Link>
-          <NotificationBell />
-        </div>
         <h1 className="create-title">
           Create a
           <br />
@@ -536,7 +529,7 @@ export default function CreatePage() {
 
       {toast && <div className={`toast ${toast ? 'show' : ''}`}>{toast}</div>}
 
-      <BottomNav activeTab="create" />
+      <BottomNav activeTab="inbox" />
     </div>
   );
 }

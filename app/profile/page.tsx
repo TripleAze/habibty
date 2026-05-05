@@ -22,7 +22,11 @@ import { useEffect, useState } from "react";
 import PWASettingsModal from "@/components/PWASettingsModal";
 import ConfirmModal from "@/components/ConfirmModal";
 
+import NotificationBell from "@/components/NotificationBell";
+import { useHeader } from "@/lib/HeaderContext";
+
 export default function ProfilePage() {
+  useHeader({ hide: true });
   const { user, signOut } = useAuth();
   const { partner, unpair, daysTogether } = usePair();
   const [showUnpairConfirm, setShowUnpairConfirm] = useState(false);
@@ -73,8 +77,11 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="profile-section">
-      <h1 className="font-serif text-3xl font-bold text-gray-800 mb-6">Our Space</h1>
+    <div className="profile-section app-container">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="font-serif text-3xl font-bold text-gray-800">Our Space</h1>
+        <NotificationBell />
+      </div>
 
       {/* Couple Card */}
       <div className="profile-card mb-6 relative overflow-hidden">

@@ -6,9 +6,12 @@ import { useSearchParams } from "next/navigation";
 import { Plus, Filter } from "lucide-react";
 import MessageCard from "@/components/MessageCard";
 import RevealModal from "@/components/RevealModal";
+import NotificationBell from "@/components/NotificationBell";
+import BottomNav from "@/components/BottomNav";
 import { useMessages } from "@/lib/messages";
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useHeader } from "@/lib/HeaderContext";
 import { Message } from "@/types";
 
 const TABS = [
@@ -19,6 +22,7 @@ const TABS = [
 ];
 
 export default function InboxPage() {
+  useHeader({ hide: true });
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("all");
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -41,7 +45,7 @@ export default function InboxPage() {
   });
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="app-container">
       {/* Header */}
       <div className="home-header">
         <div className="home-header-left">
@@ -50,12 +54,15 @@ export default function InboxPage() {
             Love <em>Letters</em>
           </h1>
         </div>
-        <Link
-          href="/create"
-          className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-300 to-lavender-200 flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all active:scale-95"
-        >
-          <Plus className="w-6 h-6" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <Link
+            href="/create"
+            className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-300 to-lavender-200 flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all active:scale-95"
+          >
+            <Plus className="w-6 h-6" />
+          </Link>
+        </div>
       </div>
 
       {/* Filter Tabs */}
@@ -109,6 +116,7 @@ export default function InboxPage() {
         onClose={() => setSelectedMessage(null)}
         message={selectedMessage}
       />
+      <BottomNav activeTab="inbox" />
     </div>
   );
 }

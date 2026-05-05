@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Gamepad2, ArrowRight, Sparkles } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
 
 const GAMES = [
   {
@@ -60,7 +61,7 @@ export default function GamesPage() {
   const [hoveredGame, setHoveredGame] = useState<string | null>(null);
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="app-container">
       {/* Header */}
       <div className="home-header">
         <div className="home-header-left">
@@ -132,6 +133,7 @@ export default function GamesPage() {
           </Link>
         ))}
       </div>
+      <BottomNav activeTab="games" />
     </div>
   );
 }

@@ -74,8 +74,8 @@ export default function BottomNav({ activeTab }: BottomNavProps) {
           </div>
         </Link>
 
-        <Link href="/scheduled" className={`nav-item ${activeTab === 'sent' ? 'active' : ''}`}>
-          <Clock size={20} stroke={stroke('sent')} strokeWidth={1.8} />
+        <Link href="/scheduled" className={`nav-item ${activeTab === 'scheduled' ? 'active' : ''}`}>
+          <Clock size={20} stroke={stroke('scheduled')} strokeWidth={1.8} />
           <span className="nav-label">Queue</span>
         </Link>
 
