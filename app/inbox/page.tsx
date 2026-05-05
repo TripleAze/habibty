@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Plus, Filter } from "lucide-react";
@@ -21,7 +21,7 @@ const TABS = [
   { id: "scheduled", label: "Scheduled" },
 ];
 
-export default function InboxPage() {
+function InboxInternal() {
   useHeader({ hide: true });
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("all");
@@ -118,5 +118,19 @@ export default function InboxPage() {
       />
       <BottomNav activeTab="inbox" />
     </div>
+  );
+}
+
+export default function InboxPage() {
+  return (
+    <Suspense fallback={
+      <div className="app-container">
+        <div className="loading-state">
+          <div className="loading-spinner" />
+        </div>
+      </div>
+    }>
+      <InboxInternal />
+    </Suspense>
   );
 }
