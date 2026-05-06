@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Gamepad2, ArrowRight, Sparkles } from "lucide-react";
-import BottomNav from "@/components/BottomNav";
+import NotificationBell from "@/components/NotificationBell";
+import { useHeader } from "@/lib/HeaderContext";
 
 const GAMES = [
   {
@@ -40,28 +41,29 @@ const GAMES = [
     new: false,
   },
   {
-    id: "rapid-fire",
-    name: "Rapid Fire",
-    desc: "60-second quick questions",
-    icon: "/images/games/rapid-fire.png",
-    color: "from-sky-50 to-rose-100",
-    new: false,
-  },
-  {
     id: "would-you-rather",
     name: "Would You Rather",
-    desc: "Shared decision scenarios",
+    desc: "Find out where you both stand",
     icon: "/images/games/would-you-rather.png",
     color: "from-lavender-50 to-sky-100",
     new: false,
   },
+  {
+    id: "rapid-fire",
+    name: "Rapid Fire",
+    desc: "Quick answers, no thinking!",
+    icon: "/images/games/rapid-fire.png",
+    color: "from-rose-100 to-lavender-100",
+    new: true,
+  },
 ];
 
 export default function GamesPage() {
+  useHeader({ hide: true });
   const [hoveredGame, setHoveredGame] = useState<string | null>(null);
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* Header */}
       <div className="home-header">
         <div className="home-header-left">
@@ -70,8 +72,11 @@ export default function GamesPage() {
             Love <em>Games</em>
           </h1>
         </div>
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-300 to-lavender-200 flex items-center justify-center text-white shadow-lg">
-          <Gamepad2 className="w-6 h-6" />
+        <div className="flex items-center gap-3">
+          <NotificationBell />
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-300 to-lavender-200 flex items-center justify-center text-white shadow-lg">
+            <Gamepad2 className="w-6 h-6" />
+          </div>
         </div>
       </div>
 
@@ -133,7 +138,6 @@ export default function GamesPage() {
           </Link>
         ))}
       </div>
-      <BottomNav activeTab="games" />
     </div>
   );
 }

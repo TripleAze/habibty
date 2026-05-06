@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import BottomNav from '@/components/BottomNav';
 import MediaPlayer from '@/components/MediaPlayer';
 import { addMessage } from '@/lib/messages';
 import { MessageType, DeliveryType, UnlockConditionType, Message } from '@/types';
@@ -529,7 +528,6 @@ export default function CreatePage() {
 
       {toast && <div className={`toast ${toast ? 'show' : ''}`}>{toast}</div>}
 
-      <BottomNav activeTab="inbox" />
     </div>
   );
 }

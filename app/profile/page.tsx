@@ -77,7 +77,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="profile-section app-container">
+    <div className="profile-section app-container" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-serif text-3xl font-bold text-gray-800">Our Space</h1>
         <NotificationBell />

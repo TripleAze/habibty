@@ -13,6 +13,7 @@ import {
   Bell,
 } from "lucide-react";
 import { useAuth } from '@/lib/hooks/useAuth';
+import { usePair } from '@/lib/pair';
 
 interface DesktopSidebarProps {
   partnerName?: string;
@@ -31,13 +32,17 @@ const NAV_ITEMS = [
 ];
 
 export default function DesktopSidebar({
-  partnerName = "Amara",
-  partnerAvatar,
+  partnerName: propPartnerName,
+  partnerAvatar: propPartnerAvatar,
   partnerOnline = true,
   notificationCount = 0,
 }: DesktopSidebarProps) {
   const pathname = usePathname();
   const { signOut } = useAuth();
+  const { partner } = usePair();
+
+  const partnerName = propPartnerName || partner?.name || "Partner";
+  const partnerAvatar = propPartnerAvatar || partner?.photoURL;
 
   return (
     <aside className="desktop-sidebar">
@@ -67,10 +72,12 @@ export default function DesktopSidebar({
         </div>
         <div>
           <p className="text-sm font-medium text-gray-800">{partnerName}</p>
-          <p className="text-xs text-green-500 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-            Online
-          </p>
+          {partner && (
+            <p className="text-xs text-green-500 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+              Online
+            </p>
+          )}
         </div>
       </div>
 

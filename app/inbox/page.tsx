@@ -7,12 +7,13 @@ import { Plus, Filter } from "lucide-react";
 import MessageCard from "@/components/MessageCard";
 import RevealModal from "@/components/RevealModal";
 import NotificationBell from "@/components/NotificationBell";
-import BottomNav from "@/components/BottomNav";
 import { useMessages } from "@/lib/messages";
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { usePair } from "@/lib/pair";
 import { useHeader } from "@/lib/HeaderContext";
 import { Message } from "@/types";
+import Image from "next/image";
 
 const TABS = [
   { id: "all", label: "All Letters" },
@@ -23,6 +24,7 @@ const TABS = [
 
 function InboxInternal() {
   useHeader({ hide: true });
+  const { partner } = usePair();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("all");
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -45,23 +47,34 @@ function InboxInternal() {
   });
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* Header */}
       <div className="home-header">
         <div className="home-header-left">
-          <p className="home-label">Your Love Space</p>
+          <p className="home-label">From <em>{partner?.name || "Your Partner"}</em></p>
           <h1 className="home-title">
             Love <em>Letters</em>
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <NotificationBell />
-          <Link
-            href="/create"
-            className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-300 to-lavender-200 flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all active:scale-95"
-          >
-            <Plus className="w-6 h-6" />
-          </Link>
+          {partner && (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-100 to-lavender-100 border-2 border-white shadow-sm overflow-hidden relative">
+              {partner.photoURL ? (
+                <Image 
+                  src={partner.photoURL} 
+                  alt={partner.name} 
+                  fill 
+                  className="object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-sm font-bold text-rose-300">
+                  {partner.name[0]}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -116,7 +129,6 @@ function InboxInternal() {
         onClose={() => setSelectedMessage(null)}
         message={selectedMessage}
       />
-      <BottomNav activeTab="inbox" />
     </div>
   );
 }
@@ -124,7 +136,7 @@ function InboxInternal() {
 export default function InboxPage() {
   return (
     <Suspense fallback={
-      <div className="app-container">
+      <div className="app-container" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="loading-state">
           <div className="loading-spinner" />
         </div>

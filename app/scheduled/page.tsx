@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
-import BottomNav from '@/components/BottomNav';
 import { unlockDueMessages } from '@/lib/messages';
 import { Message, MessageStatus } from '@/types';
 import { auth, db } from '@/lib/firebase';
@@ -84,6 +83,7 @@ function formatMeta(message: Message, now: number): string {
 }
 
 function ScheduledInternal() {
+  useHeader({ hide: true });
   const router = useRouter();
   const searchParams = useSearchParams();
   const openId = searchParams.get('open');
@@ -169,7 +169,7 @@ function ScheduledInternal() {
   }
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="page-content-wrapper">
         <div className="sched-header">
           <div className="header-text-block">
@@ -178,6 +178,7 @@ function ScheduledInternal() {
               Your <em>journey</em> <span>✨</span>
             </h1>
           </div>
+          <NotificationBell />
         </div>
 
         <div className="timeline-section">
@@ -250,7 +251,6 @@ function ScheduledInternal() {
         </div>
       </div>
 
-      <BottomNav activeTab="scheduled" />
 
       <RevealModal 
         isOpen={isModalOpen}

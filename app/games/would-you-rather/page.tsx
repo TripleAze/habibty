@@ -8,6 +8,7 @@ import { auth, db } from '@/lib/firebase';
 import { generateGameId } from '@/lib/gameUtils';
 import GameScreen from '@/components/games/GameScreen';
 import ExitSheet from '@/components/games/ExitSheet';
+import { useHeader } from '@/lib/HeaderContext';
 import { WOULD_YOU_RATHER_QUESTIONS, WouldYouRatherQuestion } from '@/lib/questions';
 
 interface GameState {
@@ -89,6 +90,7 @@ function CreateQuestionModal({ onClose, onSubmit }: { onClose: () => void; onSub
 // MAIN COMPONENT
 // ────────────────────────────────────────────────────────────
 function WouldYouRatherInner() {
+  useHeader({ hide: true });
   const searchParams = useSearchParams();
   const gameId = searchParams.get('id') ?? '';
   const router = useRouter();

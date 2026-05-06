@@ -8,6 +8,7 @@ import { auth, db } from '@/lib/firebase';
 import { generateGameId } from '@/lib/gameUtils';
 import GameScreen from '@/components/games/GameScreen';
 import ExitSheet from '@/components/games/ExitSheet';
+import { useHeader } from '@/lib/HeaderContext';
 import { Prompt, TRUTHS, DARES, getRandomTruth, getRandomDare } from '@/lib/prompts';
 
 interface GameState {
@@ -121,6 +122,7 @@ function PromptCard({ prompt, type, subtitle }: { prompt: Prompt; type: 'truth' 
 // MAIN COMPONENT
 // ────────────────────────────────────────────────────────────
 function TruthOrDareInner() {
+  useHeader({ hide: true });
   const searchParams = useSearchParams();
   const gameId = searchParams.get('id') ?? '';
   const router = useRouter();

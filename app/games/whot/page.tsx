@@ -9,13 +9,21 @@ import {
   WhotCard, WhotGameState, Suit,
   subscribeToWhotGame, subscribeToWhotHand, playCard, drawCard, rematchWhot,
   canPlay, getEffectLabel, SUIT_SYMBOL, SUIT_COLOR, SUIT_BG, cardLabel,
+  createWhotGame,
 } from '@/lib/whot';
+import { useHeader } from '@/lib/HeaderContext';
 
 // ── EXIT SHEET ────────────────────────────────────────────
 function ExitSheet({ onResume, onMessages, onLeave }: { onResume: () => void; onMessages: () => void; onLeave: () => void }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(61,43,61,0.55)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-      <div style={{ background: 'white', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 480, padding: '28px 24px 40px', animation: 'slideUp 0.3s ease' }}>
+      <div style={{
+        background: 'white', borderRadius: '24px 24px 0 0',
+        width: '100%', maxWidth: 480, 
+        padding: `28px 24px calc(24px + env(safe-area-inset-bottom, 20px))`,
+        maxHeight: '85vh', overflowY: 'auto',
+        animation: 'slideUp 0.3s ease',
+      }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(201,184,216,0.4)', margin: '0 auto 24px' }} />
         <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontWeight: 300, fontStyle: 'italic', color: '#3D2B3D', textAlign: 'center', marginBottom: 6 }}>Leave game?</p>
         <p style={{ fontSize: 12, color: 'rgba(122,92,122,0.6)', textAlign: 'center', marginBottom: 24 }}>Your game is saved — come back anytime</p>
@@ -101,6 +109,7 @@ function WhotCardView({
 
 // ── MAIN ──────────────────────────────────────────────────
 function WhotInner() {
+  useHeader({ hide: true });
   const searchParams = useSearchParams();
   const gameId = searchParams.get('id') ?? '';
   const router = useRouter();
@@ -147,7 +156,51 @@ function WhotInner() {
     return () => clearTimeout(t);
   }, [actionError]);
 
-  if (!game || !uid) return <WhotSkeleton />;
+  if (!uid) return <WhotSkeleton />;
+
+  // No game ID in URL - show landing/create screen
+  if (!gameId && !game) {
+    const handleCreateLocal = async () => {
+      const user = auth?.currentUser;
+      const id = await createWhotGame(uid, user?.displayName || 'You', user?.photoURL || '');
+      router.push(`/games/whot?id=${id}`);
+    };
+
+    return (
+      <div className="whot-screen">
+        <div className="whot-topbar">
+          <div>
+            <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
+            <h1 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 22, fontWeight: 300, color: '#3D2B3D' }}>
+              Naija <em style={{ fontStyle: 'italic', color: '#7A5C7A' }}>Whot</em>
+            </h1>
+          </div>
+          <button className="whot-exit" onClick={() => router.push('/games')}>✕</button>
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, padding: '0 24px' }}>
+          <div style={{ width: 84, height: 112, borderRadius: 16, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42, color: 'white', fontFamily: "var(--font-cormorant),serif", fontStyle: 'italic', boxShadow: '0 12px 24px rgba(232,160,160,0.25)', border: '2px solid rgba(255,255,255,0.6)' }}>
+            W
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 30, color: '#3D2B3D', marginBottom: 10 }}>Naija Whot</h2>
+            <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.65)', maxWidth: 280, lineHeight: 1.5 }}>
+              The legendary Nigerian card game. Play special cards, pick from market, and be the first to go "Whot!"
+            </p>
+          </div>
+          <div style={{ width: '100%', maxWidth: 280, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <button onClick={handleCreateLocal} style={{ width: '100%', padding: '18px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 8px 20px rgba(232,160,160,0.2)' }}>
+              Create New Game
+            </button>
+            <button onClick={() => router.push('/games')} style={{ width: '100%', padding: '16px', borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(232,160,160,0.3)', color: '#7A5C7A', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
+              Back to Games
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!game) return <WhotSkeleton />;
 
   const opponent = game.players?.find(p => p !== uid) ?? '';
   const oppHandCount = game.handCounts?.[opponent] ?? 0;
@@ -234,13 +287,15 @@ function WhotInner() {
         @keyframes fadeIn  { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
 
         .whot-screen {
-          position: fixed; inset: 0; overflow: hidden;
+          position: fixed; inset: 0;
+          top: calc(0px + env(safe-area-inset-top, 0px));
+          overflow: hidden;
           background: linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%);
           display: flex; flex-direction: column;
           font-family: var(--font-dm-sans), sans-serif;
         }
 
-        .whot-topbar { display: flex; align-items: center; justify-content: space-between; padding: 44px 20px 10px; flex-shrink: 0; }
+        .whot-topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px 10px; flex-shrink: 0; }
         .whot-exit { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: #7A5C7A; backdrop-filter: blur(8px); flex-shrink: 0; }
 
         .whot-status { margin: 0 16px 8px; background: rgba(255,255,255,0.65); backdrop-filter: blur(8px); border-radius: 100px; padding: 9px 14px; border: 1px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { makeMove, subscribeToGame, rematch, GameState, getWinningCells } from '@/lib/games';
+import { useHeader } from '@/lib/HeaderContext';
 
 // ── EXIT SHEET ────────────────────────────────────────────
 function ExitSheet({
@@ -18,7 +19,9 @@ function ExitSheet({
     }}>
       <div style={{
         background: 'white', borderRadius: '24px 24px 0 0',
-        width: '100%', maxWidth: 480, padding: '28px 24px 40px',
+        width: '100%', maxWidth: 480, 
+        padding: `28px 24px calc(24px + env(safe-area-inset-bottom, 20px))`,
+        maxHeight: '85vh', overflowY: 'auto',
         animation: 'slideUp 0.3s ease',
       }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(201,184,216,0.4)', margin: '0 auto 24px' }} />
@@ -56,6 +59,7 @@ function TTTSkeleton() {
 
 // ── MAIN ──────────────────────────────────────────────────
 function TicTacToeInner() {
+  useHeader({ hide: true });
   const searchParams = useSearchParams();
   const gameId = searchParams.get('id') ?? '';
   const router = useRouter();
@@ -181,14 +185,16 @@ function TicTacToeInner() {
         @keyframes popIn { from{transform:scale(0.6);opacity:0} to{transform:scale(1);opacity:1} }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         .ttt-screen {
-          position: fixed; inset: 0; overflow: hidden;
+          position: fixed; inset: 0;
+          top: calc(0px + env(safe-area-inset-top, 0px));
+          overflow: hidden;
           background: linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%);
           display: flex; flex-direction: column;
           font-family: var(--font-dm-sans), sans-serif;
         }
         .ttt-topbar {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 48px 20px 12px; flex-shrink: 0;
+          padding: 12px 20px 12px; flex-shrink: 0;
         }
         .ttt-exit-btn {
           width: 36px; height: 36px; border-radius: 50%;

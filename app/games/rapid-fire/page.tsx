@@ -8,6 +8,7 @@ import { auth, db } from '@/lib/firebase';
 import { generateGameId } from '@/lib/gameUtils';
 import GameScreen from '@/components/games/GameScreen';
 import ExitSheet from '@/components/games/ExitSheet';
+import { useHeader } from '@/lib/HeaderContext';
 import { RAPID_FIRE_QUESTIONS } from '@/lib/questions';
 
 interface RapidFireQuestion {
@@ -122,6 +123,7 @@ function ResultsScreen({ game, uid, router }: { game: GameState; uid: string; ro
 // MAIN COMPONENT
 // ────────────────────────────────────────────────────────────
 function RapidFireInner() {
+  useHeader({ hide: true });
   const searchParams = useSearchParams();
   const gameId = searchParams.get('id') ?? '';
   const router = useRouter();

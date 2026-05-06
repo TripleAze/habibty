@@ -64,7 +64,7 @@ export default function RootLayout({
           <DesktopSidebar />
 
           {/* Main Content Area */}
-          <div className="app-container">
+          <div className="app-shell">
             <AppHeader />
             <main className="relative z-10">
               {children}

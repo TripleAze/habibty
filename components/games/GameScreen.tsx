@@ -25,14 +25,17 @@ export default function GameScreen({ title, subtitle, onExit, children }: GameSc
         @keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
 
         .game-screen {
-          position: fixed; inset: 0; overflow: hidden;
+          position: fixed; inset: 0; 
+          top: calc(0px + env(safe-area-inset-top, 0px));
+          overflow: hidden;
           background: linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%);
           display: flex; flex-direction: column;
           font-family: var(--font-dm-sans), sans-serif;
+          z-index: 100;
         }
         .game-topbar {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 48px 20px 12px; flex-shrink: 0;
+          padding: 12px 20px 12px; flex-shrink: 0;
         }
         .game-exit-btn {
           width: 36px; height: 36px; border-radius: 50%;

@@ -8,6 +8,7 @@ import { auth, db } from '@/lib/firebase';
 import { generateGameId } from '@/lib/gameUtils';
 import GameScreen from '@/components/games/GameScreen';
 import ExitSheet from '@/components/games/ExitSheet';
+import { useHeader } from '@/lib/HeaderContext';
 
 interface GameState {
   type: 'wordle';
@@ -230,6 +231,7 @@ function HintBanner({
 // MAIN COMPONENT
 // ────────────────────────────────────────────────────────────
 function WordleInner() {
+  useHeader({ hide: true });
   const searchParams = useSearchParams();
   const gameId = searchParams.get('id') ?? '';
   const router = useRouter();
@@ -387,6 +389,32 @@ function WordleInner() {
   const isCreator = game?.creatorUid === uid;
   const isGuesser = game?.guesserUid === uid;
   const canPlay = isGuesser && game?.status === 'playing';
+
+  // No game ID in URL - show landing/create screen
+  if (!gameId && !game) {
+    return (
+      <>
+        {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
+        <GameScreen title="Partner Wordle" onExit={() => setShowExit(true)}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
+            <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(104,184,139,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '1px solid rgba(104,184,139,0.3)' }}>
+              📝
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <h2 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Partner Wordle</h2>
+              <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>Set a secret word for your partner to guess. They get hints as they play!</p>
+            </div>
+            <button onClick={handleCreate} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#68B88B,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(104,184,139,0.2)' }}>
+              Create New Game
+            </button>
+            <button onClick={() => router.push('/games')} style={{ fontSize: 13, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Back to Games
+            </button>
+          </div>
+        </GameScreen>
+      </>
+    );
+  }
 
   // Waiting for partner
   if (game?.status === 'waiting') {

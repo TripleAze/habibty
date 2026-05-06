@@ -15,7 +15,9 @@ export default function ExitSheet({ onResume, onMessages, onLeave }: ExitSheetPr
     }}>
       <div style={{
         background: 'white', borderRadius: '24px 24px 0 0',
-        width: '100%', maxWidth: 480, padding: '28px 24px 40px',
+        width: '100%', maxWidth: 480, 
+        padding: `28px 24px calc(24px + env(safe-area-inset-bottom, 20px))`,
+        maxHeight: '85vh', overflowY: 'auto',
         animation: 'slideUp 0.3s ease',
       }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(201,184,216,0.4)', margin: '0 auto 24px' }} />
