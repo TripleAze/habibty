@@ -159,6 +159,19 @@ function WhotInner() {
     return () => { document.body.style.overflow = ''; };
   }, []);
 
+  // Auto-join if user is not in the players list and game is waiting
+  useEffect(() => {
+    if (!game || !uid || game.status !== 'waiting') return;
+    if (!game.players?.includes(uid)) {
+      const doJoin = async () => {
+        const { joinWhotGame } = await import('@/lib/whot');
+        const user = auth?.currentUser;
+        await joinWhotGame(gameId, uid, user?.displayName || 'Partner', user?.photoURL || '');
+      };
+      doJoin();
+    }
+  }, [game, uid, gameId]);
+
   // Clear error
   useEffect(() => {
     if (!actionError) return;

@@ -100,6 +100,19 @@ function TicTacToeInner() {
     }
   }, [game?.rematchId, router]);
 
+  // Auto-join if user is not in the players list and game is waiting
+  useEffect(() => {
+    if (!game || !uid || game.status !== 'waiting') return;
+    if (!game.players?.includes(uid)) {
+      const doJoin = async () => {
+        const { joinGame } = await import('@/lib/games');
+        const user = auth?.currentUser;
+        await joinGame(gameId, uid, user?.displayName || 'Partner', user?.photoURL || '');
+      };
+      doJoin();
+    }
+  }, [game, uid, gameId]);
+
   // Lock body scroll while in game
   useEffect(() => {
     document.body.style.overflow = 'hidden';
