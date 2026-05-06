@@ -6,6 +6,9 @@ import Image from "next/image";
 import { Gamepad2, ArrowRight, Sparkles } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import { useHeader } from "@/lib/HeaderContext";
+import { useRouter } from "next/navigation";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const GAMES = [
   {
@@ -60,7 +63,32 @@ const GAMES = [
 
 export default function GamesPage() {
   useHeader({ hide: true });
+  const router = useRouter();
   const [hoveredGame, setHoveredGame] = useState<string | null>(null);
+  const [joinCode, setJoinCode] = useState("");
+  const [showJoinInput, setShowJoinInput] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState("");
+
+  const handleJoin = async () => {
+    if (!joinCode.trim()) return;
+    setJoining(true);
+    setJoinError("");
+    try {
+      const code = joinCode.trim().toUpperCase();
+      const snap = await getDoc(doc(db, "games", code));
+      if (snap.exists()) {
+        const data = snap.data();
+        router.push(`/games/${data.type}?id=${code}`);
+      } else {
+        setJoinError("Game not found. Check the code.");
+      }
+    } catch (err) {
+      setJoinError("Error joining game.");
+    } finally {
+      setJoining(false);
+    }
+  };
 
   return (
     <div className="app-container" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
@@ -83,6 +111,44 @@ export default function GamesPage() {
       <p className="px-6 text-sm text-gray-500 mb-6">
         Play together, stay together. Choose a game to start.
       </p>
+
+      {/* Join with Code */}
+      <div className="px-6 mb-8">
+        {!showJoinInput ? (
+          <button
+            onClick={() => setShowJoinInput(true)}
+            className="w-full py-4 rounded-2xl bg-white/40 border border-white/60 backdrop-blur-sm flex items-center justify-center gap-3 text-gray-700 font-medium hover:bg-white/50 transition-all shadow-sm"
+          >
+            <Sparkles className="w-5 h-5 text-rose-400" />
+            <span>Join with Game Code</span>
+          </button>
+        ) : (
+          <div className="bg-white/60 backdrop-blur-md rounded-2xl p-5 border border-white/80 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-800">Enter Code</h3>
+              <button onClick={() => setShowJoinInput(false)} className="text-gray-400 text-xs">Cancel</button>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="e.g. ABCD"
+                className="flex-1 bg-white/80 border border-rose-100 rounded-xl px-4 py-3 text-lg font-bold tracking-[0.2em] uppercase focus:outline-none focus:ring-2 focus:ring-rose-200"
+                maxLength={6}
+              />
+              <button
+                onClick={handleJoin}
+                disabled={joining || !joinCode}
+                className="bg-gradient-to-r from-rose-400 to-rose-300 text-white px-6 py-3 rounded-xl font-bold shadow-md disabled:opacity-50"
+              >
+                {joining ? "..." : "GO"}
+              </button>
+            </div>
+            {joinError && <p className="text-rose-500 text-xs mt-2 ml-1">{joinError}</p>}
+          </div>
+        )}
+      </div>
 
       {/* Games Grid */}
       <div className="games-grid">
