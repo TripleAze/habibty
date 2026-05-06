@@ -27,6 +27,7 @@ interface GameState {
   hintLevel: 0 | 1 | 2 | 3;
   status: 'waiting' | 'playing' | 'won' | 'lost';
   winner?: string;
+  players: string[];
   playerNames: Record<string, string>;
   playerPhotos: Record<string, string>;
   createdAt: number;
@@ -239,7 +240,9 @@ function WordleInner() {
   const [uid, setUid] = useState('');
   const [game, setGame] = useState<GameState | null>(null);
   const [showExit, setShowExit] = useState(false);
+  const [rematching, setRematching] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [scoreboard, setScoreboard] = useState<any>(null);
   const [currentGuess, setCurrentGuess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [keyStates, setKeyStates] = useState<Record<string, 'correct' | 'present' | 'absent'>>({});
@@ -257,16 +260,20 @@ function WordleInner() {
   // Subscribe to game
   useEffect(() => {
     if (!gameId) return;
-    const unsub = onSnapshot(doc(db, 'games', gameId), 
-      (snap) => {
-        if (snap.exists()) setGame(snap.data() as GameState);
-      },
-      (error) => {
-        console.error("Firestore snapshot error:", error);
-      }
-    );
+    const unsub = onSnapshot(doc(db, 'games', gameId), (snap) => {
+      if (snap.exists()) setGame(snap.data() as GameState);
+    });
     return () => unsub();
   }, [gameId]);
+
+  // Subscribe to scoreboard
+  useEffect(() => {
+    if (!uid || !game?.players || game.players.length < 2) return;
+    const pairId = [...game.players].sort().join('_');
+    return onSnapshot(doc(db, 'scoreboards', pairId), (snap) => {
+      if (snap.exists()) setScoreboard(snap.data()?.wordle);
+    });
+  }, [uid, game?.players]);
 
   // Update key states from tile states
   useEffect(() => {
@@ -492,6 +499,30 @@ function WordleInner() {
     <>
       {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
       <GameScreen title="Partner Wordle" onExit={() => setShowExit(true)}>
+        {/* Scoreboard Strip */}
+        {scoreboard && (
+          <div style={{
+            margin: '0 20px 16px',
+            padding: '10px 16px',
+            background: 'rgba(255,255,255,0.45)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: 16,
+            border: '1px solid rgba(255,255,255,0.7)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', width: '100%' }}>
+              <span style={{ fontSize: 11, color: '#3D2B3D', opacity: 0.8, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {game?.playerNames?.[[...game.players].sort()[0]] || 'Partner'}
+              </span>
+              <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 24, fontWeight: 500, color: '#3D2B3D' }}>{scoreboard.winsA}</span>
+              <span style={{ fontSize: 12, color: '#7A5C7A', opacity: 0.4 }}>—</span>
+              <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 24, fontWeight: 500, color: '#3D2B3D' }}>{scoreboard.winsB}</span>
+              <span style={{ fontSize: 11, color: '#3D2B3D', opacity: 0.8, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {game?.playerNames?.[[...game.players].sort()[1]] || 'Partner'}
+              </span>
+            </div>
+          </div>
+        )}
         {/* Category hint */}
         <div style={{ padding: '0 20px 8px', textAlign: 'center' }}>
           <p style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 600, marginBottom: 4 }}>Category</p>

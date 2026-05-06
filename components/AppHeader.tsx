@@ -11,7 +11,7 @@ export default function AppHeader() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 4);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -34,7 +34,7 @@ export default function AppHeader() {
           justify-content: space-between;
           padding-left: 20px;
           padding-right: 20px;
-          z-index: 1000;
+          z-index: 1001;
           transition: all 0.3s ease;
           background: rgba(255, 255, 255, 0);
           backdrop-filter: blur(0);

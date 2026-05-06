@@ -3,6 +3,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { generateGameId } from './games';
+import { recordGameResult } from './scoreboard';
 
 import {
   Suit, WhotCard, WhotGameState, PlayerHand, SpecialEffect,
@@ -251,6 +252,18 @@ export async function playCard(
       [`handCounts.${uid}`]: 0,
     });
     batch.update(handRef, { cards: newHand });
+
+    const opponent = g.players.find(p => p !== uid);
+    if (opponent) {
+      recordGameResult(
+        uid, 
+        opponent, 
+        'whot', 
+        uid, 
+        g.playerNames[uid]
+      ).catch(e => console.error('Whot scoreboard update failed:', e));
+    }
+
     await batch.commit();
     return { ok: true };
   }

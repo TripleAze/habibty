@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { recordGameResult } from '@/lib/scoreboard';
 
 type TileState = 'correct' | 'present' | 'absent';
 
@@ -181,9 +182,25 @@ export async function POST(request: NextRequest) {
     if (won) {
       updates.status = 'won';
       updates.winner = guesserUid;
+      // Record scoreboard
+      recordGameResult(
+        guesserUid, 
+        game.creatorUid, 
+        'wordle', 
+        guesserUid, 
+        game.playerNames[guesserUid] || 'Guesser'
+      ).catch(e => console.error('Wordle scoreboard update failed:', e));
     } else if (attemptsLeft === 0) {
       updates.status = 'lost';
       updates.winner = game.creatorUid; // Creator wins if guesser loses
+      // Record scoreboard
+      recordGameResult(
+        guesserUid, 
+        game.creatorUid, 
+        'wordle', 
+        game.creatorUid, 
+        game.playerNames[game.creatorUid] || 'Creator'
+      ).catch(e => console.error('Wordle scoreboard update failed:', e));
     }
 
     await updateDoc(gameRef, updates);

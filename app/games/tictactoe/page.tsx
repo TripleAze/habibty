@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { onSnapshot, doc } from 'firebase/firestore';
 import { makeMove, subscribeToGame, rematch, GameState, getWinningCells } from '@/lib/games';
 import { useHeader } from '@/lib/HeaderContext';
 
@@ -66,6 +67,7 @@ function TicTacToeInner() {
 
   const [uid, setUid] = useState('');
   const [game, setGame] = useState<GameState | null>(null);
+  const [scoreboard, setScoreboard] = useState<any>(null);
   const [showExit, setShowExit] = useState(false);
   const [rematching, setRematching] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -81,6 +83,15 @@ function TicTacToeInner() {
     const unsub = subscribeToGame(gameId, setGame);
     return () => unsub();
   }, [gameId]);
+
+  // Subscribe to scoreboard
+  useEffect(() => {
+    if (!uid || !game?.players || game.players.length < 2) return;
+    const pairId = [...game.players].sort().join('_');
+    return onSnapshot(doc(db, 'scoreboards', pairId), (snap) => {
+      if (snap.exists()) setScoreboard(snap.data()?.tic_tac_toe);
+    });
+  }, [uid, game?.players]);
 
   // Auto-redirect to rematch
   useEffect(() => {
@@ -184,6 +195,7 @@ function TicTacToeInner() {
         @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
         @keyframes popIn { from{transform:scale(0.6);opacity:0} to{transform:scale(1);opacity:1} }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        @keyframes scoreUpdate { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
         .ttt-screen {
           position: fixed; inset: 0;
           top: calc(0px + env(safe-area-inset-top, 0px));
@@ -205,6 +217,24 @@ function TicTacToeInner() {
         }
         .ttt-title { font-family: var(--font-cormorant),serif; font-size: 22px; font-weight: 300; color: #3D2B3D; }
         .ttt-title em { font-style: italic; color: #7A5C7A; }
+
+        /* Scoreboard UI */
+        .ttt-scoreboard {
+          margin: 0 20px 12px;
+          padding: 12px 20px;
+          background: rgba(255,255,255,0.45);
+          backdrop-filter: blur(12px);
+          border-radius: 20px;
+          border: 1px solid rgba(255,255,255,0.7);
+          display: flex; flex-direction: column; align-items: center; gap: 4px;
+          box-shadow: 0 4px 15px rgba(232,160,160,0.1);
+        }
+        .score-row { display: flex; align-items: center; gap: 16px; width: 100%; justify-content: center; }
+        .score-val { font-family: var(--font-cormorant), serif; font-size: 28px; font-weight: 500; color: #3D2B3D; min-width: 24px; text-align: center; }
+        .score-val.updated { animation: scoreUpdate 0.4s ease; color: #E8A0A0; }
+        .score-sep { font-size: 14px; color: #7A5C7A; opacity: 0.5; }
+        .score-name { font-size: 12px; color: #3D2B3D; opacity: 0.8; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .draws-label { font-size: 10px; color: #7A5C7A; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.05em; }
 
         .ttt-status-pill {
           margin: 0 20px 12px;
@@ -296,6 +326,20 @@ function TicTacToeInner() {
           </div>
           <button className="ttt-exit-btn" onClick={() => setShowExit(true)}>✕</button>
         </div>
+
+        {/* Scoreboard Strip */}
+        {scoreboard && (
+          <div className="ttt-scoreboard">
+            <div className="score-row">
+              <span className="score-name">{game.playerNames[[...game.players].sort()[0]] || 'Partner'}</span>
+              <span className="score-val">{scoreboard.winsA}</span>
+              <span className="score-sep">—</span>
+              <span className="score-val">{scoreboard.winsB}</span>
+              <span className="score-name">{game.playerNames[[...game.players].sort()[1]] || 'Partner'}</span>
+            </div>
+            {scoreboard.draws > 0 && <span className="draws-label">{scoreboard.draws} Draws</span>}
+          </div>
+        )}
 
         {game.status === 'waiting' ? (
           <div className="ttt-waiting-center">

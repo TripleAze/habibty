@@ -1,29 +1,19 @@
 "use client";
 
-
-import Link from "next/link";
-import {
-  User,
-  Bell,
-  Smartphone,
-  LogOut,
-  Heart,
-  Mail,
-  Gamepad2,
-  Calendar,
-  ChevronRight,
-  Unlink,
-} from "lucide-react";
-import { useAuth } from '@/lib/hooks/useAuth';
-import { db } from '@/lib/firebase';
-import { usePair } from "@/lib/pair";
-import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { 
+  Mail, Calendar, Gamepad2, ChevronRight, User, Bell, 
+  LogOut, Unlink, Heart, Smartphone, Trophy 
+} from "lucide-react";
+import { onSnapshot, doc, collection, query, where, getDocs } from "firebase/firestore";
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { usePair } from "@/lib/pair";
+import { useHeader } from "@/lib/HeaderContext";
 import PWASettingsModal from "@/components/PWASettingsModal";
 import ConfirmModal from "@/components/ConfirmModal";
-
 import NotificationBell from "@/components/NotificationBell";
-import { useHeader } from "@/lib/HeaderContext";
 
 export default function ProfilePage() {
   useHeader({ hide: true });
@@ -34,9 +24,15 @@ export default function ProfilePage() {
   const [showPWASettings, setShowPWASettings] = useState(false);
   const [letterCount, setLetterCount] = useState<number>(0);
   const [gameCount, setGameCount] = useState<number>(0);
+  const [scoreboard, setScoreboard] = useState<any>(null);
 
   useEffect(() => {
     if (!user || !partner) return;
+
+    const pairId = [user.uid, partner.uid].sort().join('_');
+    const unsubScore = onSnapshot(doc(db, 'scoreboards', pairId), (snap) => {
+      if (snap.exists()) setScoreboard(snap.data());
+    });
 
     // Count letters (messages)
     const qMessages = query(
@@ -67,6 +63,7 @@ export default function ProfilePage() {
     return () => {
       unsubMessages();
       unsubGames();
+      unsubScore();
     };
   }, [user, partner]);
 
@@ -131,15 +128,60 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center p-3 rounded-2xl bg-white/30">
-                <stat.icon className={`w-5 h-5 ${stat.color} mx-auto mb-1`} />
-                <p className="text-xl font-bold text-gray-800">{stat.value}</p>
-                <p className="text-xs text-gray-500">{stat.label}</p>
+          {/* Stats & Scoreboard */}
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-3 rounded-2xl bg-white/30">
+                <Mail className="w-5 h-5 text-rose-400 mx-auto mb-1" />
+                <p className="text-xl font-bold text-gray-800">{letterCount}</p>
+                <p className="text-xs text-gray-500">Letters</p>
               </div>
-            ))}
+              <div className="text-center p-3 rounded-2xl bg-white/30">
+                <Calendar className="w-5 h-5 text-green-400 mx-auto mb-1" />
+                <p className="text-xl font-bold text-gray-800">{daysTogether || 0}</p>
+                <p className="text-xs text-gray-500">Days</p>
+              </div>
+              <div className="text-center p-3 rounded-2xl bg-white/30">
+                <Gamepad2 className="w-5 h-5 text-lavender-300 mx-auto mb-1" />
+                <p className="text-xl font-bold text-gray-800">{gameCount}</p>
+                <p className="text-xs text-gray-500">Games</p>
+              </div>
+            </div>
+
+            {/* Detailed Game Stats */}
+            {scoreboard && Object.keys(scoreboard).length > 0 && (
+              <div className="p-4 rounded-2xl bg-white/40 border border-white/50 backdrop-blur-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <Trophy className="w-4 h-4 text-amber-400" />
+                  <p className="text-sm font-semibold text-gray-700">Recent Scores</p>
+                </div>
+                <div className="space-y-2">
+                  {Object.entries(scoreboard).map(([key, data]: [string, any]) => {
+                    const [pA, pB] = [user?.uid, partner?.uid].sort();
+                    const isMeA = user?.uid === pA;
+                    const myScore = isMeA ? data.winsA : data.winsB;
+                    const oppScore = isMeA ? data.winsB : data.winsA;
+                    
+                    return (
+                      <div key={key} className="flex items-center justify-between text-xs bg-white/20 p-2 rounded-xl">
+                        <span className="capitalize text-gray-600 font-medium">{key.replace(/_/g, ' ')}</span>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-gray-500">You</span>
+                            <span className="font-bold text-gray-800">{myScore}</span>
+                          </div>
+                          <span className="text-gray-300">—</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-gray-800">{oppScore}</span>
+                            <span className="text-gray-500">{partner?.name?.split(' ')[0] || 'Partner'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

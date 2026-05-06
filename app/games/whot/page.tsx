@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import {
   WhotCard, WhotGameState, Suit,
@@ -122,6 +122,7 @@ function WhotInner() {
   const [showExit, setShowExit] = useState(false);
   const [rematching, setRematching] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [scoreboard, setScoreboard] = useState<any>(null);
   const [actionError, setActionError] = useState('');
 
   useEffect(() => {
@@ -135,6 +136,15 @@ function WhotInner() {
     const unsub = subscribeToWhotGame(gameId, setGame);
     return () => unsub();
   }, [gameId]);
+
+  // Subscribe to scoreboard
+  useEffect(() => {
+    if (!uid || !game?.players || game.players.length < 2) return;
+    const pairId = [...game.players].sort().join('_');
+    return onSnapshot(doc(db, 'scoreboards', pairId), (snap) => {
+      if (snap.exists()) setScoreboard(snap.data()?.whot);
+    });
+  }, [uid, game?.players]);
 
   // Subscribe to own hand
   useEffect(() => {
@@ -366,6 +376,31 @@ function WhotInner() {
           </div>
           <button className="whot-exit" onClick={() => setShowExit(true)}>✕</button>
         </div>
+
+        {/* Scoreboard Strip */}
+        {scoreboard && (
+          <div style={{
+            margin: '0 20px 12px',
+            padding: '10px 16px',
+            background: 'rgba(255,255,255,0.45)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: 16,
+            border: '1px solid rgba(255,255,255,0.7)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', width: '100%' }}>
+              <span style={{ fontSize: 11, color: '#3D2B3D', opacity: 0.8, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {game.playerNames[[...game.players].sort()[0]] || 'Partner'}
+              </span>
+              <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 24, fontWeight: 500, color: '#3D2B3D' }}>{scoreboard.winsA}</span>
+              <span style={{ fontSize: 12, color: '#7A5C7A', opacity: 0.4 }}>—</span>
+              <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 24, fontWeight: 500, color: '#3D2B3D' }}>{scoreboard.winsB}</span>
+              <span style={{ fontSize: 11, color: '#3D2B3D', opacity: 0.8, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {game.playerNames[[...game.players].sort()[1]] || 'Partner'}
+              </span>
+            </div>
+          </div>
+        )}
 
         {game.status === 'waiting' ? (
           <div className="whot-waiting">

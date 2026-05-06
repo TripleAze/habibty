@@ -98,6 +98,8 @@ export async function joinGame(
   return { ok: true };
 }
 
+import { recordGameResult } from './scoreboard';
+
 export async function makeMove(
   gameId: string,
   uid: string,
@@ -119,13 +121,30 @@ export async function makeMove(
   const isDraw = !winSymbol && newBoard.every(c => c !== '');
   const nextTurn = data.players.find(p => p !== uid) ?? uid;
 
+  const winnerUid = winSymbol ? uid : null;
+  const isFinished = winSymbol || isDraw;
+
+  if (isFinished) {
+    const oppUid = data.players.find(p => p !== uid);
+    if (oppUid) {
+      // Record result in background
+      recordGameResult(
+        uid, 
+        oppUid, 
+        'tic_tac_toe', 
+        winnerUid, 
+        data.playerNames[uid]
+      ).catch(e => console.error('Scoreboard update failed:', e));
+    }
+  }
+
   await updateDoc(ref, {
     board: newBoard,
-    turn: winSymbol || isDraw ? data.turn : nextTurn,
-    winner: winSymbol ? uid : null,
+    turn: isFinished ? data.turn : nextTurn,
+    winner: winnerUid,
     winnerSymbol: winSymbol ?? null,
     isDraw,
-    status: winSymbol || isDraw ? 'finished' : 'playing',
+    status: isFinished ? 'finished' : 'playing',
   });
 }
 
