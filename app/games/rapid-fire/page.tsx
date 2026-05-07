@@ -169,6 +169,15 @@ function RapidFireInner() {
     }
   }, [game?.rematchId, router]);
 
+  // Auto-join: if we have a gameId, the game is waiting, and we're not yet a player → join
+  useEffect(() => {
+    if (!uid || !game || !gameId) return;
+    if (game.status === 'waiting' && !game.players.includes(uid)) {
+      handleJoin();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid, game?.status, game?.players, gameId]);
+
   // Timer logic
   const [remaining, setRemaining] = useState(0);
   const [progress, setProgress] = useState(1);
