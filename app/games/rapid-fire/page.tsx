@@ -37,6 +37,7 @@ interface GameState {
   usedQuestionIds: string[];
   createdAt: number;
   creatorUid: string;
+  rematchId?: string;
 }
 
 const DIFFICULTY_CONFIG = {
@@ -61,7 +62,7 @@ function Skeleton() {
 // ────────────────────────────────────────────────────────────
 // RESULTS SCREEN
 // ────────────────────────────────────────────────────────────
-function ResultsScreen({ game, uid, router }: { game: GameState; uid: string; router: any }) {
+function ResultsScreen({ game, uid, router, onRematch, rematching }: { game: GameState; uid: string; router: any; onRematch: () => void; rematching: boolean }) {
   const opponentUid = game.players.find(p => p !== uid) || '';
   const myAnswers = game.answers[uid] || {};
   const opponentAnswers = game.answers[opponentUid] || {};
@@ -115,7 +116,12 @@ function ResultsScreen({ game, uid, router }: { game: GameState; uid: string; ro
         })}
       </div>
 
-      <button onClick={() => router.push('/games')} style={{ marginTop: 32, padding: '18px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontWeight: 600, boxShadow: '0 4px 15px rgba(232,160,160,0.3)', cursor: 'pointer' }}>Return to Lobby</button>
+      <div style={{ display: 'flex', gap: 12, marginTop: 32 }}>
+        <button onClick={() => router.push('/games')} style={{ flex: 1, padding: '18px', borderRadius: 100, background: 'none', border: '1.5px solid #eee', color: '#7A5C7A', fontWeight: 600, cursor: 'pointer' }}>Lobby</button>
+        <button onClick={onRematch} disabled={rematching} style={{ flex: 1.5, padding: '18px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontWeight: 600, boxShadow: '0 4px 15px rgba(232,160,160,0.3)', cursor: 'pointer' }}>
+          {rematching ? 'Starting…' : 'Rematch'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -135,6 +141,7 @@ function RapidFireInner() {
   const [copied, setCopied] = useState(false);
   const [singleValue, setSingleValue] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<'chill' | 'standard' | 'blitz'>('standard');
+  const [rematching, setRematching] = useState(false);
 
   // Auth check
   useEffect(() => {
@@ -148,12 +155,18 @@ function RapidFireInner() {
 
   // Subscribe to game
   useEffect(() => {
-    if (!gameId) return;
     const unsub = onSnapshot(doc(db, 'games', gameId), (snap) => {
       if (snap.exists()) setGame(snap.data() as GameState);
     });
     return () => unsub();
   }, [gameId]);
+
+  // Rematch follow
+  useEffect(() => {
+    if (game?.rematchId) {
+      router.replace(`/games/rapid-fire?id=${game.rematchId}`);
+    }
+  }, [game?.rematchId, router]);
 
   // Timer logic
   const [remaining, setRemaining] = useState(0);
@@ -215,6 +228,39 @@ function RapidFireInner() {
       usedQuestionIds: initialQSet.map(q => q.id),
       createdAt: serverTimestamp(),
     });
+    router.replace(`/games/rapid-fire?id=${newId}`);
+  };
+
+  const handleRematch = async () => {
+    if (!game) return;
+    setRematching(true);
+    const config = DIFFICULTY_CONFIG[game.difficulty as keyof typeof DIFFICULTY_CONFIG] || DIFFICULTY_CONFIG.standard;
+    const initialQSet = await selectQuestions(config.preload, game.usedQuestionIds || []);
+    const newId = await generateGameId();
+    
+    const opponentUid = game.players.find(p => p !== uid);
+    const players = [uid, opponentUid].filter(Boolean);
+
+    await setDoc(doc(db, 'games', newId), {
+      type: 'rapidfire',
+      creatorUid: uid,
+      players,
+      playerNames: game.playerNames,
+      playerPhotos: game.playerPhotos,
+      currentPlayer: uid,
+      difficulty: game.difficulty,
+      timerStartedAt: Date.now(), // Start immediately since they are both already here
+      timerDuration: config.duration,
+      currentQuestionIndex: 0,
+      answers: {},
+      roundsCompleted: 0,
+      status: 'playing',
+      questions: initialQSet,
+      usedQuestionIds: [...(game.usedQuestionIds || []), ...initialQSet.map(q => q.id)],
+      createdAt: serverTimestamp(),
+    });
+
+    await updateDoc(doc(db, 'games', gameId), { rematchId: newId });
     router.replace(`/games/rapid-fire?id=${newId}`);
   };
 
@@ -361,7 +407,7 @@ function RapidFireInner() {
   if (!game) return <Skeleton />;
 
   if (game.status === 'finished') {
-    return <GameScreen title="Results" onExit={() => router.push('/games')}><ResultsScreen game={game} uid={uid} router={router} /></GameScreen>;
+    return <GameScreen title="Results" onExit={() => router.push('/games')}><ResultsScreen game={game} uid={uid} router={router} onRematch={handleRematch} rematching={rematching} /></GameScreen>;
   }
 
   if (game.status === 'waiting') {

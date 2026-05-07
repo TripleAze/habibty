@@ -7,6 +7,7 @@ import { auth, db } from '@/lib/firebase';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { makeMove, subscribeToGame, rematch, GameState, getWinningCells } from '@/lib/games';
 import { useHeader } from '@/lib/HeaderContext';
+import GameScreen from '@/components/games/GameScreen';
 import ExitSheet from '@/components/games/ExitSheet';
 import WaitingLobby from '@/components/games/WaitingLobby';
 
@@ -160,13 +161,12 @@ function TicTacToeInner() {
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         @keyframes scoreUpdate { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
         .ttt-screen {
-          background: linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%);
-          display: flex; flex-direction: column; height: 100%;
+          display: flex; flex-direction: column;
           font-family: var(--font-dm-sans), sans-serif;
+          padding-bottom: 40px;
         }
         .ttt-topbar {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 12px 20px 12px; flex-shrink: 0;
+          display: none;
         }
         .ttt-exit-btn {
           width: 36px; height: 36px; border-radius: 50%;
@@ -271,16 +271,10 @@ function TicTacToeInner() {
           onCancel={() => router.push('/games')} 
         />
       ) : (
-        <div className="game-active-screen ttt-screen">
-          <div className="ttt-topbar">
-            <div>
-              <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
-              <h1 className="ttt-title">Tic <em>Tac</em> Toe</h1>
-            </div>
-            <button className="ttt-exit-btn" onClick={() => setShowExit(true)}>✕</button>
-          </div>
-
-          {scoreboard && (
+        <div className="game-active-screen">
+          <GameScreen title="Tic <em>Tac</em> Toe" onExit={() => setShowExit(true)}>
+            <div className="ttt-screen">
+              {scoreboard && (
           <div className="ttt-scoreboard">
             <div className="score-row">
               <span className="score-name">{game.playerNames[[...game.players].sort()[0]] || 'Partner'}</span>
@@ -355,6 +349,8 @@ function TicTacToeInner() {
             </div>
           )}
           {game.status === 'playing' && <div style={{ height: 32 }} />}
+            </div>
+          </GameScreen>
         </div>
       )}
     </>
