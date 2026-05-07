@@ -74,7 +74,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="profile-section app-container" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <div className="profile-section app-container px-4" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-serif text-3xl font-bold text-gray-800">Our Space</h1>
         <NotificationBell />
@@ -130,7 +130,7 @@ export default function ProfilePage() {
 
           {/* Stats & Scoreboard */}
           <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
               <div className="text-center p-3 rounded-2xl bg-white/30">
                 <Mail className="w-5 h-5 text-rose-400 mx-auto mb-1" />
                 <p className="text-xl font-bold text-gray-800">{letterCount}</p>

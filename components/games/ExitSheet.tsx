@@ -9,7 +9,7 @@ interface ExitSheetProps {
 export default function ExitSheet({ onResume, onMessages, onLeave }: ExitSheetProps) {
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 300,
+      position: 'fixed', inset: 0, zIndex: 51,
       background: 'rgba(61,43,61,0.55)', backdropFilter: 'blur(10px)',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
     }}>
@@ -18,8 +18,8 @@ export default function ExitSheet({ onResume, onMessages, onLeave }: ExitSheetPr
         style={{
         background: 'white', borderRadius: '24px 24px 0 0',
         width: '100%', maxWidth: 480, 
-        padding: `28px 24px calc(20px + env(safe-area-inset-bottom, 0px))`,
-        maxHeight: 'calc(70vh - env(safe-area-inset-bottom, 0px))', 
+        padding: `28px 24px calc(68px + env(safe-area-inset-bottom, 16px) + 16px)`,
+        maxHeight: '70vh', 
         overflowY: 'auto',
         animation: 'slideUp 0.3s ease',
       }}>

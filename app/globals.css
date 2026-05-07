@@ -1652,6 +1652,12 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
+.profile-section {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 16px 100px;
+}
+
 /* ─── GAME EXIT SHEET ───────────────────────────── */
 .game-exit-sheet {
   padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
