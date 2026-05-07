@@ -21,7 +21,7 @@ interface RapidFireQuestion {
 }
 
 interface GameState {
-  type: 'rapidfire';
+  type: 'rapid-fire';
   players: string[];
   playerNames: Record<string, string>;
   playerPhotos: Record<string, string>;

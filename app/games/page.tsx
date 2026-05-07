@@ -79,7 +79,13 @@ export default function GamesPage() {
       const snap = await getDoc(doc(db, "games", code));
       if (snap.exists()) {
         const data = snap.data();
-        router.push(`/games/${data.type}?id=${code}`);
+        let type = data.type;
+        // Map legacy types to current hyphenated folder names
+        if (type === 'rapidfire') type = 'rapid-fire';
+        if (type === 'truthordare') type = 'truth-or-dare';
+        if (type === 'wouldyourather') type = 'would-you-rather';
+        
+        router.push(`/games/${type}?id=${code}`);
       } else {
         setJoinError("Game not found. Check the code.");
       }

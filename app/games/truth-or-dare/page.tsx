@@ -13,7 +13,7 @@ import { useHeader } from '@/lib/HeaderContext';
 import { Prompt, TRUTHS, DARES, getRandomTruth, getRandomDare } from '@/lib/prompts';
 
 interface GameState {
-  type: 'truthordare';
+  type: 'truth-or-dare';
   players: string[];
   playerNames: Record<string, string>;
   playerPhotos: Record<string, string>;

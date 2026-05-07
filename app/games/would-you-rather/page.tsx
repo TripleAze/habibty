@@ -13,7 +13,7 @@ import { useHeader } from '@/lib/HeaderContext';
 import { WOULD_YOU_RATHER_QUESTIONS, WouldYouRatherQuestion } from '@/lib/questions';
 
 interface GameState {
-  type: 'wouldyourather';
+  type: 'would-you-rather';
   players: string[];
   playerNames: Record<string, string>;
   playerPhotos: Record<string, string>;
@@ -232,14 +232,16 @@ function WouldYouRatherInner() {
   }
 
   if (game.status === 'finished') {
-    const matchPercent = Math.round((game.score.matches / game.score.total) * 100);
+    const matches = game.score?.matches || 0;
+    const total = game.score?.total || 1;
+    const matchPercent = Math.round((matches / total) * 100);
     return (
       <GameScreen title="Would You Rather" onExit={() => setShowExit(true)}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 32, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 8 }}>Perfect Match!</p>
             <p style={{ fontSize: 64, fontWeight: 700, background: 'linear-gradient(135deg,#E8A0A0,#9B7EBD)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{matchPercent}%</p>
-            <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', marginTop: 8 }}>You agreed on {game.score.matches} of {game.score.total} dilemmas</p>
+            <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', marginTop: 8 }}>You agreed on {game.score?.matches || 0} of {game.score?.total || 0} dilemmas</p>
           </div>
           <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 320 }}>
             <button onClick={() => router.push('/games')} style={{ flex: 1, padding: '14px', borderRadius: 100, background: 'none', border: '1.5px solid #eee', color: '#7A5C7A' }}>Games</button>
@@ -268,12 +270,12 @@ function WouldYouRatherPlaying({
 }: {
   game: GameState; uid: string; gameId: string; router: any; showExit: boolean; setShowExit: (b: boolean) => void; showCreateQ: boolean; setShowCreateQ: (b: boolean) => void; selected: 'A' | 'B' | null; handleSelect: (c: 'A' | 'B') => void; handleReadyForNext: () => void; handleAddCustomQuestion: (q: Partial<WouldYouRatherQuestion>) => void;
 }) {
-  const opponentUid = game.players.find(p => p !== uid) || '';
-  const opponentName = game.playerNames[opponentUid] || 'Partner';
-  const myPhoto = game.playerPhotos[uid];
-  const oppPhoto = game.playerPhotos[opponentUid];
-  const hasAnswered = !!game.responses[uid];
-  const bothAnswered = Object.keys(game.responses).length === 2;
+  const opponentUid = game.players?.find(p => p !== uid) || '';
+  const opponentName = game.playerNames?.[opponentUid] || 'Partner';
+  const myPhoto = game.playerPhotos?.[uid];
+  const oppPhoto = game.playerPhotos?.[opponentUid];
+  const hasAnswered = !!game.responses?.[uid];
+  const bothAnswered = Object.keys(game.responses || {}).length === 2;
   const currentQuestion = game.currentQuestion;
 
   if (!currentQuestion) return <Skeleton />;
@@ -286,9 +288,9 @@ function WouldYouRatherPlaying({
 
       <div style={{ padding: '0 20px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.5)', borderRadius: 3, overflow: 'hidden' }}>
-          <div style={{ width: `${((game.score.total) / QUESTIONS_PER_GAME) * 100}%`, height: '100%', background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', transition: 'width 0.3s' }} />
+          <div style={{ width: `${((game.score?.total || 0) / QUESTIONS_PER_GAME) * 100}%`, height: '100%', background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', transition: 'width 0.3s' }} />
         </div>
-        <span style={{ fontSize: 12, color: '#7A5C7A', fontWeight: 600 }}>{game.score.total + 1}/{QUESTIONS_PER_GAME}</span>
+        <span style={{ fontSize: 12, color: '#7A5C7A', fontWeight: 600 }}>{(game.score?.total || 0) + 1}/{QUESTIONS_PER_GAME}</span>
       </div>
 
       <div style={{ padding: '0 20px 24px', display: 'flex', gap: 8 }}>
