@@ -71,10 +71,10 @@ function ResultsScreen({ game, uid, router, onRematch, rematching }: { game: Gam
   const matches = allQuestions.filter((q) => {
     const myA = myAnswers[q.id]?.toLowerCase().trim();
     const oppA = opponentAnswers[q.id]?.toLowerCase().trim();
-    return myA && oppA && (myA === oppA || (q.type === 'binary' && myA === oppA));
+    return myA && oppA && myA === oppA;
   }).length;
 
-  const matchPercent = Math.round((matches / allQuestions.length) * 100);
+  const matchPercent = allQuestions.length > 0 ? Math.round((matches / allQuestions.length) * 100) : 0;
   
   // Calculate speed (questions per minute)
   const durationUsed = game.timerDuration;
@@ -143,6 +143,7 @@ function RapidFireInner() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<'chill' | 'standard' | 'blitz'>('standard');
   const [rematching, setRematching] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [isAnswering, setIsAnswering] = useState(false);
 
   // Auth check
   useEffect(() => {
@@ -279,7 +280,7 @@ function RapidFireInner() {
   };
 
   const handleJoin = async () => {
-    if (!gameId || !uid) return;
+    if (!gameId || !uid || joining) return;
     setJoining(true);
     try {
       const gameRef = doc(db, 'games', gameId);
@@ -313,8 +314,10 @@ function RapidFireInner() {
   };
 
   const handleAnswer = async (answer: string) => {
-    if (!game || !isMyTurn) return;
-    const gameRef = doc(db, 'games', gameId);
+    if (!game || !isMyTurn || isAnswering) return;
+    setIsAnswering(true);
+    try {
+      const gameRef = doc(db, 'games', gameId);
     const currentQ = game.questions[game.currentQuestionIndex];
     const nextIndex = game.currentQuestionIndex + 1;
 
@@ -338,6 +341,9 @@ function RapidFireInner() {
 
     await updateDoc(gameRef, update);
     setSingleValue('');
+    } finally {
+      setIsAnswering(false);
+    }
   };
 
   const handleRoundTimeout = async () => {
@@ -490,6 +496,7 @@ function RapidFireInner() {
       progress={progress}
       isMyTurn={isMyTurn}
       handleAnswer={handleAnswer}
+      isAnswering={isAnswering}
     />
   );
 }
@@ -498,9 +505,9 @@ function RapidFireInner() {
 // PLAYING COMPONENT (Normalized)
 // ────────────────────────────────────────────────────────────
 function RapidFirePlaying({
-  game, uid, gameId, router, showExit, setShowExit, singleValue, setSingleValue, remaining, progress, isMyTurn, handleAnswer
+  game, uid, gameId, router, showExit, setShowExit, singleValue, setSingleValue, remaining, progress, isMyTurn, handleAnswer, isAnswering
 }: {
-  game: GameState; uid: string; gameId: string; router: any; showExit: boolean; setShowExit: (b: boolean) => void; singleValue: string; setSingleValue: (s: string) => void; remaining: number; progress: number; isMyTurn: boolean; handleAnswer: (a: string) => void;
+  game: GameState; uid: string; gameId: string; router: any; showExit: boolean; setShowExit: (b: boolean) => void; singleValue: string; setSingleValue: (s: string) => void; remaining: number; progress: number; isMyTurn: boolean; handleAnswer: (a: string) => void; isAnswering: boolean;
 }) {
   const currentQ = game.questions[game.currentQuestionIndex];
   const opponentName = game.playerNames[game.players.find(p => p !== uid) || 'Partner'];
@@ -523,44 +530,54 @@ function RapidFirePlaying({
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '10px 24px 40px', justifyContent: 'space-between' }}>
         {isMyTurn ? (
           <>
-            <div style={{ background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(10px)', borderRadius: 28, padding: 36, border: '1.5px solid rgba(255,255,255,0.9)', textAlign: 'center', boxShadow: '0 15px 35px rgba(122,92,122,0.06)' }}>
-              <p style={{ fontSize: 10, color: '#C9829A', fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 16 }}>Rapid Fire Question</p>
-              <h1 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 26, fontStyle: 'italic', color: '#3D2B3D', lineHeight: 1.3 }}>{currentQ?.text}</h1>
-            </div>
-
-            {currentQ?.type === 'binary' ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {['A', 'B'].map((opt, i) => {
-                  const parts = currentQ.text.split(/ or /i);
-                  return (
-                    <button
-                      key={opt}
-                      onClick={() => handleAnswer(i === 0 ? 'A' : 'B')}
-                      style={{ padding: '24px 20px', borderRadius: 22, background: 'white', border: '2px solid #f0f0f0', fontSize: 18, fontWeight: 700, color: i === 0 ? '#E8A0A0' : '#C9B8D8', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s' }}
-                    >
-                      {i === 0 ? (parts[0] || 'Option A') : (parts[1] || 'Option B')}
-                    </button>
-                  );
-                })}
+            {!currentQ ? (
+              <div style={{ textAlign: 'center', padding: 40 }}>
+                <p>No questions found. Please exit and try again.</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <input
-                  autoFocus
-                  placeholder="First word only..."
-                  value={singleValue}
-                  onChange={e => setSingleValue(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && singleValue && handleAnswer(singleValue)}
-                  style={{ width: '100%', padding: '22px', borderRadius: 24, border: '2.5px solid #E8A0A0', fontSize: 20, textAlign: 'center', fontFamily: 'inherit', background: 'white', boxShadow: '0 8px 20px rgba(232,160,160,0.1)' }}
-                />
-                <button 
-                  onClick={() => singleValue && handleAnswer(singleValue)} 
-                  disabled={!singleValue}
-                  style={{ padding: 20, borderRadius: 100, background: '#3D2B3D', color: 'white', border: 'none', fontWeight: 700, fontSize: 16, opacity: singleValue ? 1 : 0.5, transition: 'all 0.3s' }}
-                >
-                  Send Answer ⚡
-                </button>
-              </div>
+              <>
+                <div style={{ background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(10px)', borderRadius: 28, padding: 36, border: '1.5px solid rgba(255,255,255,0.9)', textAlign: 'center', boxShadow: '0 15px 35px rgba(122,92,122,0.06)' }}>
+                  <p style={{ fontSize: 10, color: '#C9829A', fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 16 }}>Rapid Fire Question</p>
+                  <h1 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 26, fontStyle: 'italic', color: '#3D2B3D', lineHeight: 1.3 }}>{currentQ.text}</h1>
+                </div>
+
+                {currentQ.type === 'binary' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {['A', 'B'].map((opt, i) => {
+                      const parts = currentQ.text.split(/ or /i);
+                      return (
+                        <button
+                          key={opt}
+                          disabled={isAnswering}
+                          onClick={() => handleAnswer(i === 0 ? 'A' : 'B')}
+                          style={{ padding: '24px 20px', borderRadius: 22, background: 'white', border: '2px solid #f0f0f0', fontSize: 18, fontWeight: 700, color: i === 0 ? '#E8A0A0' : '#C9B8D8', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s', opacity: isAnswering ? 0.7 : 1 }}
+                        >
+                          {i === 0 ? (parts[0] || 'Option A') : (parts[1] || 'Option B')}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <input
+                      autoFocus
+                      disabled={isAnswering}
+                      placeholder="First word only..."
+                      value={singleValue}
+                      onChange={e => setSingleValue(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && singleValue && handleAnswer(singleValue)}
+                      style={{ width: '100%', padding: '22px', borderRadius: 24, border: '2.5px solid #E8A0A0', fontSize: 20, textAlign: 'center', fontFamily: 'inherit', background: 'white', boxShadow: '0 8px 20px rgba(232,160,160,0.1)' }}
+                    />
+                    <button 
+                      onClick={() => singleValue && handleAnswer(singleValue)} 
+                      disabled={!singleValue || isAnswering}
+                      style={{ padding: 20, borderRadius: 100, background: '#3D2B3D', color: 'white', border: 'none', fontWeight: 700, fontSize: 16, opacity: (singleValue && !isAnswering) ? 1 : 0.5, transition: 'all 0.3s' }}
+                    >
+                      Send Answer ⚡
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </>
         ) : (
