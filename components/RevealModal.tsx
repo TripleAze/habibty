@@ -400,7 +400,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         /* Layer 2: Actions Sheet */
         .rev-actions-sheet {
           position: fixed;
-          bottom: 0;
+          bottom: calc(68px + env(safe-area-inset-bottom, 0px));
           left: 0;
           right: 0;
           background: #ffffff;
@@ -409,7 +409,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           margin: 0 auto;
           border-radius: 22px 22px 0 0;
           box-shadow: 0 -12px 48px rgba(61, 43, 61, 0.14);
-          padding: 0 20px 32px;
+          padding: 0 20px calc(12px + env(safe-area-inset-bottom, 0px));
           transform: translateY(100%);
           opacity: 0;
           transition: transform 0.44s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease;
@@ -536,7 +536,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
             transform: translate(-50%, -50%) scale(1);
           }
           .rev-actions-sheet {
-            bottom: 0;
+            bottom: calc(68px + env(safe-area-inset-bottom, 0px));
             width: 480px;
           }
         }
