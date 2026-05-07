@@ -172,54 +172,58 @@ function ScheduledInternal() {
     <div className="app-container" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="page-content-wrapper">
         <div className="sched-header">
-          <div className="header-text-block">
-            <p className="home-label">Memories & Magic</p>
-            <h1 className="home-title" style={{ fontSize: '28px' }}>
-              Your <em>journey</em> <span>✨</span>
-            </h1>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <div>
+              <p className="home-label">Memories & Magic</p>
+              <h1 className="home-title">
+                Your <em>journey</em> <span>✨</span>
+              </h1>
+            </div>
+            <div style={{ flexShrink: 0, marginTop: 4 }}>
+              <NotificationBell />
+            </div>
           </div>
-          <NotificationBell />
         </div>
 
         <div className="timeline-section">
           {loading ? (
             <ListSkeleton count={4} variant="list" />
           ) : messages.length > 0 ? (
-            <div className="space-y-8 relative">
+            <div className="timeline-container relative">
               {/* Main Timeline Line */}
-              <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-gradient-to-b from-[#E8A0A0]/40 via-[#C9B8D8]/40 to-transparent rounded-full" />
+              <div className="timeline-connector absolute left-6 top-4 bottom-4 w-0.5 bg-gradient-to-b from-[#E8A0A0]/40 via-[#C9B8D8]/40 to-transparent rounded-full" />
 
               {messages.map((message, index) => (
-                <div key={message.id} className="relative pl-12 animation-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div key={message.id} className="timeline-item relative animation-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                   {/* Timeline Point */}
                   <div 
-                    className={`absolute left-4 top-6 w-4 h-4 rounded-full border-4 border-white shadow-sm z-10 transition-transform duration-300 hover:scale-150 ${
+                    className={`timeline-dot absolute left-4 top-6 rounded-full border-4 border-white shadow-sm z-10 transition-transform duration-300 hover:scale-150 ${
                       getEffectiveStatus(message, now) === 'opened' ? 'bg-[#E8A0A0]' : 
                       getEffectiveStatus(message, now) === 'available' ? 'bg-[#C9B8D8]' : 'bg-gray-200'
                     }`}
                   />
 
                   <div 
-                    className="timeline-card cursor-pointer hover:shadow-md transition-shadow"
+                    className="timeline-card timeline-content cursor-pointer hover:shadow-md transition-shadow"
                     onClick={() => {
                       setSelectedMessage(message);
                       setIsModalOpen(true);
                     }}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-serif text-[#3D2B3D] leading-tight flex items-center gap-2">
+                      <h3 className="tl-title font-serif text-[#3D2B3D] leading-tight flex items-center gap-2">
                         {message.title} {message.emoji}
                       </h3>
-                      <span className={`timeline-badge ${getBadgeClass(message, now)}`}>
+                      <span className={`tl-badge ${getBadgeClass(message, now)}`}>
                         {getBadgeLabel(message, now)}
                       </span>
                     </div>
                     
                     <div className="flex items-center gap-3 text-gray-400 mb-2">
-                      <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-base">
+                      <div className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center text-xs">
                         {message.type === 'text' ? '📝' : message.type === 'voice' ? '🎙️' : '🎬'}
                       </div>
-                      <p className="font-medium tracking-wide uppercase opacity-80">{formatMeta(message, now)}</p>
+                      <p className="tl-meta font-medium tracking-wide uppercase opacity-80">{formatMeta(message, now)}</p>
                     </div>
 
                     <div className="flex gap-2">
