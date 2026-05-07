@@ -607,8 +607,15 @@ function WordlePlaying({
           {isSubmitting && (
             <p style={{ fontSize: 13, color: '#7A5C7A' }}>Checking...</p>
           )}
-          {!canPlay && !isSubmitting && game.status === 'playing' && (
-            <p style={{ fontSize: 13, color: '#7A5C7A' }}>Waiting for creator to join...</p>
+          {!isSubmitting && game.status === 'playing' && (
+            <>
+              {isCreator && (
+                <p style={{ fontSize: 13, color: '#7A5C7A' }}>Waiting for partner to guess...</p>
+              )}
+              {!isCreator && !isGuesser && (
+                <p style={{ fontSize: 13, color: '#7A5C7A' }}>Watching game...</p>
+              )}
+            </>
           )}
         </div>
 
