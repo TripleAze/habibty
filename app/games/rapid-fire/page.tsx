@@ -382,6 +382,7 @@ function RapidFireInner() {
       const batch = writeBatch(db);
       const rfCol = collection(db, 'rapid_fire_questions');
       const wyrCol = collection(db, 'would_you_rather_questions');
+      const todCol = collection(db, 'truth_or_dare_questions');
       
       // Get existing to prevent duplicates
       const existingRF = await getDocs(rfCol);
@@ -392,6 +393,9 @@ function RapidFireInner() {
         const data = d.data();
         return `${data.optionA}|${data.optionB}`.toLowerCase().trim();
       }));
+
+      const existingTOD = await getDocs(todCol);
+      const todTexts = new Set(existingTOD.docs.map(d => d.data().text?.toLowerCase().trim()));
 
       const newRF = [
         // User provided JSON examples
@@ -445,6 +449,63 @@ function RapidFireInner() {
         { optionA: "Relive favorite memory 🥺", optionB: "Create a new one ✨", category: "emotional" },
         { optionA: "Sneeze glitter ✨", optionB: "Cry confetti 🎉", category: "chaotic" },
         { optionA: "Always be 10 minutes late ⏰", optionB: "Always be 20 minutes early ⏳", category: "funny" },
+        // Batch 2
+        { optionA: "Like old photo 📸", optionB: "Send voice note 🎤", category: "chaotic" },
+        { optionA: "Food delivery 🍔", optionB: "Game purchases 🎮", category: "fun" },
+        { optionA: "Rain 🌧️", optionB: "Cold weather ❄️", category: "cute" },
+        { optionA: "Replay memory 🥺", optionB: "Future memory 🔮", category: "deep" },
+        { optionA: "Fast internet 📶", optionB: "Unlimited battery 🔋", category: "tech" },
+        { optionA: "Night drive 🚗", optionB: "Food date 🍟", category: "relationship" },
+        { optionA: "Win arguments 😤", optionB: "Get spoiled ❤️", category: "relationship" },
+        { optionA: "Lose charger 🔌", optionB: "Lose headphones 🎧", category: "fun" },
+        { optionA: "Travel world ✈️", optionB: "Dream home 🏡", category: "future" },
+        { optionA: "Random kisses 😘", optionB: "Random hugs 🤗", category: "flirty" },
+        { optionA: "No TikTok 📱", optionB: "No Instagram 📸", category: "social" },
+        { optionA: "Noodles 🍜", optionB: "Bread 🍞", category: "food" },
+        { optionA: "Matching pajamas 🛌", optionB: "Matching sneakers 👟", category: "cute" },
+        { optionA: "Always sleepy 😴", optionB: "Always hungry 🍔", category: "chaotic" },
+        { optionA: "Confidence 😌", optionB: "Charisma ✨", category: "deep" },
+        { optionA: "Horror 😨", optionB: "Romance ❤️", category: "movies" },
+        { optionA: "Caught singing 🎤", optionB: "Caught dancing 💃", category: "funny" },
+        { optionA: "Gaming date 🎮", optionB: "Cooking date 🍳", category: "relationship" },
+        { optionA: "Know lies 🤥", optionB: "Know feelings ❤️", category: "deep" },
+        { optionA: "Post drafts 😭", optionB: "Post screenshots 💀", category: "chaotic" },
+        { optionA: "Perfect hair 💇", optionB: "Perfect outfits 👕", category: "lifestyle" },
+        { optionA: "Luxury hotel 🏨", optionB: "Cozy cabin 🌲", category: "travel" },
+        { optionA: "Spicy 🌶️", optionB: "Sweet 🍫", category: "food" },
+        { optionA: "Always early ⏰", optionB: "Fashionably late 😎", category: "fun" },
+        { optionA: "Massages 💆", optionB: "Sleep 😴", category: "selfcare" },
+        // Batch 3
+        { optionA: "Cold pillows ❄️", optionB: "Warm blankets 🛌", category: "comfort" },
+        { optionA: "Go ghost 👻", optionB: "Lose phone 📱", category: "chaotic" },
+        { optionA: "Unlimited snacks 🍟", optionB: "Unlimited drinks 🥤", category: "food" },
+        { optionA: "Sunsets 🌅", optionB: "Sunrises 🌄", category: "relationship" },
+        { optionA: "Clingy 🥺", optionB: "Teasing 😂", category: "flirty" },
+        { optionA: "No memes 🚫😂", optionB: "No GIFs 🚫🎞️", category: "social" },
+        { optionA: "Multiplayer 🎮", optionB: "Story games 📖", category: "gaming" },
+        { optionA: "Laugh 😂", optionB: "Cry 😭", category: "funny" },
+        { optionA: "Know secrets 🤫", optionB: "Know feelings ❤️", category: "deep" },
+        { optionA: "Fresh laundry 🧺", optionB: "Vanilla 🍦", category: "fun" },
+        { optionA: "Beach 🌊", optionB: "Mountains ⛰️", category: "travel" },
+        { optionA: "Text ex 😭", optionB: "Text boss 💀", category: "chaotic" },
+        { optionA: "Sushi 🍣", optionB: "Burgers 🍔", category: "food" },
+        { optionA: "Emojis 😂", optionB: "Voice notes 🎤", category: "communication" },
+        { optionA: "Gifts 🎁", optionB: "Attention ❤️", category: "relationship" },
+        { optionA: "Perfect skin ✨", optionB: "Perfect hair 💇", category: "lifestyle" },
+        { optionA: "Offline 🌿", optionB: "Online 📱", category: "tech" },
+        { optionA: "Breakfast 🍳", optionB: "Dinner 🍝", category: "food" },
+        { optionA: "Teleportation ✨", optionB: "Invisibility 👻", category: "wildcard" },
+        { optionA: "Dance battles 💃", optionB: "Karaoke battles 🎤", category: "funny" },
+        { optionA: "Perfect memory 🧠", optionB: "Perfect intuition 🔮", category: "deep" },
+        { optionA: "Sleep call 📞", optionB: "Text all day 💬", category: "cute" },
+        { optionA: "Dark mode 🌑", optionB: "Light mode ☀️", category: "tech" },
+        { optionA: "Relive school 🎒", optionB: "Retire rich 💰", category: "future" },
+        { optionA: "Butterflies 🥺", optionB: "Feel calm 😌", category: "emotional" },
+        { optionA: "Iced coffee 🧋", optionB: "Hot coffee ☕", category: "food" },
+        { optionA: "Forehead kisses 😚", optionB: "Hand squeezes 🤝", category: "flirty" },
+        { optionA: "Overdressed 👔", optionB: "Underdressed 😭", category: "lifestyle" },
+        { optionA: "No music 🚫🎵", optionB: "No movies 🚫🎬", category: "entertainment" },
+        { optionA: "Dream job 🚀", optionB: "Dream relationship ❤️", category: "deep" },
       ];
 
       newWYR.forEach(q => {
@@ -453,6 +514,67 @@ function RapidFireInner() {
           const d = doc(wyrCol);
           batch.set(d, { ...q, isActive: true, isCustom: false });
           wyrTexts.add(key);
+        }
+      });
+
+      const newTOD = [
+        { type: "truth", category: "cute", text: "What’s one thing you miss most about me today?" },
+        { type: "truth", category: "relationship", text: "When did you realize you were getting attached to me?" },
+        { type: "truth", category: "flirty", text: "What’s your favorite thing I do unintentionally?" },
+        { type: "truth", category: "deep", text: "What’s something you wish we could experience together physically right now?" },
+        { type: "truth", category: "cute", text: "What’s your favorite memory of us texting late at night?" },
+        { type: "truth", category: "flirty", text: "What outfit do you think I’d look best in?" },
+        { type: "truth", category: "emotional", text: "What’s one thing I do that makes you feel safe?" },
+        { type: "truth", category: "chaotic", text: "Have you ever stalked my profile for way too long?" },
+        { type: "truth", category: "cute", text: "What’s the cutest thing I’ve ever said to you?" },
+        { type: "truth", category: "deep", text: "What scares you most about long distance?" },
+        { type: "dare", category: "funny", text: "Send a voice note pretending to propose dramatically." },
+        { type: "dare", category: "cute", text: "Send your cutest selfie right now." },
+        { type: "dare", category: "flirty", text: "Describe me in three attractive words." },
+        { type: "dare", category: "relationship", text: "Type the cheesiest pickup line you can think of." },
+        { type: "dare", category: "chaotic", text: "Send the last meme in your gallery." },
+        { type: "dare", category: "cute", text: "Change my contact name to something adorable for 10 minutes." },
+        { type: "dare", category: "flirty", text: "Send a voice note saying what you’d do if I was beside you right now." },
+        { type: "dare", category: "funny", text: "Text using only emojis for the next 5 minutes." },
+        { type: "dare", category: "cute", text: "Send a screenshot of your favorite chat between us." },
+        { type: "dare", category: "relationship", text: "Write a tiny love note in one sentence." },
+        { type: "truth", category: "flirty", text: "What’s one thing you’ve imagined us doing together?" },
+        { type: "truth", category: "cute", text: "What nickname would you secretly love me to call you?" },
+        { type: "truth", category: "deep", text: "What’s one future moment with me you think about a lot?" },
+        { type: "truth", category: "chaotic", text: "What’s the pettiest thing you’ve gotten jealous over?" },
+        { type: "truth", category: "emotional", text: "What’s one thing I’ve done that made you emotional?" },
+        { type: "truth", category: "cute", text: "What’s your favorite thing about hearing my voice?" },
+        { type: "truth", category: "relationship", text: "What’s one thing you think makes us different from other couples?" },
+        { type: "truth", category: "funny", text: "What’s your funniest memory involving me?" },
+        { type: "truth", category: "deep", text: "What’s one insecurity you rarely talk about?" },
+        { type: "truth", category: "cute", text: "What’s something small I do that instantly improves your mood?" },
+        { type: "dare", category: "funny", text: "Send a selfie making the ugliest face possible." },
+        { type: "dare", category: "cute", text: "Send me a random picture from your day." },
+        { type: "dare", category: "relationship", text: "Describe our relationship like it’s a movie trailer." },
+        { optionA: "Compliment me continuously for 30 seconds.", type: "dare", category: "flirty", text: "Compliment me continuously for 30 seconds." },
+        { type: "dare", category: "chaotic", text: "Use only baby language for your next 3 messages." },
+        { type: "dare", category: "cute", text: "Send a song that reminds you of me." },
+        { type: "dare", category: "deep", text: "Tell me one thing you appreciate about us." },
+        { type: "dare", category: "funny", text: "Record yourself saying a dramatic 'I miss you' speech." },
+        { type: "dare", category: "flirty", text: "Send the last attractive photo of yourself." },
+        { type: "dare", category: "cute", text: "Make a heart using random objects near you and send it." },
+        { type: "truth", category: "deep", text: "What’s one thing you’re excited to do together in the future?" },
+        { type: "truth", category: "relationship", text: "What moment made you feel closest to me?" },
+        { type: "truth", category: "cute", text: "What’s your favorite type of affection from me?" },
+        { type: "truth", category: "chaotic", text: "What’s the most embarrassing thing you’ve done because you liked someone?" },
+        { type: "truth", category: "emotional", text: "What’s one thing you never want to lose about us?" },
+        { type: "truth", category: "flirty", text: "What’s something I do that gives you butterflies?" },
+        { type: "truth", category: "cute", text: "What’s your favorite thing we do together online?" },
+        { type: "truth", category: "deep", text: "What’s one thing you wish I understood more about you?" },
+        { type: "truth", category: "relationship", text: "How do you usually know when you truly trust someone?" },
+        { type: "truth", category: "cute", text: "What’s your favorite message I’ve ever sent you?" },
+      ];
+
+      newTOD.forEach(q => {
+        if (!todTexts.has(q.text.toLowerCase().trim())) {
+          const d = doc(todCol);
+          batch.set(d, { ...q, isActive: true, isCustom: false });
+          todTexts.add(q.text.toLowerCase().trim());
         }
       });
 

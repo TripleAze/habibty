@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDoc, onSnapshot, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { generateGameId } from '@/lib/gameUtils';
 import GameScreen from '@/components/games/GameScreen';
@@ -302,9 +302,27 @@ function TruthOrDarePlaying({
   const mySkipsLeft = game.skipsLeft[uid] || MAX_SKIPS;
   const oppSkipsLeft = game.skipsLeft[opponentUid] || MAX_SKIPS;
 
-  const handleChooseType = (type: 'truth' | 'dare') => {
+  const handleChooseType = async (type: 'truth' | 'dare') => {
     setChoosingType(false);
-    const prompt = type === 'truth' ? getRandomTruth() : getRandomDare();
+    
+    let prompt: Prompt | null = null;
+    try {
+      const questionsCol = collection(db, 'truth_or_dare_questions');
+      const snap = await getDocs(query(questionsCol, where('type', '==', type), where('isActive', '==', true), limit(50)));
+      
+      if (!snap.empty) {
+        const pool = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+        prompt = pool[Math.floor(Math.random() * pool.length)];
+      }
+    } catch (err) {
+      console.error("Failed to fetch Truth or Dare prompt from Firebase:", err);
+    }
+
+    // Fallback to local
+    if (!prompt) {
+      prompt = type === 'truth' ? getRandomTruth() : getRandomDare();
+    }
+
     const gameRef = doc(db, 'games', gameId);
     updateDoc(gameRef, {
       currentPrompt: prompt,
