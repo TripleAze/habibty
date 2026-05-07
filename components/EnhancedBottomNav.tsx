@@ -31,7 +31,6 @@ export default function EnhancedBottomNav() {
   
   // Hide bottom nav on game sub-pages (but keep it on the main /games list)
   const isGameSubPage = pathname?.startsWith('/games/') && pathname !== '/games';
-  if (isGameSubPage) return null;
 
   useEffect(() => {
     if (!auth) return;
@@ -63,6 +62,9 @@ export default function EnhancedBottomNav() {
     });
     return () => unsub();
   }, []);
+
+  // Early return AFTER all hooks — safe per Rules of Hooks
+  if (isGameSubPage) return null;
 
   return (
     <nav className="bottom-nav">
