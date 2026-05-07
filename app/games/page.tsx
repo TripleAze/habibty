@@ -123,12 +123,12 @@ export default function GamesPage() {
             <span>Join with Game Code</span>
           </button>
         ) : (
-          <div className="bg-white/60 backdrop-blur-md rounded-2xl p-5 border border-white/80 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-white/60 backdrop-blur-md rounded-2xl p-4 border border-white/80 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300 overflow-hidden">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-800">Enter Code</h3>
               <button onClick={() => setShowJoinInput(false)} className="text-gray-400 text-xs">Cancel</button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full">
               <input
                 type="text"
                 value={joinCode}
@@ -140,7 +140,8 @@ export default function GamesPage() {
               <button
                 onClick={handleJoin}
                 disabled={joining || !joinCode}
-                className="bg-gradient-to-r from-rose-400 to-rose-300 text-white px-6 py-3 rounded-xl font-bold shadow-md disabled:opacity-50"
+                style={{ flexShrink: 0, width: 60 }}
+                className="bg-gradient-to-r from-rose-400 to-rose-300 text-white py-3 rounded-xl font-bold shadow-md disabled:opacity-50 flex items-center justify-center"
               >
                 {joining ? "..." : "GO"}
               </button>

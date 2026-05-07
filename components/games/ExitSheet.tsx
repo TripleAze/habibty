@@ -13,11 +13,14 @@ export default function ExitSheet({ onResume, onMessages, onLeave }: ExitSheetPr
       background: 'rgba(61,43,61,0.55)', backdropFilter: 'blur(10px)',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
     }}>
-      <div style={{
+      <div 
+        className="game-exit-sheet"
+        style={{
         background: 'white', borderRadius: '24px 24px 0 0',
         width: '100%', maxWidth: 480, 
-        padding: `28px 24px calc(24px + env(safe-area-inset-bottom, 20px))`,
-        maxHeight: '85vh', overflowY: 'auto',
+        padding: `28px 24px calc(20px + env(safe-area-inset-bottom, 0px))`,
+        maxHeight: 'calc(70vh - env(safe-area-inset-bottom, 0px))', 
+        overflowY: 'auto',
         animation: 'slideUp 0.3s ease',
       }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(201,184,216,0.4)', margin: '0 auto 24px' }} />

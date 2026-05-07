@@ -8,6 +8,7 @@ import { auth, db } from '@/lib/firebase';
 import { generateGameId } from '@/lib/gameUtils';
 import GameScreen from '@/components/games/GameScreen';
 import ExitSheet from '@/components/games/ExitSheet';
+import WaitingLobby from '@/components/games/WaitingLobby';
 import { useHeader } from '@/lib/HeaderContext';
 import { WOULD_YOU_RATHER_QUESTIONS, WouldYouRatherQuestion } from '@/lib/questions';
 
@@ -195,26 +196,30 @@ function WouldYouRatherInner() {
   // No game ID in URL - show landing/create screen
   if (!gameId && !game) {
     return (
-      <>
-        {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
-        <GameScreen title="Would You Rather" onExit={() => setShowExit(true)}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
-            <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(232,160,160,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '1px solid rgba(232,160,160,0.3)' }}>
-              ⚖️
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Would You Rather</h2>
-              <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>Discover how much you and your partner agree on impossible choices!</p>
-            </div>
-            <button onClick={handleCreate} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(232,160,160,0.2)' }}>
-              Create New Game
-            </button>
-            <button onClick={() => router.push('/games')} style={{ fontSize: 13, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer' }}>
-              Back to Games
-            </button>
+      <div className="game-lobby-screen">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0 10px', flexShrink: 0 }}>
+          <div>
+            <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
+            <h1 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 22, fontWeight: 300, color: '#3D2B3D' }}>Would You Rather</h1>
           </div>
-        </GameScreen>
-      </>
+          <button onClick={() => router.push('/games')} style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14, color: '#7A5C7A', backdropFilter: 'blur(8px)' }}>✕</button>
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
+          <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(232,160,160,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '1px solid rgba(232,160,160,0.3)' }}>
+            ⚖️
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Would You Rather</h2>
+            <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>Discover how much you and your partner agree on impossible choices!</p>
+          </div>
+          <button onClick={handleCreate} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(232,160,160,0.2)' }}>
+            Create New Game
+          </button>
+          <button onClick={() => router.push('/games')} style={{ fontSize: 13, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer' }}>
+            Back to Games
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -422,19 +427,15 @@ function WouldYouRatherInner() {
 
   if (game?.status === 'waiting') {
     return (
-      <GameScreen title="Would You Rather" onExit={() => setShowExit(true)}>
+      <>
         {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '0 20px' }}>
-          <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Invite your partner</p>
-          <div onClick={copyCode} style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 36, letterSpacing: '0.2em', color: '#3D2B3D', cursor: 'pointer', padding: '16px 32px', background: 'rgba(255,255,255,0.5)', borderRadius: 16 }}>{gameId}</div>
-          <p style={{ fontSize: 12, color: '#B06060' }}>{copied ? 'Copied!' : 'Tap to copy code'}</p>
-          <button onClick={handleJoin} style={{ marginTop: 24, padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>Join Game</button>
-          
-          {uid === game.creatorUid && (
-            <button onClick={handleSeedDB} style={{ marginTop: 40, background: 'none', border: '1px dashed #ccc', color: '#ccc', padding: '8px 16px', borderRadius: 8, fontSize: 10 }}>[ADMIN] Seed 200 Questions</button>
-          )}
-        </div>
-      </GameScreen>
+        <WaitingLobby
+          gameId={gameId}
+          gameType="would-you-rather"
+          myPhoto={game.playerPhotos?.[uid]}
+          onCancel={() => setShowExit(true)}
+        />
+      </>
     );
   }
 
@@ -468,6 +469,7 @@ function WouldYouRatherInner() {
   const currentQuestion = game.currentQuestion;
 
   return (
+    <div className="game-active-screen" style={{ background: 'linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%)', display: 'flex', flexDirection: 'column' }}>
     <GameScreen title="Would You Rather" onExit={() => setShowExit(true)}>
       {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
       {showCreateQ && <CreateQuestionModal onClose={() => setShowCreateQ(false)} onSubmit={handleAddCustomQuestion} />}
@@ -538,6 +540,7 @@ function WouldYouRatherInner() {
         <span style={{ fontSize: 12, color: 'rgba(122,92,122,0.4)' }}>Game ID: {gameId}</span>
       </div>
     </GameScreen>
+    </div>
   );
 }
 

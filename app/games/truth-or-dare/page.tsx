@@ -8,6 +8,7 @@ import { auth, db } from '@/lib/firebase';
 import { generateGameId } from '@/lib/gameUtils';
 import GameScreen from '@/components/games/GameScreen';
 import ExitSheet from '@/components/games/ExitSheet';
+import WaitingLobby from '@/components/games/WaitingLobby';
 import { useHeader } from '@/lib/HeaderContext';
 import { Prompt, TRUTHS, DARES, getRandomTruth, getRandomDare } from '@/lib/prompts';
 
@@ -38,7 +39,7 @@ interface HistoryEntry {
   skipped: boolean;
 }
 
-const MAX_SKIPS = 2;
+const MAX_SKIPS = 3;
 
 // ────────────────────────────────────────────────────────────
 // SKELETON
@@ -186,28 +187,43 @@ function TruthOrDareInner() {
   // No game ID in URL - show landing/create screen
   if (!gameId && !game) {
     return (
-      <>
-        {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
-        <GameScreen title="Truth or Dare" onExit={() => setShowExit(true)}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
-            <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(212,169,74,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '1px solid rgba(212,169,74,0.3)' }}>
-              🔥
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Truth or Dare</h2>
-              <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>Ready for some fun? Take turns choosing between deep truths and spicy dares!</p>
-            </div>
-            <button onClick={handleCreate} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#D4A94A,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(212,169,74,0.2)' }}>
-              Create New Game
-            </button>
-            <button onClick={() => router.push('/games')} style={{ fontSize: 13, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer' }}>
-              Back to Games
-            </button>
+      <div className="game-lobby-screen">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0 10px', flexShrink: 0 }}>
+          <div>
+            <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
+            <h1 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 22, fontWeight: 300, color: '#3D2B3D' }}>Truth or Dare</h1>
           </div>
-        </GameScreen>
-      </>
+          <button onClick={() => router.push('/games')} style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14, color: '#7A5C7A', backdropFilter: 'blur(8px)' }}>✕</button>
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
+          <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(212,169,74,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '1px solid rgba(212,169,74,0.3)' }}>
+            🔥
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, color: '#3D2B3D', marginBottom: 8 }}>Truth or Dare</h2>
+            <p style={{ fontSize: 14, color: 'rgba(122,92,122,0.6)', maxWidth: 260 }}>Ready for some fun? Take turns choosing between deep truths and spicy dares!</p>
+          </div>
+          <button onClick={handleCreate} style={{ width: '100%', maxWidth: 240, padding: '16px', borderRadius: 100, background: 'linear-gradient(135deg,#D4A94A,#C9B8D8)', border: 'none', color: 'white', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 15px rgba(212,169,74,0.2)' }}>
+            Create New Game
+          </button>
+          <button onClick={() => router.push('/games')} style={{ fontSize: 13, color: '#7A5C7A', background: 'none', border: 'none', cursor: 'pointer' }}>
+            Back to Games
+          </button>
+        </div>
+      </div>
     );
   }
+
+  // Auto-join if user is not in the players list and game is waiting
+  useEffect(() => {
+    if (!game || !uid || game.status !== 'waiting') return;
+    if (!game.players?.includes(uid)) {
+      const doJoin = async () => {
+        handleJoin();
+      };
+      doJoin();
+    }
+  }, [game, uid, gameId]);
 
   if (!game) return <Skeleton />;
 
@@ -316,7 +332,7 @@ function TruthOrDareInner() {
       currentPrompt: null,
       promptType: null,
       status: 'selecting',
-      currentTurn: uid, // Actually stays their turn to be inquisitor? Usually in T&D person who skips still switches? Let's switch.
+      currentTurn: uid, 
       response: null,
     });
   };
@@ -332,19 +348,15 @@ function TruthOrDareInner() {
   // Waiting for partner
   if (game.status === 'waiting') {
     return (
-      <GameScreen title="Truth or Dare" onExit={() => setShowExit(true)}>
+      <>
         {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '0 20px' }}>
-          <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, fontStyle: 'italic', color: '#7A5C7A', textAlign: 'center' }}>Share this code with your partner</p>
-          <div onClick={copyCode} style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 36, letterSpacing: '0.2em', color: '#3D2B3D', cursor: 'pointer', padding: '16px 32px', background: 'rgba(255,255,255,0.5)', borderRadius: 16 }}>
-            {gameId}
-          </div>
-          <p style={{ fontSize: 12, color: '#B06060' }}>{copied ? 'Copied!' : 'Tap to copy code'}</p>
-          <button onClick={handleJoin} style={{ marginTop: 24, padding: '14px 32px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: "var(--font-dm-sans),sans-serif" }}>
-            Join Game
-          </button>
-        </div>
-      </GameScreen>
+        <WaitingLobby 
+          gameId={gameId} 
+          gameType="truth-or-dare" 
+          myPhoto={myPhoto} 
+          onCancel={() => setShowExit(true)} 
+        />
+      </>
     );
   }
 
@@ -370,7 +382,8 @@ function TruthOrDareInner() {
         </div>
       )}
 
-      <GameScreen title="Truth or Dare" onExit={() => setShowExit(true)}>
+      <div className="game-active-screen" style={{ background: 'linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%)', display: 'flex', flexDirection: 'column' }}>
+        <GameScreen title="Truth or Dare" onExit={() => setShowExit(true)}>
         {/* Top Players Bar */}
         <div style={{ padding: '0 20px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
           {[
@@ -509,6 +522,7 @@ function TruthOrDareInner() {
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
         @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
       `}</style>
+      </div>
     </>
   );
 }

@@ -1628,3 +1628,32 @@ html, body {
   .home-title { font-size: 28px; }
   .create-title { font-size: 26px; }
 }
+
+/* ─── GAME LOBBY PAGES ─────────────────────────── */
+.game-lobby-screen {
+  min-height: 100vh;
+  padding-top: calc(56px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  padding-left: 20px;
+  padding-right: 20px;
+  background: linear-gradient(160deg, #FAD0DC 0%, #EDD5F0 40%, #D8E8F8 100%);
+  background-attachment: fixed;
+}
+
+/* ─── GAME ACTIVE SCREENS (fullscreen) ─────────── */
+.game-active-screen {
+  position: fixed;
+  top: calc(56px + env(safe-area-inset-top, 0px));
+  left: 0;
+  right: 0;
+  bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── GAME EXIT SHEET ───────────────────────────── */
+.game-exit-sheet {
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+

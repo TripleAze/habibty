@@ -8,6 +8,7 @@ import { auth, db } from '@/lib/firebase';
 import { generateGameId } from '@/lib/gameUtils';
 import GameScreen from '@/components/games/GameScreen';
 import ExitSheet from '@/components/games/ExitSheet';
+import WaitingLobby from '@/components/games/WaitingLobby';
 import { useHeader } from '@/lib/HeaderContext';
 import { RAPID_FIRE_QUESTIONS } from '@/lib/questions';
 
@@ -319,7 +320,15 @@ function RapidFireInner() {
 
   if (!gameId && !game) {
     return (
-      <GameScreen title="Rapid Fire" onExit={() => router.push('/games')}>
+      <div className="game-lobby-screen">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0 10px', flexShrink: 0 }}>
+          <div>
+            <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
+            <h1 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 22, fontWeight: 300, color: '#3D2B3D' }}>Rapid Fire</h1>
+          </div>
+          <button onClick={() => router.push('/games')} style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 14, color: '#7A5C7A', backdropFilter: 'blur(8px)' }}>✕</button>
+        </div>
+
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 24, justifyContent: 'center', gap: 36 }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(232,160,160,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, margin: '0 auto 20px', boxShadow: '0 8px 16px rgba(232,160,160,0.1)' }}>⚡</div>
@@ -345,7 +354,7 @@ function RapidFireInner() {
 
           <button onClick={handleCreate} style={{ width: '100%', padding: '20px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontWeight: 700, fontSize: 16, boxShadow: '0 10px 30px rgba(232,160,160,0.35)', cursor: 'pointer' }}>Generate Challenge</button>
         </div>
-      </GameScreen>
+      </div>
     );
   }
 
@@ -357,18 +366,14 @@ function RapidFireInner() {
 
   if (game.status === 'waiting') {
     return (
-      <GameScreen title="Waiting" onExit={() => router.push('/games')}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, padding: 24, textAlign: 'center' }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(232,160,160,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'pulse 2s infinite' }}>🔗</div>
-          <div>
-            <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20, color: '#7A5C7A', fontStyle: 'italic', marginBottom: 8 }}>Partner Invite Code</p>
-            <div onClick={copyCode} style={{ fontSize: 44, letterSpacing: '0.15em', fontFamily: "var(--font-cormorant),serif", color: '#3D2B3D', cursor: 'pointer', background: 'rgba(255,255,255,0.4)', padding: '16px 32px', borderRadius: 20 }}>{gameId}</div>
-            <p style={{ fontSize: 12, color: '#B06060', marginTop: 12 }}>{copied ? 'Copied to clipboard!' : 'Tap code to copy'}</p>
-          </div>
-          <button onClick={handleJoin} style={{ padding: '16px 48px', borderRadius: 100, background: '#E8A0A0', color: 'white', border: 'none', fontWeight: 700, boxShadow: '0 6px 20px rgba(232,160,160,0.2)' }}>Join Game</button>
-          {uid === game.creatorUid && <button onClick={handleSeedDB} style={{ marginTop: 60, opacity: 0.2, fontSize: 10, background: 'none', border: 'none' }}>[ADMIN] Seed 150 Dataset</button>}
-        </div>
-      </GameScreen>
+      <>
+        <WaitingLobby
+          gameId={gameId}
+          gameType="rapid-fire"
+          myPhoto={game.playerPhotos?.[uid]}
+          onCancel={() => router.push('/games')}
+        />
+      </>
     );
   }
 
@@ -376,6 +381,7 @@ function RapidFireInner() {
   const opponentName = game.playerNames[game.players.find(p => p !== uid) || 'Partner'];
 
   return (
+    <div className="game-active-screen" style={{ background: 'linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%)', display: 'flex', flexDirection: 'column' }}>
     <GameScreen title="Rapid Fire" onExit={() => setShowExit(true)}>
       {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
       
@@ -456,6 +462,7 @@ function RapidFireInner() {
         }
       `}</style>
     </GameScreen>
+    </div>
   );
 }
 
