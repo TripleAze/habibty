@@ -155,6 +155,7 @@ function RapidFireInner() {
 
   // Subscribe to game
   useEffect(() => {
+    if (!gameId) return;
     const unsub = onSnapshot(doc(db, 'games', gameId), (snap) => {
       if (snap.exists()) setGame(snap.data() as GameState);
     });
@@ -362,7 +363,8 @@ function RapidFireInner() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!uid || !gameId) return <Skeleton />;
+  if (!uid) return <Skeleton />;
+  
   // No game ID in URL - show landing/create screen
   if (!gameId && !game) {
     return (

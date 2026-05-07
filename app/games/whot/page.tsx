@@ -124,7 +124,8 @@ function WhotInner() {
     return () => clearTimeout(t);
   }, [actionError]);
 
-  if (!uid || !gameId) return <WhotSkeleton />;
+  if (!uid) return <WhotSkeleton />;
+  if (gameId && !game) return <WhotSkeleton />;
 
   if (!gameId && !game) {
     const handleCreateLocal = async () => {

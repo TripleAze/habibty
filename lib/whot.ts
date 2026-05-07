@@ -438,6 +438,7 @@ export function subscribeToWhotGame(
   gameId: string,
   cb: (state: WhotGameState) => void
 ): () => void {
+  if (!gameId) return () => {};
   return onSnapshot(doc(db, 'games', gameId.toUpperCase()), snap => {
     if (snap.exists()) cb({ id: snap.id, ...snap.data() } as WhotGameState);
   });
@@ -448,6 +449,7 @@ export function subscribeToWhotHand(
   uid: string,
   cb: (cards: WhotCard[]) => void
 ): () => void {
+  if (!gameId || !uid) return () => {};
   return onSnapshot(doc(db, 'games', gameId.toUpperCase(), 'hands', uid), snap => {
     if (snap.exists()) {
       const data = snap.data() as PlayerHand;

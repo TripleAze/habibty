@@ -171,7 +171,8 @@ function TruthOrDareInner() {
   }, [game, uid, gameId]);
 
   // Auth/Loading states
-  if (!uid || !gameId) return <Skeleton />;
+  if (!uid) return <Skeleton />;
+  if (gameId && !game) return <Skeleton />;
   const handleJoin = async () => {
     if (!gameId) return;
     const gameRef = doc(db, 'games', gameId);

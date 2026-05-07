@@ -82,7 +82,8 @@ function TicTacToeInner() {
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  if (!uid || !gameId) return <TTTSkeleton />;
+  if (!uid) return <TTTSkeleton />;
+  if (gameId && !game) return <TTTSkeleton />;
 
   if (!gameId && !game) {
     const handleCreateLocal = async () => {

@@ -79,6 +79,7 @@ export async function joinGame(
   joinerName: string,
   joinerPhoto?: string
 ): Promise<{ ok: boolean; error?: string }> {
+  if (!gameId) return { ok: false, error: 'Invalid Game ID' };
   const ref = doc(db, 'games', gameId.toUpperCase());
   const snap = await getDoc(ref);
 
@@ -105,6 +106,7 @@ export async function makeMove(
   uid: string,
   index: number
 ): Promise<void> {
+  if (!gameId) return;
   const ref = doc(db, 'games', gameId);
   const snap = await getDoc(ref);
   if (!snap.exists()) return;
@@ -149,6 +151,7 @@ export async function makeMove(
 }
 
 export async function rematch(gameId: string, initiatorUid: string): Promise<string> {
+  if (!gameId) return '';
   const ref = doc(db, 'games', gameId);
   const snap = await getDoc(ref);
   if (!snap.exists()) return gameId;
@@ -187,6 +190,7 @@ export function subscribeToGame(
   gameId: string,
   cb: (data: GameState) => void
 ): () => void {
+  if (!gameId) return () => {};
   return onSnapshot(doc(db, 'games', gameId), snap => {
     if (snap.exists()) cb({ id: snap.id, ...snap.data() } as GameState);
   });
