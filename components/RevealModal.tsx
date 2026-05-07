@@ -118,23 +118,28 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
     let unsubReactions: (() => void) | null = null;
     let unsubReplies: (() => void) | null = null;
 
-    const setupSubscriptions = async () => {
+    const setupSubscriptions = async (isCancelled: () => boolean) => {
       const { auth } = await import('@/lib/firebase');
       currentUserId.current = auth?.currentUser?.uid || null;
 
       const { subscribeToReactions } = await import('@/lib/reactions');
       const { subscribeToReplies } = await import('@/lib/replies');
 
-      unsubReactions = subscribeToReactions(message.id, (fetched) => {
+      const unsubR = subscribeToReactions(message.id, (fetched) => {
+        if (isCancelled()) return;
         setReactions(fetched);
         if (currentUserId.current) {
           setUserReaction(fetched.find(r => r.userId === currentUserId.current));
         }
       });
 
-      unsubReplies = subscribeToReplies(message.id, (fetched) => {
+      const unsubRep = subscribeToReplies(message.id, (fetched) => {
+        if (isCancelled()) return;
         setReplies(fetched);
       });
+
+      unsubReactions = unsubR;
+      unsubReplies = unsubRep;
 
       // Mark as opened
       if (message.status !== 'opened') {
@@ -152,10 +157,18 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
       }
     };
 
-    setupSubscriptions();
+    let cancelled = false;
+    const isCancelled = () => cancelled;
+
+    const timer = setTimeout(() => {
+      setupSubscriptions(isCancelled);
+    }, 300);
+
     return () => {
-      unsubReactions?.();
-      unsubReplies?.();
+      cancelled = true;
+      clearTimeout(timer);
+      if (unsubReactions) unsubReactions();
+      if (unsubReplies) unsubReplies();
     };
   }, [message?.id, isOpen]);
 

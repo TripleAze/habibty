@@ -164,6 +164,7 @@ export default function GamesPage() {
           <Link
             key={game.id}
             href={`/games/${game.id}`}
+            prefetch={true}
             className="game-card"
             onMouseEnter={() => setHoveredGame(game.id)}
             onMouseLeave={() => setHoveredGame(null)}

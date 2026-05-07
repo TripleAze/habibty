@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { subscribeToNotifications, AppNotification, markAllAsRead, markNotificationAsRead } from '@/lib/notifications';
+import { AppNotification, markAllAsRead, markNotificationAsRead } from '@/lib/notifications';
+import { useNotifications } from '@/lib/NotificationContext';
 
 function timeAgo(date: number) {
   const seconds = Math.floor((Date.now() - date) / 1000);
@@ -21,14 +22,9 @@ function timeAgo(date: number) {
 
 export default function NotificationBell() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const { notifications, unreadCount } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
-  const unreadCount = notifications.filter(n => !n.read).length;
   const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    return subscribeToNotifications(setNotifications);
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

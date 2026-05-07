@@ -12,9 +12,9 @@ import {
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { subscribeToPresence, Presence } from "@/lib/presence";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { usePresence } from "@/lib/PresenceContext";
 
 const NAV_ITEMS = [
   { href: "/inbox", icon: Mail, label: "Letters" },
@@ -27,7 +27,7 @@ const NAV_ITEMS = [
 export default function EnhancedBottomNav() {
   const pathname = usePathname();
   const [partnerInfo, setPartnerInfo] = useState<{ name: string; photo: string | null } | null>(null);
-  const [partnerPresence, setPartnerPresence] = useState<Presence | null>(null);
+  const partnerPresence = usePresence();
   
   // Hide bottom nav on game sub-pages (but keep it on the main /games list)
   const isGameSubPage = pathname?.startsWith('/games/') && pathname !== '/games';
@@ -37,7 +37,6 @@ export default function EnhancedBottomNav() {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         setPartnerInfo(null);
-        setPartnerPresence(null);
         return;
       }
       try {
@@ -48,12 +47,13 @@ export default function EnhancedBottomNav() {
             const pSnap = await getDoc(doc(db, 'users', pid));
             if (pSnap.exists()) {
               const pData = pSnap.data();
+              // Optimize avatar URL for small display size
+              const photo = pData.photoURL ? `${pData.photoURL}?tr=w-48,h-48,fo-auto,f-webp` : null;
               setPartnerInfo({
                 name: pData.displayName || 'Partner',
-                photo: pData.photoURL || null
+                photo: photo
               });
             }
-            subscribeToPresence(pid, (pres) => setPartnerPresence(pres));
           }
         }
       } catch (err) {

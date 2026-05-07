@@ -5,8 +5,13 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Plus, Filter } from "lucide-react";
 import MessageCard from "@/components/MessageCard";
-import RevealModal from "@/components/RevealModal";
 import NotificationBell from "@/components/NotificationBell";
+import dynamic from 'next/dynamic';
+
+const RevealModal = dynamic(() => import('@/components/RevealModal'), {
+  ssr: false,
+  loading: () => null
+});
 import { useMessages } from "@/lib/messages";
 import { auth, db } from '@/lib/firebase';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -62,7 +67,7 @@ function InboxInternal() {
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-100 to-lavender-100 border-2 border-white shadow-sm overflow-hidden relative">
               {partner.photoURL ? (
                 <Image 
-                  src={partner.photoURL} 
+                  src={`${partner.photoURL}?tr=w-80,h-80,fo-auto,f-webp`} 
                   alt={partner.name} 
                   fill 
                   className="object-cover"

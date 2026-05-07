@@ -59,46 +59,28 @@ export async function sendNotification(
  * Subscribe to current user's notifications
  */
 export function subscribeToNotifications(
+  userId: string,
   callback: (notifications: AppNotification[]) => void
 ): () => void {
-  if (!auth) {
+  if (!userId) {
     callback([]);
     return () => {};
   }
-  let unsubSnapshot: (() => void) | null = null;
 
-  const unsubAuth = onAuthStateChanged(auth, (user) => {
-    // Clean up previous listener if any
-    if (unsubSnapshot) {
-      unsubSnapshot();
-      unsubSnapshot = null;
-    }
+  const q = query(
+    collection(db, NOTIFICATIONS_COLLECTION, userId, 'items'),
+    orderBy('createdAt', 'desc'),
+    limit(20)
+  );
 
-    if (!user) {
-      callback([]);
-      return;
-    }
-
-    const q = query(
-      collection(db, NOTIFICATIONS_COLLECTION, user.uid, 'items'),
-      orderBy('createdAt', 'desc'),
-      limit(20)
-    );
-
-    unsubSnapshot = onSnapshot(q, (snap) => {
-      const items = snap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.().getTime() || Date.now(),
-      })) as AppNotification[];
-      callback(items);
-    });
+  return onSnapshot(q, (snap) => {
+    const items = snap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate?.().getTime() || Date.now(),
+    })) as AppNotification[];
+    callback(items);
   });
-
-  return () => {
-    unsubAuth();
-    if (unsubSnapshot) unsubSnapshot();
-  };
 }
 
 /**

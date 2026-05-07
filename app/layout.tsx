@@ -29,6 +29,7 @@ import FloatingParticles from "@/components/FloatingParticles";
 import DesktopSidebar from "@/components/DesktopSidebar";
 import EnhancedBottomNav from "@/components/EnhancedBottomNav";
 import { HeaderProvider } from "@/lib/HeaderContext";
+import AppProviders from "@/components/AppProviders";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -56,8 +57,9 @@ export default function RootLayout({
         className={`${cormorant.variable} ${dmSans.variable}`}
         suppressHydrationWarning
       >
-        <HeaderProvider>
-          <AppLifecycle />
+    <HeaderProvider>
+      <AppProviders>
+        <AppLifecycle />
           <FloatingParticles />
 
           {/* Desktop Sidebar - hidden on mobile */}
@@ -73,8 +75,9 @@ export default function RootLayout({
 
           {/* Mobile Bottom Nav - hidden on desktop */}
           <EnhancedBottomNav />
-        </HeaderProvider>
-      </body>
-    </html>
-  );
+        </AppProviders>
+      </HeaderProvider>
+    </body>
+  </html>
+);
 }
