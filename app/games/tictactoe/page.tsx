@@ -130,7 +130,7 @@ function TicTacToeInner() {
       <WaitingLobby 
         gameId={gameId} 
         gameType="tictactoe" 
-        myPhoto={game.playerPhotos?.[uid]} 
+        myPhoto={game?.playerPhotos?.[uid]} 
         onCancel={() => router.push('/games')} 
       />
     );
@@ -161,16 +161,16 @@ function TicTacToePlaying({
 }: {
   game: GameState; uid: string; gameId: string; router: any; scoreboard: any; showExit: boolean; setShowExit: (b: boolean) => void; rematching: boolean; setRematching: (b: boolean) => void; copied: boolean; setCopied: (b: boolean) => void;
 }) {
-  const mySymbol = game.symbols?.[uid] ?? '';
-  const isMyTurn = game.turn === uid && game.status === 'playing';
-  const opponentUid = game.players?.find(p => p !== uid) ?? '';
-  const opponentName = game.playerNames?.[opponentUid] ?? 'Partner';
-  const myName = game.playerNames?.[uid] ?? 'You';
-  const myPhoto = game.playerPhotos?.[uid];
-  const oppPhoto = game.playerPhotos?.[opponentUid];
-  const iWon = game.winner === uid;
+  const mySymbol = game?.symbols?.[uid] ?? '';
+  const isMyTurn = game?.turn === uid && game?.status === 'playing';
+  const opponentUid = game?.players?.find(p => p !== uid) ?? '';
+  const opponentName = game?.playerNames?.[opponentUid] ?? 'Partner';
+  const myName = game?.playerNames?.[uid] ?? 'You';
+  const myPhoto = game?.playerPhotos?.[uid];
+  const oppPhoto = game?.playerPhotos?.[opponentUid];
+  const iWon = game?.winner === uid;
 
-  const winCells = new Set(game.winner ? getWinningCells(game.board) : []);
+  const winCells = new Set(game?.winner && game?.board ? getWinningCells(game.board) : []);
 
   const handleCell = (i: number) => {
     if (!isMyTurn || !game || game.board[i] || game.status !== 'playing') return;
@@ -321,11 +321,11 @@ function TicTacToePlaying({
               {scoreboard && (
           <div className="ttt-scoreboard">
             <div className="score-row">
-              <span className="score-name">{game.playerNames[[...game.players].sort()[0]] || 'Partner'}</span>
+              <span className="score-name">{game?.playerNames?.[([...(game?.players || [])].sort()[0])] || 'Partner'}</span>
               <span className="score-val">{scoreboard.winsA}</span>
               <span className="score-sep">—</span>
               <span className="score-val">{scoreboard.winsB}</span>
-              <span className="score-name">{game.playerNames[[...game.players].sort()[1]] || 'Partner'}</span>
+              <span className="score-name">{game?.playerNames?.[([...(game?.players || [])].sort()[1])] || 'Partner'}</span>
             </div>
             {scoreboard.draws > 0 && <span className="draws-label">{scoreboard.draws} Draws</span>}
           </div>
@@ -369,7 +369,7 @@ function TicTacToePlaying({
                     'ttt-cell',
                     val === 'X' ? 'x' : val === 'O' ? 'o' : '',
                     winCells.has(i) ? 'win' : '',
-                    !val && isMyTurn && game.status === 'playing' ? 'playable' : '',
+                    !val && isMyTurn && game?.status === 'playing' ? 'playable' : '',
                   ].filter(Boolean).join(' ')}
                   onClick={() => handleCell(i)}
                 >

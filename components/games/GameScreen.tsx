@@ -46,7 +46,7 @@ export default function GameScreen({ title, subtitle, onExit, children }: GameSc
         }
         .game-title { font-family: var(--font-cormorant),serif; font-size: 22px; font-weight: 300; color: #3D2B3D; }
         .game-title em { font-style: italic; color: #7A5C7A; }
-        .game-label { font-size: 10px; letter-spacing: '0.2em'; text-transform: uppercase; color: '#C9829A'; font-weight: 500; margin-bottom: 3px; }
+        .game-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #C9829A; font-weight: 500; margin-bottom: 3px; }
       `}</style>
 
       <div className="game-screen">

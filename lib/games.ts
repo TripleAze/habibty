@@ -10,6 +10,7 @@ const WIN_LINES = [
 ];
 
 export function checkWinner(board: string[]): string | null {
+  if (!board || !Array.isArray(board)) return null;
   for (const [a,b,c] of WIN_LINES) {
     if (board[a] && board[a] === board[b] && board[a] === board[c])
       return board[a];
@@ -18,6 +19,7 @@ export function checkWinner(board: string[]): string | null {
 }
 
 export function getWinningCells(board: string[]): number[] {
+  if (!board || !Array.isArray(board)) return [];
   for (const [a,b,c] of WIN_LINES) {
     if (board[a] && board[a] === board[b] && board[a] === board[c])
       return [a,b,c];
@@ -85,12 +87,13 @@ export async function joinGame(
 
   if (!snap.exists()) return { ok: false, error: 'Game not found. Check the code.' };
   const data = snap.data() as GameState;
+  if (!data.players) data.players = [];
   if (data.players.includes(joinerUid)) return { ok: true };
   if (data.players.length >= 2) return { ok: false, error: 'This game is already full.' };
   if (data.status === 'finished') return { ok: false, error: 'This game has ended.' };
 
   await updateDoc(ref, {
-    players: [...data.players, joinerUid],
+    players: [...(data.players || []), joinerUid],
     [`playerNames.${joinerUid}`]: joinerName,
     [`playerPhotos.${joinerUid}`]: joinerPhoto || '',
     [`symbols.${joinerUid}`]: 'O',
@@ -158,18 +161,22 @@ export async function rematch(gameId: string, initiatorUid: string): Promise<str
   const data = snap.data() as GameState;
 
   const newGameId = generateGameId();
-  const [p1, p2] = data.players;
+  const players = data.players || [];
+  const [p1, p2] = players;
+  const symbols = data.symbols || {};
   const flippedSymbols: Record<string, string> = {};
-  data.players.forEach(uid => {
-    flippedSymbols[uid] = data.symbols[uid] === 'X' ? 'O' : 'X';
+  
+  players.forEach(pid => {
+    flippedSymbols[pid] = symbols[pid] === 'X' ? 'O' : 'X';
   });
-  const firstTurn = data.players.find(uid => flippedSymbols[uid] === 'X') ?? p1;
+  
+  const firstTurn = players.find(pid => flippedSymbols[pid] === 'X') ?? p1;
 
   await setDoc(doc(db, 'games', newGameId), {
     type: 'tictactoe',
-    players: data.players,
-    playerNames: data.playerNames,
-    playerPhotos: data.playerPhotos,
+    players: players,
+    playerNames: data.playerNames || {},
+    playerPhotos: data.playerPhotos || {},
     symbols: flippedSymbols,
     board: Array(9).fill(''),
     turn: firstTurn,

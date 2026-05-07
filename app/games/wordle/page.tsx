@@ -44,6 +44,12 @@ const VALID_WORD_PATTERN = /^[A-Z]{5}$/;
 // SKELETON
 // ────────────────────────────────────────────────────────────
 function Skeleton() {
+  const [showHelp, setShowHelp] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setShowHelp(true), 5000);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
       <div style={{ width: 160, height: 24, borderRadius: 8, background: 'rgba(255,255,255,0.4)' }} />
@@ -52,6 +58,12 @@ function Skeleton() {
           <div key={i} style={{ aspectRatio: 1, borderRadius: 8, background: 'rgba(255,255,255,0.4)' }} />
         ))}
       </div>
+      {showHelp && (
+        <div style={{ position: 'absolute', bottom: 40, padding: '0 32px', textAlign: 'center' }}>
+          <p style={{ fontSize: 13, color: '#7A5C7A', marginBottom: 4, fontWeight: 500 }}>Still loading?</p>
+          <p style={{ fontSize: 11, color: 'rgba(122,92,122,0.6)', lineHeight: 1.4 }}>If this takes too long, please check your internet connection or disable any <b>Ad-blockers</b> for this site.</p>
+        </div>
+      )}
     </div>
   );
 }
