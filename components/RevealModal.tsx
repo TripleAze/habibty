@@ -17,6 +17,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
   const [displayedText, setDisplayedText] = useState('');
   const [showCursor, setShowCursor] = useState(true);
   const [isFinishingTyping, setIsFinishingTyping] = useState(false);
+  const [typingComplete, setTypingComplete] = useState(false);
   
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [replies, setReplies] = useState<Reply[]>([]);
@@ -37,6 +38,8 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentUserId = useRef<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const userHasScrolledRef = useRef(false);
   const touchStartY = useRef<number>(0);
 
   const stopTyping = useCallback(() => {
@@ -51,19 +54,36 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
     setDisplayedText('');
     setShowCursor(true);
     setIsFinishingTyping(false);
+    setTypingComplete(false);
+    userHasScrolledRef.current = false;
     let i = 0;
     const tick = () => {
       if (i <= text.length) {
         setDisplayedText(text.substring(0, i));
         i++;
+
+        // Auto-scroll during typing
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+
         const char = text[i - 1];
         const delay = ['.', '?', '!', '。', '！', '？'].includes(char) ? 180 : 35;
         typingTimeoutRef.current = setTimeout(tick, delay);
       } else {
         setShowCursor(false);
         setIsFinishingTyping(true);
+        setTypingComplete(true);
         // Automatic phase transition after delay
-        setTimeout(() => setPhase('actions'), 800);
+        setTimeout(() => {
+          setPhase('actions');
+          // Re-trigger scroll after transition
+          setTimeout(() => {
+            if (scrollRef.current) {
+              scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            }
+          }, 450);
+        }, 800);
       }
     };
     tick();
@@ -138,6 +158,29 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
       unsubReplies?.();
     };
   }, [message?.id, isOpen]);
+
+  // Scroll to bottom when actions appear
+  useEffect(() => {
+    if (phase === 'actions' && scrollRef.current) {
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 200);
+    }
+  }, [phase]);
+
+  const handleScroll = () => {
+    if (typingComplete && scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 10;
+      if (!isAtBottom) {
+        userHasScrolledRef.current = true;
+      } else {
+        userHasScrolledRef.current = false;
+      }
+    }
+  };
 
   // Swipe Gestures
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -310,6 +353,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           -webkit-overflow-scrolling: touch;
           display: flex;
           flex-direction: column;
+          transition: padding-bottom 0.4s ease;
         }
         .rev-scroll-body::-webkit-scrollbar { display: none; }
         
@@ -382,7 +426,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
         /* Swipe Hint */
         .rev-swipe-hint {
           position: absolute;
-          bottom: 24px;
+          bottom: calc(84px + env(safe-area-inset-bottom, 0px));
           left: 50%;
           transform: translateX(-50%);
           text-align: center;
@@ -409,7 +453,7 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           margin: 0 auto;
           border-radius: 22px 22px 0 0;
           box-shadow: 0 -12px 48px rgba(61, 43, 61, 0.14);
-          padding: 0 20px calc(12px + env(safe-area-inset-bottom, 0px));
+          padding: 0 20px calc(24px + env(safe-area-inset-bottom, 0px));
           transform: translateY(100%);
           opacity: 0;
           transition: transform 0.44s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s ease;
@@ -559,7 +603,12 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
 
           <div 
             className="rev-scroll-body"
+            ref={scrollRef}
+            onScroll={handleScroll}
             onClick={() => setPhase('actions')}
+            style={{
+              paddingBottom: phase === 'actions' ? '180px' : '48px'
+            }}
           >
             <div className="rev-scroll-inner">
               {message.type === 'text' ? (
