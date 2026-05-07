@@ -212,7 +212,7 @@ function RapidFireInner() {
     const user = auth?.currentUser;
 
     await setDoc(doc(db, 'games', newId), {
-      type: 'rapidfire',
+      type: 'rapid-fire',
       creatorUid: uid,
       players: [uid],
       playerNames: { [uid]: user?.displayName || 'You' },
@@ -243,7 +243,7 @@ function RapidFireInner() {
     const players = [uid, opponentUid].filter(Boolean);
 
     await setDoc(doc(db, 'games', newId), {
-      type: 'rapidfire',
+      type: 'rapid-fire',
       creatorUid: uid,
       players,
       playerNames: game.playerNames,

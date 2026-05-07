@@ -196,7 +196,7 @@ function TruthOrDareInner() {
     const user = auth?.currentUser;
     const startPlayer = uid;
     await setDoc(doc(db, 'games', newId), {
-      type: 'truthordare',
+      type: 'truth-or-dare',
       creatorUid: uid,
       players: [uid],
       playerNames: { [uid]: user?.displayName || 'You' },

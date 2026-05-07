@@ -138,7 +138,7 @@ function WouldYouRatherInner() {
       const user = auth?.currentUser;
       const initialQ = await selectNextQuestion([], null);
       await setDoc(doc(db, 'games', newId), {
-        type: 'wouldyourather', creatorUid: uid, players: [uid],
+        type: 'would-you-rather', creatorUid: uid, players: [uid],
         playerNames: { [uid]: user?.displayName || 'You' },
         playerPhotos: user?.photoURL ? { [uid]: user.photoURL } : {},
         currentQuestion: initialQ, usedQuestionIds: [initialQ.id],
