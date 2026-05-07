@@ -26,7 +26,7 @@ function WhotCardView({
   const effect = getEffectLabel(card);
   return (
     <div onClick={onClick} style={{
-      width: 58, height: 88,
+      width: 64, height: 96,
       borderRadius: 11,
       background: selected ? SUIT_COLOR[card.suit] : SUIT_BG[card.suit],
       border: `2px solid ${selected ? SUIT_COLOR[card.suit] : playable ? SUIT_COLOR[card.suit] : 'rgba(200,180,200,0.3)'}`,
@@ -292,7 +292,7 @@ function WhotPlaying({
         @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
         @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.5} }
         @keyframes fadeIn  { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
-        .whot-screen { background: linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%); display: flex; flex-direction: column; height: 100%; font-family: var(--font-dm-sans), sans-serif; }
+        .whot-screen { background: linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%); display: flex; flex-direction: column; flex: 1; font-family: var(--font-dm-sans), sans-serif; }
         .whot-topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px 10px; flex-shrink: 0; }
         .whot-exit { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; color: #7A5C7A; backdrop-filter: blur(8px); flex-shrink: 0; }
         .whot-status { margin: 0 16px 8px; background: rgba(255,255,255,0.65); backdrop-filter: blur(8px); border-radius: 100px; padding: 9px 14px; border: 1px solid rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
@@ -316,10 +316,10 @@ function WhotPlaying({
         .pile-lbl { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(122,92,122,0.5); font-weight: 500; }
         .called-pill { margin-top: 4px; font-size: 10px; font-weight: 500; padding: 3px 10px; border-radius: 100px; }
         .whot-hand-area { flex: 1; display: flex; align-items: flex-end; justify-content: center; min-height: 0; padding-bottom: 8px; position: relative; }
-        .hand-fan { position: relative; height: 120px; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
-        .whot-action-bar { flex-shrink: 0; padding: 8px 16px 32px; display: flex; gap: 8px; }
-        .btn-play { flex: 1; padding: 13px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-size: 13px; font-weight: 500; cursor: pointer; }
-        .btn-draw-card { padding: 13px 18px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.35); background: transparent; font-size: 13px; color: #7A5C7A; cursor: pointer; }
+        .hand-fan { position: relative; height: 130px; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+        .whot-action-bar { flex-shrink: 0; padding: 12px 16px calc(24px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; }
+        .btn-play { flex: 1; padding: 16px; border-radius: 100px; background: linear-gradient(135deg,#E8A0A0,#C9B8D8); border: none; color: white; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .btn-draw-card { padding: 16px 20px; border-radius: 100px; border: 1.5px solid rgba(232,160,160,0.35); background: transparent; font-size: 14px; color: #7A5C7A; cursor: pointer; }
         .action-err { font-size: 12px; color: #c0706a; text-align: center; padding: 0 16px 6px; animation: fadeIn 0.2s ease; flex-shrink: 0; }
         .whot-finished { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; gap: 10px; }
         .fin-title { font-family: var(--font-cormorant),serif; font-size: 28px; font-weight: 300; font-style: italic; color: #3D2B3D; }

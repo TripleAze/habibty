@@ -28,6 +28,10 @@ export default function EnhancedBottomNav() {
   const pathname = usePathname();
   const [partnerInfo, setPartnerInfo] = useState<{ name: string; photo: string | null } | null>(null);
   const [partnerPresence, setPartnerPresence] = useState<Presence | null>(null);
+  
+  // Hide bottom nav on game sub-pages (but keep it on the main /games list)
+  const isGameSubPage = pathname?.startsWith('/games/') && pathname !== '/games';
+  if (isGameSubPage) return null;
 
   useEffect(() => {
     if (!auth) return;

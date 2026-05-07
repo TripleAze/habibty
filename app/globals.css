@@ -1707,7 +1707,9 @@ html, body {
   top: calc(56px + env(safe-area-inset-top, 0px));
   left: 0;
   right: 0;
-  bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+  bottom: env(safe-area-inset-bottom, 0px);
+  /* If the bottom nav is hidden, we take full height up to the safe area */
+  height: auto;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
