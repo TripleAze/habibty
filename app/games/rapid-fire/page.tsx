@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDoc, onSnapshot, updateDoc, serverTimestamp, arrayUnion, writeBatch, collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, updateDoc, serverTimestamp, arrayUnion, writeBatch, collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { generateGameId } from '@/lib/gameUtils';
 import GameScreen from '@/components/games/GameScreen';
