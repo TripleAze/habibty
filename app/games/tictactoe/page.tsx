@@ -82,7 +82,7 @@ function TicTacToeInner() {
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  if (!uid) return <TTTSkeleton />;
+  if (!uid || !gameId) return <TTTSkeleton />;
 
   if (!gameId && !game) {
     const handleCreateLocal = async () => {
@@ -94,12 +94,14 @@ function TicTacToeInner() {
 
     return (
       <div className="game-lobby-screen">
-        <div className="ttt-topbar">
-          <div>
-            <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
-            <h1 className="ttt-title">Tic <em>Tac</em> Toe</h1>
+        <div className="ttt-topbar-landing">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 20px 10px' }}>
+            <div>
+              <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
+              <h1 className="ttt-title">Tic <em>Tac</em> Toe</h1>
+            </div>
+            <button className="ttt-exit-btn" onClick={() => router.push('/games')}>✕</button>
           </div>
-          <button className="ttt-exit-btn" onClick={() => router.push('/games')}>✕</button>
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: '0 20px' }}>
           <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(232,160,160,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, border: '1px solid rgba(232,160,160,0.3)' }}>
@@ -122,6 +124,42 @@ function TicTacToeInner() {
 
   if (!game) return <TTTSkeleton />;
 
+  if (game.status === 'waiting') {
+    return (
+      <WaitingLobby 
+        gameId={gameId} 
+        gameType="tictactoe" 
+        myPhoto={game.playerPhotos?.[uid]} 
+        onCancel={() => router.push('/games')} 
+      />
+    );
+  }
+
+  return (
+    <TicTacToePlaying
+      game={game}
+      uid={uid}
+      gameId={gameId}
+      router={router}
+      scoreboard={scoreboard}
+      showExit={showExit}
+      setShowExit={setShowExit}
+      rematching={rematching}
+      setRematching={setRematching}
+      copied={copied}
+      setCopied={setCopied}
+    />
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// PLAYING COMPONENT (Normalized)
+// ────────────────────────────────────────────────────────────
+function TicTacToePlaying({
+  game, uid, gameId, router, scoreboard, showExit, setShowExit, rematching, setRematching, copied, setCopied
+}: {
+  game: GameState; uid: string; gameId: string; router: any; scoreboard: any; showExit: boolean; setShowExit: (b: boolean) => void; rematching: boolean; setRematching: (b: boolean) => void; copied: boolean; setCopied: (b: boolean) => void;
+}) {
   const mySymbol = game.symbols?.[uid] ?? '';
   const isMyTurn = game.turn === uid && game.status === 'playing';
   const opponentUid = game.players?.find(p => p !== uid) ?? '';
@@ -152,6 +190,11 @@ function TicTacToeInner() {
     if (game.status === 'finished') return iWon ? 'You won! 🎉' : game.isDraw ? "It's a draw!" : `${opponentName} won`;
     return isMyTurn ? 'Your turn' : `${opponentName}'s turn`;
   };
+
+
+
+
+
 
   return (
     <>

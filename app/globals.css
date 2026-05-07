@@ -1368,7 +1368,7 @@ html, body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
-  padding: 0 20px 40px;
+  padding: 0 0 40px;
 }
 
 .game-card {

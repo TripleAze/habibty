@@ -159,8 +159,36 @@ function TruthOrDareInner() {
     return () => unsub();
   }, [gameId]);
 
+  // Auto-join if user is not in the players list and game is waiting
+  useEffect(() => {
+    if (!game || !uid || game.status !== 'waiting') return;
+    if (!game.players?.includes(uid)) {
+      const doJoin = async () => {
+        handleJoin();
+      };
+      doJoin();
+    }
+  }, [game, uid, gameId]);
+
   // Auth/Loading states
-  if (!uid) return <Skeleton />;
+  if (!uid || !gameId) return <Skeleton />;
+  const handleJoin = async () => {
+    if (!gameId) return;
+    const gameRef = doc(db, 'games', gameId);
+    const snap = await getDoc(gameRef);
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    if (data.players?.length >= 2) return;
+
+    const user = auth?.currentUser;
+    await updateDoc(gameRef, {
+      players: arrayUnion(uid),
+      [`playerNames.${uid}`]: user?.displayName || 'Partner',
+      ...(user?.photoURL ? { [`playerPhotos.${uid}`]: user.photoURL } : {}),
+      status: 'active', // Set to active when second player joins
+    });
+  };
 
   const handleCreate = async () => {
     const newId = await generateGameId();
@@ -214,54 +242,64 @@ function TruthOrDareInner() {
     );
   }
 
-  // Auto-join if user is not in the players list and game is waiting
-  useEffect(() => {
-    if (!game || !uid || game.status !== 'waiting') return;
-    if (!game.players?.includes(uid)) {
-      const doJoin = async () => {
-        handleJoin();
-      };
-      doJoin();
-    }
-  }, [game, uid, gameId]);
-
   if (!game) return <Skeleton />;
 
+  // ─── RENDERING ───
+  if (game.status === 'waiting') {
+    return (
+      <>
+        {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
+        <WaitingLobby 
+          gameId={gameId} 
+          gameType="truth-or-dare" 
+          myPhoto={game.playerPhotos?.[uid]} 
+          onCancel={() => setShowExit(true)} 
+        />
+      </>
+    );
+  }
+
+  return (
+    <TruthOrDarePlaying
+      game={game}
+      uid={uid}
+      gameId={gameId}
+      router={router}
+      showExit={showExit}
+      setShowExit={setShowExit}
+      showHistory={showHistory}
+      setShowHistory={setShowHistory}
+      copied={copied}
+      setCopied={setCopied}
+      choosingType={choosingType}
+      setChoosingType={setChoosingType}
+    />
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// PLAYING COMPONENT (Normalized)
+// ────────────────────────────────────────────────────────────
+function TruthOrDarePlaying({
+  game, uid, gameId, router, showExit, setShowExit, showHistory, setShowHistory, copied, setCopied, choosingType, setChoosingType
+}: {
+  game: GameState; uid: string; gameId: string; router: any; showExit: boolean; setShowExit: (b: boolean) => void; showHistory: boolean; setShowHistory: (b: boolean) => void; copied: boolean; setCopied: (b: boolean) => void; choosingType: boolean; setChoosingType: (b: boolean) => void;
+}) {
   const opponentUid = game.players.find(p => p !== uid) || '';
   const opponentName = game.playerNames[opponentUid] || 'Partner';
   const myName = game.playerNames[uid] || 'You';
   const myPhoto = game.playerPhotos[uid];
   const oppPhoto = game.playerPhotos[opponentUid];
   
-  // Inquisitor is the person whose Turn it is
-  const isMyTurn = game.currentTurn === uid;
   const inquisitor = game.currentTurn;
   const performer = game.players.find(p => p !== inquisitor) || '';
   
   const iAmInquisitor = uid === inquisitor;
   const iAmPerformer = uid === performer;
+  const isMyTurn = iAmInquisitor;
 
   const mySkipsLeft = game.skipsLeft[uid] || MAX_SKIPS;
   const oppSkipsLeft = game.skipsLeft[opponentUid] || MAX_SKIPS;
-
-  const handleJoin = async () => {
-    if (!gameId) return;
-    const gameRef = doc(db, 'games', gameId);
-    const snap = await getDoc(gameRef);
-    if (!snap.exists()) return;
-
-    const data = snap.data();
-    if (data.players?.length >= 2) return;
-
-    const user = auth?.currentUser;
-    await updateDoc(gameRef, {
-      players: [...(data.players || []), uid],
-      [`playerNames.${uid}`]: user?.displayName || 'You',
-      ...(user?.photoURL ? { [`playerPhotos.${uid}`]: user.photoURL } : {}),
-      [`skipsLeft.${uid}`]: MAX_SKIPS,
-      status: 'selecting',
-    });
-  };
 
   const handleChooseType = (type: 'truth' | 'dare') => {
     setChoosingType(false);
@@ -276,7 +314,6 @@ function TruthOrDareInner() {
   };
 
   const handleSubmitResponse = async () => {
-    if (!game || !iAmPerformer) return;
     const gameRef = doc(db, 'games', gameId);
     await updateDoc(gameRef, {
       status: 'awaiting_approval',
@@ -288,7 +325,6 @@ function TruthOrDareInner() {
   };
 
   const handleApprove = async () => {
-    if (!game || !iAmInquisitor) return;
     const gameRef = doc(db, 'games', gameId);
     const historyEntry: HistoryEntry = {
       playerId: performer,
@@ -302,13 +338,12 @@ function TruthOrDareInner() {
       currentPrompt: null,
       promptType: null,
       status: 'selecting',
-      currentTurn: performer, // Switch roles
+      currentTurn: performer,
       response: null,
     });
   };
 
   const handleReject = async () => {
-    if (!game || !iAmInquisitor) return;
     const gameRef = doc(db, 'games', gameId);
     await updateDoc(gameRef, {
       status: 'awaiting_response',
@@ -317,7 +352,7 @@ function TruthOrDareInner() {
   };
 
   const handleSkip = async () => {
-    if (!game || mySkipsLeft <= 0 || !iAmPerformer) return;
+    if (mySkipsLeft <= 0) return;
     const gameRef = doc(db, 'games', gameId);
     const historyEntry: HistoryEntry = {
       playerId: uid,
@@ -343,22 +378,14 @@ function TruthOrDareInner() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // ─── RENDERING ───
 
-  // Waiting for partner
-  if (game.status === 'waiting') {
-    return (
-      <>
-        {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
-        <WaitingLobby 
-          gameId={gameId} 
-          gameType="truth-or-dare" 
-          myPhoto={myPhoto} 
-          onCancel={() => setShowExit(true)} 
-        />
-      </>
-    );
-  }
+
+
+
+
+
+
+
 
   return (
     <>

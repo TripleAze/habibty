@@ -102,8 +102,8 @@ export default function WordleSetupPage() {
   return (
     <>
       {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
-      <GameScreen title="Partner Wordle" onExit={() => setShowExit(true)}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 20px 40px', overflow: 'auto' }}>
+      <GameScreen title="Partner Wordle" onExit={() => router.push('/games')}>
+        <div className="app-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 16px calc(88px + env(safe-area-inset-bottom, 0px)) 16px', overflow: 'auto', paddingTop: 'calc(56px + env(safe-area-inset-top, 0px))' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 24, fontStyle: 'italic', color: '#3D2B3D', marginBottom: 8 }}>Create a Word Puzzle</p>
@@ -112,7 +112,7 @@ export default function WordleSetupPage() {
 
           {/* Secret Word */}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#7A5C7A', fontWeight: 500, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label style={{ display: 'block', fontSize: 12, color: '#7A5C7A', fontWeight: 600, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Secret Word (5 letters)
             </label>
             <input
@@ -140,7 +140,7 @@ export default function WordleSetupPage() {
 
           {/* Category */}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#7A5C7A', fontWeight: 500, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label style={{ display: 'block', fontSize: 12, color: '#7A5C7A', fontWeight: 600, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Category
             </label>
             <input
@@ -163,7 +163,7 @@ export default function WordleSetupPage() {
 
           {/* Text Hint */}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#7A5C7A', fontWeight: 500, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label style={{ display: 'block', fontSize: 12, color: '#7A5C7A', fontWeight: 600, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Text Hint
             </label>
             <textarea
@@ -187,7 +187,7 @@ export default function WordleSetupPage() {
 
           {/* Emoji Hint */}
           <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', fontSize: 12, color: '#7A5C7A', fontWeight: 500, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label style={{ display: 'block', fontSize: 12, color: '#7A5C7A', fontWeight: 600, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Emoji Hint
             </label>
             <input
@@ -215,7 +215,7 @@ export default function WordleSetupPage() {
               Letters to Reveal (optional)
             </label>
             <p style={{ fontSize: 11, color: 'rgba(122,92,122,0.5)', marginBottom: 12 }}>Tap positions to reveal after 4 failed attempts</p>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', padding: 0 }}>
               {[0, 1, 2, 3, 4].map(i => (
                 <button
                   key={i}
@@ -254,6 +254,9 @@ export default function WordleSetupPage() {
             onClick={handleCreate}
             disabled={creating}
             style={{
+              position: 'sticky',
+              bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+              marginTop: 24,
               padding: '16px',
               borderRadius: 100,
               background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)',
@@ -264,6 +267,8 @@ export default function WordleSetupPage() {
               cursor: creating ? 'not-allowed' : 'pointer',
               fontFamily: "var(--font-dm-sans),sans-serif",
               opacity: creating ? 0.7 : 1,
+              boxShadow: '0 8px 24px rgba(232,160,160,0.3)',
+              zIndex: 10,
             }}
           >
             {creating ? 'Creating...' : 'Create Game'}

@@ -362,8 +362,8 @@ function RapidFireInner() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!uid) return <Skeleton />;
-
+  if (!uid || !gameId) return <Skeleton />;
+  // No game ID in URL - show landing/create screen
   if (!gameId && !game) {
     return (
       <div className="game-lobby-screen">
@@ -407,7 +407,17 @@ function RapidFireInner() {
   if (!game) return <Skeleton />;
 
   if (game.status === 'finished') {
-    return <GameScreen title="Results" onExit={() => router.push('/games')}><ResultsScreen game={game} uid={uid} router={router} onRematch={handleRematch} rematching={rematching} /></GameScreen>;
+    return (
+      <GameScreen title="Results" onExit={() => router.push('/games')}>
+        <ResultsScreen 
+          game={game} 
+          uid={uid} 
+          router={router} 
+          onRematch={handleRematch} 
+          rematching={rematching} 
+        />
+      </GameScreen>
+    );
   }
 
   if (game.status === 'waiting') {
@@ -423,6 +433,32 @@ function RapidFireInner() {
     );
   }
 
+  return (
+    <RapidFirePlaying
+      game={game}
+      uid={uid}
+      gameId={gameId}
+      router={router}
+      showExit={showExit}
+      setShowExit={setShowExit}
+      singleValue={singleValue}
+      setSingleValue={setSingleValue}
+      remaining={remaining}
+      progress={progress}
+      isMyTurn={isMyTurn}
+      handleAnswer={handleAnswer}
+    />
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// PLAYING COMPONENT (Normalized)
+// ────────────────────────────────────────────────────────────
+function RapidFirePlaying({
+  game, uid, gameId, router, showExit, setShowExit, singleValue, setSingleValue, remaining, progress, isMyTurn, handleAnswer
+}: {
+  game: GameState; uid: string; gameId: string; router: any; showExit: boolean; setShowExit: (b: boolean) => void; singleValue: string; setSingleValue: (s: string) => void; remaining: number; progress: number; isMyTurn: boolean; handleAnswer: (a: string) => void;
+}) {
   const currentQ = game.questions[game.currentQuestionIndex];
   const opponentName = game.playerNames[game.players.find(p => p !== uid) || 'Partner'];
 
@@ -458,8 +494,6 @@ function RapidFireInner() {
                       key={opt}
                       onClick={() => handleAnswer(i === 0 ? 'A' : 'B')}
                       style={{ padding: '24px 20px', borderRadius: 22, background: 'white', border: '2px solid #f0f0f0', fontSize: 18, fontWeight: 700, color: i === 0 ? '#E8A0A0' : '#C9B8D8', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s' }}
-                      onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
-                      onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                     >
                       {i === 0 ? (parts[0] || 'Option A') : (parts[1] || 'Option B')}
                     </button>
@@ -511,6 +545,8 @@ function RapidFireInner() {
     </div>
   );
 }
+
+
 
 export default function RapidFirePage() {
   return <Suspense fallback={<Skeleton />}><RapidFireInner /></Suspense>;

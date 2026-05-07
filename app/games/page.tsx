@@ -91,7 +91,7 @@ export default function GamesPage() {
   };
 
   return (
-    <div className="app-container px-4" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <div className="app-container" style={{ paddingLeft: 16, paddingRight: 16, paddingTop: 'calc(20px + env(safe-area-inset-top, 0px))' }}>
       {/* Header */}
       <div className="home-header">
         <div className="home-header-left">
@@ -108,12 +108,12 @@ export default function GamesPage() {
         </div>
       </div>
 
-      <p className="px-4 text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 mb-6 px-1">
         Play together, stay together. Choose a game to start.
       </p>
 
       {/* Join with Code */}
-      <div className="px-4 mb-8">
+      <div className="mb-8 px-1">
         {!showJoinInput ? (
           <button
             onClick={() => setShowJoinInput(true)}
@@ -128,20 +128,20 @@ export default function GamesPage() {
               <h3 className="text-sm font-semibold text-gray-800">Enter Code</h3>
               <button onClick={() => setShowJoinInput(false)} className="text-gray-400 text-xs">Cancel</button>
             </div>
-            <div className="flex items-center gap-2 w-full">
+            <div className="flex items-center gap-2 w-full" style={{ width: '100%' }}>
               <input
                 type="text"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 placeholder="e.g. ABCD"
                 className="flex-1 min-width-0 bg-white/80 border border-rose-100 rounded-xl px-4 py-3 text-lg font-bold tracking-[0.2em] uppercase focus:outline-none focus:ring-2 focus:ring-rose-200"
-                style={{ minWidth: 0 }}
+                style={{ minWidth: 0, flex: 1 }}
                 maxLength={6}
               />
               <button
                 onClick={handleJoin}
                 disabled={joining || !joinCode}
-                style={{ flexShrink: 0, width: 56, height: 48 }}
+                style={{ flexShrink: 0, width: 60, height: 48 }}
                 className="bg-gradient-to-r from-rose-400 to-rose-300 text-white rounded-xl font-bold shadow-md disabled:opacity-50 flex items-center justify-center"
               >
                 {joining ? "..." : "GO"}

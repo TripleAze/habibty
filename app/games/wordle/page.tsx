@@ -393,11 +393,6 @@ function WordleInner() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Determine if current user is creator or guesser
-  const isCreator = game?.creatorUid === uid;
-  const isGuesser = game?.guesserUid === uid;
-  const canPlay = isGuesser && game?.status === 'playing';
-
   // No game ID in URL - show landing/create screen
   if (!gameId && !game) {
     return (
@@ -440,8 +435,11 @@ function WordleInner() {
     }
   }, [game, uid, gameId]);
 
-  // Waiting for partner
-  if (game?.status === 'waiting') {
+  if (!uid || !gameId) return <Skeleton />;
+  if (!game) return <Skeleton />;
+
+
+  if (game.status === 'waiting') {
     return (
       <>
         {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
@@ -455,8 +453,41 @@ function WordleInner() {
     );
   }
 
+  return (
+    <WordlePlaying
+      game={game}
+      uid={uid}
+      gameId={gameId}
+      router={router}
+      showExit={showExit}
+      setShowExit={setShowExit}
+      rematching={rematching}
+      scoreboard={scoreboard}
+      currentGuess={currentGuess}
+      isSubmitting={isSubmitting}
+      keyStates={keyStates}
+      handleKeyPress={handleKeyPress}
+      handleCreate={handleCreate}
+      copyCode={copyCode}
+      copied={copied}
+    />
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// PLAYING COMPONENT (Normalized)
+// ────────────────────────────────────────────────────────────
+function WordlePlaying({
+  game, uid, gameId, router, showExit, setShowExit, rematching, scoreboard, currentGuess, isSubmitting, keyStates, handleKeyPress, handleCreate, copyCode, copied
+}: {
+  game: GameState; uid: string; gameId: string; router: any; showExit: boolean; setShowExit: (b: boolean) => void; rematching: boolean; scoreboard: any; currentGuess: string; isSubmitting: boolean; keyStates: Record<string, 'correct' | 'present' | 'absent'>; handleKeyPress: (key: string) => void; handleCreate: () => void; copyCode: () => void; copied: boolean;
+}) {
+  const isCreator = game.creatorUid === uid;
+  const isGuesser = game.guesserUid === uid;
+  const canPlay = isGuesser && game.status === 'playing';
+
   // Game over
-  if (game?.status === 'won' || game?.status === 'lost') {
+  if (game.status === 'won' || game.status === 'lost') {
     const won = game.winner === uid;
     const lost = game.winner && game.winner !== uid;
 
@@ -491,8 +522,8 @@ function WordleInner() {
   }
 
   // Playing
-  const attempts = game?.attempts || [];
-  const tileStates = game?.tileStates || [];
+  const attempts = game.attempts || [];
+  const tileStates = game.tileStates || [];
   const currentAttemptIndex = attempts.length;
 
   return (
@@ -512,13 +543,13 @@ function WordleInner() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', width: '100%' }}>
               <span style={{ fontSize: 11, color: '#3D2B3D', opacity: 0.8, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {game?.playerNames?.[[...game.players].sort()[0]] || 'Partner'}
+                {game.playerNames[[...game.players].sort()[0]] || 'Partner'}
               </span>
               <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 24, fontWeight: 500, color: '#3D2B3D' }}>{scoreboard.winsA}</span>
               <span style={{ fontSize: 12, color: '#7A5C7A', opacity: 0.4 }}>—</span>
               <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 24, fontWeight: 500, color: '#3D2B3D' }}>{scoreboard.winsB}</span>
               <span style={{ fontSize: 11, color: '#3D2B3D', opacity: 0.8, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {game?.playerNames?.[[...game.players].sort()[1]] || 'Partner'}
+                {game.playerNames[[...game.players].sort()[1]] || 'Partner'}
               </span>
             </div>
           </div>
@@ -526,11 +557,11 @@ function WordleInner() {
         {/* Category hint */}
         <div style={{ padding: '0 20px 8px', textAlign: 'center' }}>
           <p style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 600, marginBottom: 4 }}>Category</p>
-          <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 16, fontStyle: 'italic', color: '#3D2B3D' }}>{game?.hints?.category}</p>
+          <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 16, fontStyle: 'italic', color: '#3D2B3D' }}>{game.hints?.category}</p>
         </div>
 
         {/* Hint banner */}
-        <HintBanner hintLevel={game?.hintLevel || 0} hints={game?.hints} word={isCreator ? game.word : undefined} />
+        <HintBanner hintLevel={game.hintLevel || 0} hints={game.hints} word={isCreator ? game.word : undefined} />
 
         {/* Attempts remaining */}
         <div style={{ padding: '0 20px 8px', textAlign: 'center' }}>
@@ -576,7 +607,7 @@ function WordleInner() {
           {isSubmitting && (
             <p style={{ fontSize: 13, color: '#7A5C7A' }}>Checking...</p>
           )}
-          {!canPlay && !isSubmitting && game?.status === 'playing' && (
+          {!canPlay && !isSubmitting && game.status === 'playing' && (
             <p style={{ fontSize: 13, color: '#7A5C7A' }}>Waiting for creator to join...</p>
           )}
         </div>

@@ -124,7 +124,7 @@ function WhotInner() {
     return () => clearTimeout(t);
   }, [actionError]);
 
-  if (!uid) return <WhotSkeleton />;
+  if (!uid || !gameId) return <WhotSkeleton />;
 
   if (!gameId && !game) {
     const handleCreateLocal = async () => {
@@ -135,14 +135,16 @@ function WhotInner() {
 
     return (
       <div className="game-lobby-screen">
-        <div className="whot-topbar">
-          <div>
-            <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
-            <h1 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 22, fontWeight: 300, color: '#3D2B3D' }}>
-              Naija <em style={{ fontStyle: 'italic', color: '#7A5C7A' }}>Whot</em>
-            </h1>
+        <div className="whot-topbar-landing">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 20px 10px' }}>
+            <div>
+              <p style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#C9829A', fontWeight: 500, marginBottom: 3 }}>Games</p>
+              <h1 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 22, fontWeight: 300, color: '#3D2B3D' }}>
+                Naija <em style={{ fontStyle: 'italic', color: '#7A5C7A' }}>Whot</em>
+              </h1>
+            </div>
+            <button className="whot-exit" onClick={() => router.push('/games')}>✕</button>
           </div>
-          <button className="whot-exit" onClick={() => router.push('/games')}>✕</button>
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, padding: '0 24px' }}>
           <div style={{ width: 84, height: 112, borderRadius: 16, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42, color: 'white', fontFamily: "var(--font-cormorant),serif", fontStyle: 'italic', boxShadow: '0 12px 24px rgba(232,160,160,0.25)', border: '2px solid rgba(255,255,255,0.6)' }}>
@@ -169,14 +171,55 @@ function WhotInner() {
 
   if (!game) return <WhotSkeleton />;
 
+  if (game.status === 'waiting') {
+    return (
+      <WaitingLobby 
+        gameId={gameId} 
+        gameType="whot" 
+        myPhoto={game.playerPhotos?.[uid]} 
+        onCancel={() => router.push('/games')} 
+      />
+    );
+  }
+
+  return (
+    <WhotPlaying
+      game={game}
+      uid={uid}
+      gameId={gameId}
+      router={router}
+      myHand={myHand}
+      selected={selected}
+      setSelected={setSelected}
+      showSuitPicker={showSuitPicker}
+      setShowSuitPicker={setShowSuitPicker}
+      showExit={showExit}
+      setShowExit={setShowExit}
+      rematching={rematching}
+      setRematching={setRematching}
+      copied={copied}
+      setCopied={setCopied}
+      scoreboard={scoreboard}
+      actionError={actionError}
+      setActionError={setActionError}
+    />
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// PLAYING COMPONENT (Normalized)
+// ────────────────────────────────────────────────────────────
+function WhotPlaying({
+  game, uid, gameId, router, myHand, selected, setSelected, showSuitPicker, setShowSuitPicker, showExit, setShowExit, rematching, setRematching, copied, setCopied, scoreboard, actionError, setActionError
+}: {
+  game: WhotGameState; uid: string; gameId: string; router: any; myHand: WhotCard[]; selected: WhotCard | null; setSelected: (c: WhotCard | null) => void; showSuitPicker: boolean; setShowSuitPicker: (b: boolean) => void; showExit: boolean; setShowExit: (b: boolean) => void; rematching: boolean; setRematching: (b: boolean) => void; copied: boolean; setCopied: (b: boolean) => void; scoreboard: any; actionError: string; setActionError: (s: string) => void;
+}) {
   const opponent = game.players?.find(p => p !== uid) ?? '';
   const oppHandCount = game.handCounts?.[opponent] ?? 0;
   const isMyTurn = game.turn === uid && game.status === 'playing';
   const myPhoto = game.playerPhotos?.[uid];
   const oppPhoto = game.playerPhotos?.[opponent];
   const iWon = game.winner === uid;
-  const hasLastCard = game.lastCardUids?.includes(uid);
-  const oppLastCard = game.lastCardUids?.includes(opponent);
 
   const playableIds = new Set(
     myHand.filter(c => canPlay(c, game.topCard, game.calledSuit, game.pendingPickup)).map(c => c.id)
@@ -184,7 +227,7 @@ function WhotInner() {
 
   const handleCardTap = (card: WhotCard) => {
     if (!isMyTurn || !playableIds.has(card.id)) return;
-    setSelected(prev => prev?.id === card.id ? null : card);
+    setSelected(selected?.id === card.id ? null : card);
   };
 
   const handlePlay = async () => {

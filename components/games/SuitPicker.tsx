@@ -1,6 +1,6 @@
 'use client';
 
-import { Suit } from '@/types';
+import type { Suit } from '@/types';
 import { SUIT_SYMBOL, SUIT_COLOR, SUIT_BG } from '@/lib/whot';
 
 export default function SuitPicker({ onPick }: { onPick: (s: Suit) => void }) {
