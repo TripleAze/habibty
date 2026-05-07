@@ -74,6 +74,7 @@ function WhotInner() {
   const [copied, setCopied] = useState(false);
   const [scoreboard, setScoreboard] = useState<any>(null);
   const [actionError, setActionError] = useState('');
+  const joiningRef = useRef(false);
 
   useEffect(() => {
     if (!auth) return;
@@ -107,12 +108,14 @@ function WhotInner() {
   }, []);
 
   useEffect(() => {
-    if (!game || !uid || game.status !== 'waiting') return;
+    if (!game || !uid || game.status !== 'waiting' || joiningRef.current) return;
     if (!game.players?.includes(uid)) {
+      joiningRef.current = true;
       const doJoin = async () => {
         const { joinWhotGame } = await import('@/lib/whot');
         const user = auth?.currentUser;
         await joinWhotGame(gameId, uid, user?.displayName || 'Partner', user?.photoURL || '');
+        joiningRef.current = false;
       };
       doJoin();
     }
@@ -177,7 +180,7 @@ function WhotInner() {
       <WaitingLobby 
         gameId={gameId} 
         gameType="whot" 
-        myPhoto={game.playerPhotos?.[uid]} 
+        myPhoto={game?.playerPhotos?.[uid]} 
         onCancel={() => router.push('/games')} 
       />
     );
@@ -344,11 +347,11 @@ function WhotPlaying({
 
           {scoreboard && (
             <div style={{ margin: '0 20px 12px', padding: '10px 16px', background: 'rgba(255,255,255,0.45)', backdropFilter: 'blur(12px)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.7)', display: 'flex', justifyContent: 'center', gap: 12 }}>
-              <span style={{ fontSize: 11, opacity: 0.8 }}>{game.playerNames[[...game.players].sort()[0]] || 'Partner'}</span>
+              <span style={{ fontSize: 11, opacity: 0.8 }}>{game?.playerNames?.[([...(game?.players || [])].sort()[0])] || 'Partner'}</span>
               <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20 }}>{scoreboard.winsA}</span>
               <span style={{ color: '#7A5C7A', opacity: 0.4 }}>—</span>
               <span style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 20 }}>{scoreboard.winsB}</span>
-              <span style={{ fontSize: 11, opacity: 0.8 }}>{game.playerNames[[...game.players].sort()[1]] || 'Partner'}</span>
+              <span style={{ fontSize: 11, opacity: 0.8 }}>{game?.playerNames?.[([...(game?.players || [])].sort()[1])] || 'Partner'}</span>
             </div>
           )}
 

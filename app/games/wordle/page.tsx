@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, getDoc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -254,6 +254,7 @@ function WordleInner() {
   const [game, setGame] = useState<GameState | null>(null);
   const [showExit, setShowExit] = useState(false);
   const [rematching, setRematching] = useState(false);
+  const joiningRef = useRef(false);
   const [copied, setCopied] = useState(false);
   const [scoreboard, setScoreboard] = useState<any>(null);
   const [currentGuess, setCurrentGuess] = useState('');
@@ -438,12 +439,12 @@ function WordleInner() {
 
   // Auto-join if user is not in the players list and game is waiting
   useEffect(() => {
-    if (!game || !uid || game.status !== 'waiting') return;
+    if (!game || !uid || game.status !== 'waiting' || joiningRef.current) return;
     if (!game.players?.includes(uid)) {
-      const doJoin = async () => {
-        handleJoin();
-      };
-      doJoin();
+      joiningRef.current = true;
+      handleJoin().finally(() => {
+        joiningRef.current = false;
+      });
     }
   }, [game, uid, gameId]);
 

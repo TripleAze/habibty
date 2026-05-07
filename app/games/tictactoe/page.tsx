@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
@@ -38,6 +38,7 @@ function TicTacToeInner() {
   const [showExit, setShowExit] = useState(false);
   const [rematching, setRematching] = useState(false);
   const [copied, setCopied] = useState(false);
+  const joiningRef = useRef(false);
 
   useEffect(() => {
     if (!auth) return;
@@ -66,12 +67,14 @@ function TicTacToeInner() {
   }, [game?.rematchId, router]);
 
   useEffect(() => {
-    if (!game || !uid || game.status !== 'waiting') return;
+    if (!game || !uid || game.status !== 'waiting' || joiningRef.current) return;
     if (!game.players?.includes(uid)) {
+      joiningRef.current = true;
       const doJoin = async () => {
         const { joinGame } = await import('@/lib/games');
         const user = auth?.currentUser;
         await joinGame(gameId, uid, user?.displayName || 'Partner', user?.photoURL || '');
+        joiningRef.current = false;
       };
       doJoin();
     }

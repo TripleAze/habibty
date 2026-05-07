@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, getDoc, onSnapshot, updateDoc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
@@ -86,6 +86,7 @@ function WouldYouRatherInner() {
   const [uid, setUid] = useState('');
   const [game, setGame] = useState<GameState | null>(null);
   const [showExit, setShowExit] = useState(false);
+  const joiningRef = useRef(false);
   const [showCreateQ, setShowCreateQ] = useState(false);
   const [selected, setSelected] = useState<'A' | 'B' | null>(null);
 
@@ -199,7 +200,12 @@ function WouldYouRatherInner() {
 
   // Auto-join
   useEffect(() => {
-    if (game && uid && game.status === 'waiting' && !game.players?.includes(uid)) handleJoin();
+    if (game && uid && game.status === 'waiting' && !game.players?.includes(uid) && !joiningRef.current) {
+      joiningRef.current = true;
+      handleJoin().finally(() => {
+        joiningRef.current = false;
+      });
+    }
   }, [game, uid, gameId]);
 
   if (!uid || !gameId && !game) {
@@ -226,7 +232,7 @@ function WouldYouRatherInner() {
     return (
       <>
         {showExit && <ExitSheet onResume={() => setShowExit(false)} onMessages={() => router.push('/inbox')} onLeave={() => router.push('/games')} />}
-        <WaitingLobby gameId={gameId} gameType="would-you-rather" myPhoto={game.playerPhotos?.[uid]} onCancel={() => setShowExit(true)} />
+        <WaitingLobby gameId={gameId} gameType="would-you-rather" myPhoto={game?.playerPhotos?.[uid]} onCancel={() => setShowExit(true)} />
       </>
     );
   }
