@@ -201,27 +201,47 @@ function RapidFireInner() {
     return () => clearInterval(interval);
   }, [isMyTurn, game?.timerStartedAt, game?.timerDuration]);
 
-  // SELECTION LOGIC — uses local bundled questions, no Firestore seeding required
-  const selectQuestions = (count: number, usedIds: string[]): RapidFireQuestion[] => {
-    // Map local questions to RapidFireQuestion shape (all are binary choice)
-    const pool: RapidFireQuestion[] = RAPID_FIRE_QUESTIONS.map(q => ({
+  // SELECTION LOGIC — Firebase-first strategy (similar to Would You Rather)
+  const selectQuestions = async (count: number, usedIds: string[]): Promise<RapidFireQuestion[]> => {
+    try {
+      const questionsCol = collection(db, 'rapid_fire_questions');
+      const snap = await getDocs(query(questionsCol, where('isActive', '==', true), limit(100)));
+      
+      let pool: RapidFireQuestion[] = snap.docs.map(d => ({ 
+        id: d.id, 
+        ...d.data() 
+      } as any)).filter(q => !usedIds.includes(q.id));
+
+      if (pool.length >= count) {
+        return pool.sort(() => Math.random() - 0.5).slice(0, count);
+      }
+    } catch (err) {
+      console.error("Failed to fetch Rapid Fire questions from Firebase:", err);
+    }
+
+    // Fallback to local pool
+    const localPool: RapidFireQuestion[] = RAPID_FIRE_QUESTIONS.map(q => ({
       id: q.id,
       text: q.text,
       type: 'binary' as const,
       category: q.category,
-    }));
+    })).filter(q => !usedIds.includes(q.id));
 
-    let available = pool.filter(q => !usedIds.includes(q.id));
-    // If we've used most questions, reset and use the full pool
-    if (available.length < count) {
-      available = pool;
+    let finalPool = localPool;
+    if (finalPool.length < count) {
+      finalPool = RAPID_FIRE_QUESTIONS.map(q => ({
+        id: q.id,
+        text: q.text,
+        type: 'binary' as const,
+        category: q.category,
+      }));
     }
-    return available.sort(() => Math.random() - 0.5).slice(0, count);
+    return finalPool.sort(() => Math.random() - 0.5).slice(0, count);
   };
 
   const handleCreate = async () => {
     const config = DIFFICULTY_CONFIG[selectedDifficulty];
-    const initialQSet = selectQuestions(config.preload, []);
+    const initialQSet = await selectQuestions(config.preload, []);
     const newId = await generateGameId();
     const user = auth?.currentUser;
 
@@ -250,7 +270,7 @@ function RapidFireInner() {
     if (!game) return;
     setRematching(true);
     const config = DIFFICULTY_CONFIG[game.difficulty as keyof typeof DIFFICULTY_CONFIG] || DIFFICULTY_CONFIG.standard;
-    const initialQSet = selectQuestions(config.preload, game.usedQuestionIds || []);
+    const initialQSet = await selectQuestions(config.preload, game.usedQuestionIds || []);
     const newId = await generateGameId();
     
     const opponentUid = game.players.find(p => p !== uid);
@@ -358,40 +378,90 @@ function RapidFireInner() {
   };
 
   const handleSeedDB = async () => {
-    const batch = writeBatch(db);
-    const col = collection(db, 'rapid_fire_questions');
-    
-    const BINARY = [
-      "Love or money", "Text or call", "Morning or night", "Hug or kiss", "Stay in or go out", "Sweet or funny", "Clingy or independent", "Long calls or short texts",
-      "Surprise or plan", "Romantic or playful", "Jealous or chill", "Talk or listen", "Loud love or quiet love", "Late-night chats or early mornings", "Deep talks or jokes",
-      "First move or wait", "Public or private", "Honest or protective", "Emotional or logical", "Best friend or lover first",
-      "Pizza or burger", "Tea or coffee", "Android or iPhone", "Netflix or YouTube", "Beach or mountains", "Music or movies", "Dogs or cats", "Sweet or spicy",
-      "Rain or sun", "Sneakers or sandals", "Books or podcasts", "Eat in or eat out", "Cold or hot", "Sleep or scroll", "Gym or home workout", "Travel or chill",
-      "Fast food or home food", "Online or offline", "Save or spend", "Plan or improvise", "Risk or safe", "Lead or follow", "Work or rest", "Busy or free",
-      "Focus or multitask", "Routine or random", "Quiet or loud", "Early or late", "Alone or with people", "Speak or observe", "Act or think", "Push or pause", "Start or finish",
-      "Build or fix", "Learn or teach", "Try or avoid", "Stay or leave", "Control or flow", "Kiss or hug", "Flirt or ignore", "Bold or shy", "Tease or praise", "Text or voice",
-      "Slow or fast", "Soft or intense", "Close or distant", "Whisper or say it", "Look or touch", "Wait or go", "Win or learn", "Luck or skill", "Try again or quit", "Fast or careful",
-      "Attack or defend", "Solo or team", "Practice or perform", "Safe or risky", "Compete or cooperate", "Short or long", "Think fast or act fast", "Control or chaos"
-    ];
-    
-    const SINGLE = [
-      "Favorite food", "Favorite color", "Best memory", "Dream destination", "Favorite song", "Favorite person", "Favorite hobby", "Biggest fear", "Best day ever", "Favorite movie",
-      "One word for me", "Favorite emoji", "Favorite app", "Favorite snack", "Favorite drink", "Favorite game", "Favorite place", "Favorite outfit", "Favorite smell", "Favorite time",
-      "One goal", "One regret", "One wish", "One habit", "One skill", "One dream", "One truth", "One lie", "One secret", "What are you feeling", "Miss me?", "Thinking of?", "Want what?",
-      "Need what?", "Say something", "Describe me", "Describe us", "One word for love", "One word for today", "First thing you see", "First thought now", "First word in mind", "One emotion"
-    ];
+    try {
+      const batch = writeBatch(db);
+      const rfCol = collection(db, 'rapid_fire_questions');
+      const wyrCol = collection(db, 'would_you_rather_questions');
+      
+      // Get existing to prevent duplicates
+      const existingRF = await getDocs(rfCol);
+      const rfTexts = new Set(existingRF.docs.map(d => d.data().text?.toLowerCase().trim()));
+      
+      const existingWYR = await getDocs(wyrCol);
+      const wyrTexts = new Set(existingWYR.docs.map(d => {
+        const data = d.data();
+        return `${data.optionA}|${data.optionB}`.toLowerCase().trim();
+      }));
 
-    BINARY.forEach(q => {
-      const d = doc(col);
-      batch.set(d, { text: q, type: 'binary', category: 'general', isActive: true });
-    });
-    SINGLE.forEach(q => {
-      const d = doc(col);
-      batch.set(d, { text: q, type: 'single', category: 'personal', isActive: true });
-    });
+      const newRF = [
+        // User provided JSON examples
+        { text: "What’s your most used emoji?", category: "fun", options: ["😂", "❤️", "😭", "😒"] },
+        { text: "What food could you eat forever?", category: "fun", options: ["Pizza 🍕", "Rice 🍚", "Fries 🍟", "Noodles 🍜"] },
+        { text: "What’s your comfort movie genre?", category: "movies", options: ["Romance", "Comedy", "Action", "Anime"] },
+        { text: "What instantly reminds you of me?", category: "relationship", options: ["Music 🎵", "Food 🍔", "Late nights 🌙", "Memes 😂"] },
+        { text: "What’s your ideal date?", category: "relationship", options: ["Movie night 🎬", "Beach date 🌊", "Gaming together 🎮", "Road trip 🚗"] },
+        { text: "What’s your biggest toxic trait?", category: "chaotic", options: ["Overthinking 😭", "Ignoring texts 😒", "Being stubborn 😤", "Sleeping too much 🛌"] },
+        { text: "What type of weather matches your mood?", category: "personality", options: ["Rain 🌧️", "Sunny ☀️", "Cold ❄️", "Cloudy ☁️"] },
+        { text: "What’s your gaming personality?", category: "gaming", options: ["Competitive 😤", "Casual 😌", "Chaotic 😂", "Supportive ❤️"] },
+        { text: "What’s your favorite type of affection?", category: "flirty", options: ["Hugs 🤗", "Forehead kisses 😚", "Hand holding 🤝", "Cuddles 🥺"] },
+        { text: "What keeps you going on hard days?", category: "deep", options: ["Loved ones ❤️", "Goals 🚀", "Faith 🙏", "Music 🎵"] },
+        // More from the list
+        { text: "Coffee or tea?", category: "fun" },
+        { text: "Morning or night person?", category: "personality" },
+        { text: "PC or console?", category: "gaming" },
+        { text: "If animals could talk, which would be the rudest?", category: "chaotic" },
+        { text: "What’s the dumbest thing you’ve cried over?", category: "emotional" },
+        { text: "If you became famous, what would it be for?", category: "fun" },
+        { text: "What’s your most embarrassing moment?", category: "fun" },
+        { text: "What’s your love language?", category: "relationship" },
+        { text: "What color reminds you of me?", category: "relationship" },
+        { text: "What makes you feel safe?", category: "deep" },
+      ];
 
-    await batch.commit();
-    alert("Seeded dataset successfully!");
+      newRF.forEach(q => {
+        if (!rfTexts.has(q.text.toLowerCase().trim())) {
+          const d = doc(rfCol);
+          batch.set(d, { 
+            text: q.text, 
+            type: q.options ? 'binary' : 'binary', 
+            options: q.options || null,
+            category: q.category || 'general', 
+            isActive: true 
+          });
+          rfTexts.add(q.text.toLowerCase().trim());
+        }
+      });
+
+      const newWYR = [
+        { optionA: "Cuddle every night 🤗", optionB: "Go on dates every weekend 🌃", category: "relationship" },
+        { optionA: "Long texts 💌", optionB: "Surprise calls 📞", category: "cute" },
+        { optionA: "10 duck-sized horses 🐴", optionB: "1 horse-sized duck 🦆", category: "chaotic" },
+        { optionA: "Unlimited money 💰", optionB: "Unlimited free time ⏳", category: "deep" },
+        { optionA: "Win arguments 😤", optionB: "Keep peace ☮️", category: "deep" },
+        { optionA: "Co-op 🎮", optionB: "Competitive ⚔️", category: "gaming" },
+        { optionA: "Teleport ✨", optionB: "Time travel ⏰", category: "wildcard" },
+        { optionA: "Publicly 😏", optionB: "Privately ❤️", category: "flirty" },
+        { optionA: "Lose charger 🔋", optionB: "Lose headphones 🎧", category: "fun" },
+        { optionA: "Relive favorite memory 🥺", optionB: "Create a new one ✨", category: "emotional" },
+        { optionA: "Sneeze glitter ✨", optionB: "Cry confetti 🎉", category: "chaotic" },
+        { optionA: "Always be 10 minutes late ⏰", optionB: "Always be 20 minutes early ⏳", category: "funny" },
+      ];
+
+      newWYR.forEach(q => {
+        const key = `${q.optionA}|${q.optionB}`.toLowerCase().trim();
+        if (!wyrTexts.has(key)) {
+          const d = doc(wyrCol);
+          batch.set(d, { ...q, isActive: true, isCustom: false });
+          wyrTexts.add(key);
+        }
+      });
+
+      await batch.commit();
+      alert("Database updated with new standardized questions! Duplicates were skipped.");
+    } catch (err) {
+      console.error("Seeding failed:", err);
+      alert("Failed to seed database.");
+    }
   };
 
   const copyCode = () => {
@@ -438,6 +508,13 @@ function RapidFireInner() {
           </div>
 
           <button onClick={handleCreate} style={{ width: '100%', padding: '20px', borderRadius: 100, background: 'linear-gradient(135deg,#E8A0A0,#C9B8D8)', border: 'none', color: 'white', fontWeight: 700, fontSize: 16, boxShadow: '0 10px 30px rgba(232,160,160,0.35)', cursor: 'pointer' }}>Generate Challenge</button>
+          
+          <button 
+            onClick={handleSeedDB} 
+            style={{ fontSize: 11, color: '#7A5C7A', opacity: 0.5, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            Update Global Question Bank
+          </button>
         </div>
       </div>
     );
@@ -541,18 +618,19 @@ function RapidFirePlaying({
                   <h1 style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 26, fontStyle: 'italic', color: '#3D2B3D', lineHeight: 1.3 }}>{currentQ.text}</h1>
                 </div>
 
-                {currentQ.type === 'binary' ? (
+                {currentQ.type === 'binary' || currentQ.options?.length ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {['A', 'B'].map((opt, i) => {
+                    {(currentQ.options?.length ? currentQ.options : ['A', 'B']).map((opt, i) => {
                       const parts = currentQ.text.split(/ or /i);
+                      const label = currentQ.options?.length ? opt : (i === 0 ? (parts[0] || 'Option A') : (parts[1] || 'Option B'));
                       return (
                         <button
-                          key={opt}
+                          key={i}
                           disabled={isAnswering}
-                          onClick={() => handleAnswer(i === 0 ? 'A' : 'B')}
-                          style={{ padding: '24px 20px', borderRadius: 22, background: 'white', border: '2px solid #f0f0f0', fontSize: 18, fontWeight: 700, color: i === 0 ? '#E8A0A0' : '#C9B8D8', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s', opacity: isAnswering ? 0.7 : 1 }}
+                          onClick={() => handleAnswer(currentQ.options?.length ? opt : (i === 0 ? 'A' : 'B'))}
+                          style={{ padding: '24px 20px', borderRadius: 22, background: 'white', border: '2px solid #f0f0f0', fontSize: 18, fontWeight: 700, color: i % 2 === 0 ? '#E8A0A0' : '#C9B8D8', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', transition: 'all 0.2s', opacity: isAnswering ? 0.7 : 1 }}
                         >
-                          {i === 0 ? (parts[0] || 'Option A') : (parts[1] || 'Option B')}
+                          {label}
                         </button>
                       );
                     })}
