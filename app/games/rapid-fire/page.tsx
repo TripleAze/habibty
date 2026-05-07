@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDoc, onSnapshot, updateDoc, serverTimestamp, collection, query, where, getDocs, limit, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, updateDoc, serverTimestamp, arrayUnion, writeBatch, collection, getDocs } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { generateGameId } from '@/lib/gameUtils';
 import GameScreen from '@/components/games/GameScreen';
@@ -142,6 +142,7 @@ function RapidFireInner() {
   const [singleValue, setSingleValue] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<'chill' | 'standard' | 'blitz'>('standard');
   const [rematching, setRematching] = useState(false);
+  const [joining, setJoining] = useState(false);
 
   // Auth check
   useEffect(() => {
@@ -199,24 +200,27 @@ function RapidFireInner() {
     return () => clearInterval(interval);
   }, [isMyTurn, game?.timerStartedAt, game?.timerDuration]);
 
-  // SELECTION LOGIC
-  const selectQuestions = async (count: number, usedIds: string[]): Promise<RapidFireQuestion[]> => {
-    const colRef = collection(db, 'rapid_fire_questions');
-    const snap = await getDocs(query(colRef, limit(100)));
-    let all = snap.docs.map(d => ({ id: d.id, ...d.data() } as RapidFireQuestion)).filter(q => !usedIds.includes(q.id));
-    
-    if (all.length < count) {
-      console.log("Not enough unseen questions. Shuffling from main pool.");
-      const fullSnap = await getDocs(colRef);
-      all = fullSnap.docs.map(d => ({ id: d.id, ...d.data() } as RapidFireQuestion));
-    }
+  // SELECTION LOGIC — uses local bundled questions, no Firestore seeding required
+  const selectQuestions = (count: number, usedIds: string[]): RapidFireQuestion[] => {
+    // Map local questions to RapidFireQuestion shape (all are binary choice)
+    const pool: RapidFireQuestion[] = RAPID_FIRE_QUESTIONS.map(q => ({
+      id: q.id,
+      text: q.text,
+      type: 'binary' as const,
+      category: q.category,
+    }));
 
-    return all.sort(() => Math.random() - 0.5).slice(0, count);
+    let available = pool.filter(q => !usedIds.includes(q.id));
+    // If we've used most questions, reset and use the full pool
+    if (available.length < count) {
+      available = pool;
+    }
+    return available.sort(() => Math.random() - 0.5).slice(0, count);
   };
 
   const handleCreate = async () => {
     const config = DIFFICULTY_CONFIG[selectedDifficulty];
-    const initialQSet = await selectQuestions(config.preload, []);
+    const initialQSet = selectQuestions(config.preload, []);
     const newId = await generateGameId();
     const user = auth?.currentUser;
 
@@ -245,7 +249,7 @@ function RapidFireInner() {
     if (!game) return;
     setRematching(true);
     const config = DIFFICULTY_CONFIG[game.difficulty as keyof typeof DIFFICULTY_CONFIG] || DIFFICULTY_CONFIG.standard;
-    const initialQSet = await selectQuestions(config.preload, game.usedQuestionIds || []);
+    const initialQSet = selectQuestions(config.preload, game.usedQuestionIds || []);
     const newId = await generateGameId();
     
     const opponentUid = game.players.find(p => p !== uid);
@@ -275,19 +279,37 @@ function RapidFireInner() {
   };
 
   const handleJoin = async () => {
-    if (!gameId) return;
-    const gameRef = doc(db, 'games', gameId);
-    const snap = await getDoc(gameRef);
-    if (!snap.exists()) return;
+    if (!gameId || !uid) return;
+    setJoining(true);
+    try {
+      const gameRef = doc(db, 'games', gameId);
+      const snap = await getDoc(gameRef);
+      if (!snap.exists()) { setJoining(false); return; }
 
-    const user = auth?.currentUser;
-    await updateDoc(gameRef, {
-      players: [...(snap.data()?.players || []), uid],
-      [`playerNames.${uid}`]: user?.displayName || 'You',
-      ...(user?.photoURL ? { [`playerPhotos.${uid}`]: user.photoURL } : {}),
-      status: 'playing',
-      timerStartedAt: Date.now(),
-    });
+      const data = snap.data();
+      // Guard: don't join if game is full (already 2 players) or already started
+      if (data.players?.length >= 2 && !data.players.includes(uid)) {
+        setJoining(false);
+        return;
+      }
+      // Guard: don't join if already a player
+      if (data.players?.includes(uid)) {
+        setJoining(false);
+        return;
+      }
+
+      const user = auth?.currentUser;
+      // Use arrayUnion for atomic player list update (safe against race conditions)
+      await updateDoc(gameRef, {
+        players: arrayUnion(uid),
+        [`playerNames.${uid}`]: user?.displayName || 'You',
+        ...(user?.photoURL ? { [`playerPhotos.${uid}`]: user.photoURL } : {}),
+        status: 'playing',
+        timerStartedAt: Date.now(),
+      });
+    } finally {
+      setJoining(false);
+    }
   };
 
   const handleAnswer = async (answer: string) => {
@@ -432,15 +454,25 @@ function RapidFireInner() {
   }
 
   if (game.status === 'waiting') {
+    // If the current user is not the creator, they are the joiner — show joining state
+    const isCreator = game.creatorUid === uid;
+    if (!isCreator || joining) {
+      return (
+        <div style={{ position: 'fixed', inset: 0, background: 'linear-gradient(160deg,#FAD0DC 0%,#EDD5F0 55%,#D8E8F8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
+          <div style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(232,160,160,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>⚡</div>
+          <p style={{ fontFamily: "var(--font-cormorant),serif", fontSize: 28, fontStyle: 'italic', color: '#3D2B3D' }}>Joining game...</p>
+          <p style={{ fontSize: 13, color: '#7A5C7A' }}>Hold tight, getting you in!</p>
+        </div>
+      );
+    }
+    // Creator sees the waiting lobby
     return (
-      <>
-        <WaitingLobby
-          gameId={gameId}
-          gameType="rapid-fire"
-          myPhoto={game.playerPhotos?.[uid]}
-          onCancel={() => router.push('/games')}
-        />
-      </>
+      <WaitingLobby
+        gameId={gameId}
+        gameType="rapid-fire"
+        myPhoto={game.playerPhotos?.[uid]}
+        onCancel={() => router.push('/games')}
+      />
     );
   }
 
