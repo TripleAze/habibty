@@ -1,5 +1,5 @@
 import {
-  doc, setDoc, updateDoc, onSnapshot, getDoc,
+  doc, setDoc, updateDoc, onSnapshot, getDoc, runTransaction
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -156,41 +156,62 @@ export async function makeMove(
 export async function rematch(gameId: string, initiatorUid: string): Promise<string> {
   if (!gameId) return '';
   const ref = doc(db, 'games', gameId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return gameId;
-  const data = snap.data() as GameState;
-
-  const newGameId = generateGameId();
-  const players = data.players || [];
-  const [p1, p2] = players;
-  const symbols = data.symbols || {};
-  const flippedSymbols: Record<string, string> = {};
   
-  players.forEach(pid => {
-    flippedSymbols[pid] = symbols[pid] === 'X' ? 'O' : 'X';
-  });
-  
-  const firstTurn = players.find(pid => flippedSymbols[pid] === 'X') ?? p1;
+  try {
+    const newGameId = await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(ref);
+      if (!snap.exists()) return gameId;
+      const data = snap.data() as GameState;
 
-  await setDoc(doc(db, 'games', newGameId), {
-    type: 'tictactoe',
-    players: players,
-    playerNames: data.playerNames || {},
-    playerPhotos: data.playerPhotos || {},
-    symbols: flippedSymbols,
-    board: Array(9).fill(''),
-    turn: firstTurn,
-    winner: null,
-    winnerSymbol: null,
-    isDraw: false,
-    status: 'playing',
-    createdAt: Date.now(),
-  });
+      // If a rematch was already created by the partner, use that
+      if (data.rematchId) return data.rematchId;
 
-  // Point the old game to the new one so the partner can follow
-  await updateDoc(ref, { rematchId: newGameId });
+      const nextId = generateGameId();
+      const players = data.players || [];
+      const symbols = data.symbols || {};
+      const flippedSymbols: Record<string, string> = {};
+      
+      // Ensure symbols are defined and valid
+      const p1 = players[0];
+      const p2 = players[1];
+      
+      flippedSymbols[p1] = symbols[p1] === 'X' ? 'O' : 'X';
+      if (p2) {
+        flippedSymbols[p2] = flippedSymbols[p1] === 'X' ? 'O' : 'X';
+      }
+      
+      const firstTurn = players.find(pid => flippedSymbols[pid] === 'X') || players[0];
 
-  return newGameId;
+      // Create new game doc
+      const newGameRef = doc(db, 'games', nextId);
+      transaction.set(newGameRef, {
+        type: 'tictactoe',
+        players: players,
+        playerNames: data.playerNames || {},
+        playerPhotos: data.playerPhotos || {},
+        symbols: flippedSymbols,
+        board: Array(9).fill(''),
+        turn: firstTurn,
+        winner: null,
+        winnerSymbol: null,
+        isDraw: false,
+        status: 'playing',
+        createdAt: Date.now(),
+      });
+
+      // Update old game to point to the new one
+      transaction.update(ref, { rematchId: nextId });
+
+      return nextId;
+    });
+
+    return newGameId;
+  } catch (error) {
+    console.error('Rematch transaction failed:', error);
+    // Fallback: try to get the rematchId if it was set by the other player
+    const snap = await getDoc(ref);
+    return snap.data()?.rematchId || gameId;
+  }
 }
 
 export function subscribeToGame(

@@ -47,7 +47,12 @@ function TicTacToeInner() {
   }, [router]);
 
   useEffect(() => {
-    if (!gameId) return;
+    if (!gameId) {
+      setGame(null);
+      return;
+    }
+    // Clear old game state immediately to show skeleton while loading new game
+    setGame(null);
     const unsub = subscribeToGame(gameId, setGame);
     return () => unsub();
   }, [gameId]);
@@ -61,10 +66,10 @@ function TicTacToeInner() {
   }, [uid, game?.players]);
 
   useEffect(() => {
-    if (game?.rematchId) {
+    if (game?.rematchId && game.rematchId !== gameId) {
       router.replace(`/games/tictactoe?id=${game.rematchId}`);
     }
-  }, [game?.rematchId, router]);
+  }, [game?.rematchId, gameId, router]);
 
   useEffect(() => {
     if (!game || !uid || game.status !== 'waiting' || joiningRef.current) return;

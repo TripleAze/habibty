@@ -1,4 +1,4 @@
-import { doc, getDoc, writeBatch, deleteField, onSnapshot, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, writeBatch, deleteField, onSnapshot, Timestamp, query, collection, where, getDocs } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from './firebase';
 import { useState, useEffect } from 'react';
@@ -6,15 +6,14 @@ import { useState, useEffect } from 'react';
 /**
  * Atomically unpairs two users by clearing the partnerId field on both documents.
  * This is a "soft break" - shared messages and games are not deleted, only hidden.
- * 
- * @param uid Current user ID
- * @param partnerId Partner's user ID
  */
 export interface Partner {
   uid: string;
   name: string;
   photoURL?: string;
   email?: string;
+  accentColor?: string;
+  relationshipNickname?: string;
 }
 
 /**
@@ -23,6 +22,7 @@ export interface Partner {
 export function usePair() {
   const [partner, setPartner] = useState<Partner | null>(null);
   const [daysTogether, setDaysTogether] = useState<number>(0);
+  const [inviteCode, setInviteCode] = useState<string>('');
 
   useEffect(() => {
     if (!auth) return;
@@ -38,6 +38,7 @@ export function usePair() {
       if (!user) {
         setPartner(null);
         setDaysTogether(0);
+        setInviteCode('');
         return;
       }
 
@@ -48,6 +49,7 @@ export function usePair() {
         const userData = userSnap.data();
         const partnerId = userData?.partnerId;
         const pairedAt = userData?.pairedAt;
+        setInviteCode(userData?.inviteCode || '');
 
         if (!partnerId) {
           setPartner(null);
@@ -61,7 +63,6 @@ export function usePair() {
           const diffMs = now.toMillis() - pairedAt.toMillis();
           setDaysTogether(Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24))));
         } else if (pairedAt && typeof pairedAt === 'number') {
-          // Fallback if pairedAt is a numeric timestamp
           const diffMs = Date.now() - pairedAt;
           setDaysTogether(Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24))));
         }
@@ -72,9 +73,11 @@ export function usePair() {
             const data = partnerSnap.data();
             setPartner({
               uid: partnerSnap.id,
-              name: data.displayName || 'Partner',
+              name: data.relationshipNickname || data.displayName || 'Partner',
               photoURL: data.photoURL,
               email: data.email,
+              accentColor: data.accentColor,
+              relationshipNickname: data.relationshipNickname,
             });
           }
         });
@@ -94,16 +97,44 @@ export function usePair() {
     }
   };
 
-  return { partner, unpair, daysTogether };
+  return { partner, unpair, daysTogether, inviteCode };
+}
+
+export async function pairWithCode(uid: string, code: string): Promise<{ ok: boolean; error?: string }> {
+  if (!uid || !code) return { ok: false, error: 'Code required' };
+  
+  try {
+    const cleanCode = code.trim().toUpperCase();
+    const q = query(collection(db, 'users'), where('inviteCode', '==', cleanCode));
+    const snap = await getDocs(q);
+
+    if (snap.empty) return { ok: false, error: 'Code not found' };
+    
+    const partnerDoc = snap.docs[0];
+    const partnerId = partnerDoc.id;
+    const partnerData = partnerDoc.data();
+
+    if (partnerId === uid) return { ok: false, error: "That's your own code!" };
+    if (partnerData.partnerId) return { ok: false, error: 'This person is already paired.' };
+
+    const batch = writeBatch(db);
+    const pairedAt = Date.now();
+    
+    batch.update(doc(db, 'users', uid), { partnerId, pairedAt });
+    batch.update(doc(db, 'users', partnerId), { partnerId: uid, pairedAt });
+
+    await batch.commit();
+    return { ok: true };
+  } catch (err: any) {
+    console.error('Pair error:', err);
+    return { ok: false, error: 'Failed to pair. Please try again.' };
+  }
 }
 
 export async function unpairPartner(uid: string, partnerId: string): Promise<{ ok: boolean; error?: string }> {
-  if (!uid || !partnerId) {
-    return { ok: false, error: 'User IDs are required for unpairing.' };
-  }
+  if (!uid || !partnerId) return { ok: false, error: 'IDs required' };
 
   try {
-    // 1. Fetch current state to ensure valid permissions
     const [userSnap, partnerSnap] = await Promise.all([
       getDoc(doc(db, 'users', uid)),
       getDoc(doc(db, 'users', partnerId))
@@ -112,26 +143,20 @@ export async function unpairPartner(uid: string, partnerId: string): Promise<{ o
     const batch = writeBatch(db);
     let hasWork = false;
 
-    // Clear partnerId for current user only if it matches
     if (userSnap.exists() && userSnap.data().partnerId === partnerId) {
       batch.update(doc(db, 'users', uid), { partnerId: deleteField(), pairedAt: deleteField() });
       hasWork = true;
     }
     
-    // Clear partnerId for the partner ONLY if they are still pointing to current user
-    // This avoids "insufficient permissions" errors if they've already unpaired us.
     if (partnerSnap.exists() && partnerSnap.data().partnerId === uid) {
       batch.update(doc(db, 'users', partnerId), { partnerId: deleteField(), pairedAt: deleteField() });
       hasWork = true;
     }
     
-    if (hasWork) {
-      await batch.commit();
-    }
-    
+    if (hasWork) await batch.commit();
     return { ok: true };
   } catch (err: any) {
     console.error('Unpair error:', err);
-    return { ok: false, error: err.message || 'Failed to unpair. Please try again.' };
+    return { ok: false, error: 'Failed to unpair.' };
   }
 }

@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Camera, Check, AlertCircle, Loader2 } from "lucide-react";
+import { ChevronLeft, Camera, Check, AlertCircle, Loader2, Lock, Key } from "lucide-react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { db, auth } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { updateProfile } from "firebase/auth";
+import { updateProfile, updatePassword, GoogleAuthProvider } from "firebase/auth";
 import { uploadMedia } from "@/lib/imagekit";
 import Image from "next/image";
 
@@ -16,18 +16,35 @@ export default function EditProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [name, setName] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [accentColor, setAccentColor] = useState("rose");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const colors = [
+    { id: "rose", bg: "bg-rose-400" },
+    { id: "lavender", bg: "bg-lavender-400" },
+    { id: "blue", bg: "bg-sky-400" },
+    { id: "gold", bg: "bg-amber-400" },
+  ];
+
+  const isEmailUser = user?.providerData.some(p => p.providerId === 'password');
 
   useEffect(() => {
     if (!user) return;
     const fetchUser = async () => {
       const snap = await getDoc(doc(db, "users", user.uid));
       if (snap.exists()) {
-        setName(snap.data().displayName || "");
+        const data = snap.data();
+        setName(data.displayName || "");
+        setNickname(data.relationshipNickname || "");
+        setAccentColor(data.accentColor || "rose");
       }
     };
     fetchUser();
@@ -77,6 +94,8 @@ export default function EditProfilePage() {
       // 1. Update Firestore
       await setDoc(doc(db, "users", user.uid), {
         displayName: name.trim(),
+        relationshipNickname: nickname.trim(),
+        accentColor,
       }, { merge: true });
 
       // 2. Update Auth Profile
@@ -149,7 +168,7 @@ export default function EditProfilePage() {
 
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-2 ml-1">Display Name</label>
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Display Name</label>
           <input
             type="text"
             value={name}
@@ -157,6 +176,102 @@ export default function EditProfilePage() {
             className="w-full p-4 rounded-2xl bg-white/60 border border-white/40 focus:border-rose-300 focus:ring-0 transition-all outline-none text-gray-800"
             placeholder="Your name"
           />
+        </div>
+
+        {/* Relationship Nickname */}
+        <div>
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">How your partner sees you</label>
+          <input
+            type="text"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            className="w-full p-4 rounded-2xl bg-white/60 border border-white/40 focus:border-rose-300 focus:ring-0 transition-all outline-none text-gray-800 font-medium"
+            placeholder={name || "Nickname"}
+          />
+        </div>
+
+        {/* Appearance */}
+        <div>
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Your Color</label>
+          <div className="flex items-center gap-4 ml-1">
+            {colors.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setAccentColor(c.id)}
+                className={`w-8 h-8 rounded-full ${c.bg} transition-all ${accentColor === c.id ? 'ring-4 ring-white ring-offset-2 scale-110 shadow-lg' : 'opacity-40 hover:opacity-100'}`}
+              />
+            ))}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-3 font-medium">This color will be used for your name and avatar ring on your partner's app.</p>
+        </div>
+
+        {/* Account Section */}
+        <div className="pt-4">
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Account</label>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-gray-100">
+              <div className="flex items-center gap-3">
+                <Lock className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-gray-500">Email Address</span>
+              </div>
+              <span className="text-sm font-medium text-gray-400">{user?.email}</span>
+            </div>
+
+            {isEmailUser && (
+              <div className="p-4 rounded-2xl bg-white/60 border border-white/40">
+                <button 
+                  onClick={() => setShowPasswordChange(!showPasswordChange)}
+                  className="w-full flex items-center justify-between text-sm text-gray-700 font-medium"
+                >
+                  <div className="flex items-center gap-3 text-gray-600">
+                    <Key className="w-4 h-4" />
+                    <span>Change Password</span>
+                  </div>
+                  <ChevronLeft className={`w-4 h-4 text-gray-400 transition-transform ${showPasswordChange ? 'rotate-90' : '-rotate-90'}`} />
+                </button>
+                
+                {showPasswordChange && (
+                  <div className="mt-4 flex gap-2">
+                    <input 
+                      type="password"
+                      placeholder="New password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="flex-1 p-3 rounded-xl bg-white border border-gray-100 text-sm outline-none focus:border-rose-300"
+                    />
+                    <button 
+                      onClick={async () => {
+                        if (!user || !newPassword || newPassword.length < 6) {
+                          showToast("Password must be at least 6 chars");
+                          return;
+                        }
+                        setChangingPassword(true);
+                        try {
+                          await updatePassword(user, newPassword);
+                          showToast("Password updated ✨");
+                          setNewPassword("");
+                          setShowPasswordChange(false);
+                        } catch (e: any) {
+                          console.error(e);
+                          if (e.code === 'auth/requires-recent-login') {
+                            setError("Please sign out and back in to change password.");
+                          } else {
+                            setError("Failed to change password.");
+                          }
+                        } finally {
+                          setChangingPassword(false);
+                        }
+                      }}
+                      disabled={changingPassword}
+                      className="px-4 bg-gray-800 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+                    >
+                      {changingPassword ? "..." : "Update"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {error && (
