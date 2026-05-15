@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
   Mail, Calendar, Gamepad2, ChevronRight, User, Bell, 
-  LogOut, Unlink, Heart, Smartphone, Trophy 
+  LogOut, Heart, Smartphone, Trophy, Camera, X
 } from "lucide-react";
 import { onSnapshot, doc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from '@/lib/firebase';
@@ -24,10 +25,12 @@ export default function ProfilePage() {
   const [showUnpairConfirm, setShowUnpairConfirm] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showPWASettings, setShowPWASettings] = useState(false);
+  const [showPartnerPhoto, setShowPartnerPhoto] = useState(false);
   const [letterCount, setLetterCount] = useState<number>(0);
   const [gameCount, setGameCount] = useState<number>(0);
   const [scoreboard, setScoreboard] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     if (!user) return;
@@ -113,20 +116,34 @@ export default function ProfilePage() {
         <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-rose-100/50 to-transparent rounded-bl-full" />
 
         <div className="p-6 relative z-10">
-          <div className="flex items-center justify-center gap-4 mb-6">
-            {/* You */}
+          <div className="flex items-center justify-center gap-4 py-6 mb-2">
+            {/* You — tapping opens Edit Profile */}
             <div className="text-center">
-              {user?.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt="You"
-                  className={`w-20 h-20 rounded-2xl object-cover ring-4 ring-${getAccentColor(myAccent)} mx-auto mb-2`}
-                />
-              ) : (
-                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-100 to-lavender-100 flex items-center justify-center text-2xl ring-4 ring-${getAccentColor(myAccent)} mx-auto mb-2`}>
-                  {user?.displayName?.[0] || "Y"}
-                </div>
-              )}
+              <button
+                onClick={() => router.push('/profile/edit')}
+                className="relative block mx-auto mb-2 group"
+                aria-label="Edit your profile photo"
+              >
+                {user?.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt="You"
+                    className="w-20 h-20 rounded-2xl object-cover"
+                    style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}
+                  />
+                ) : (
+                  <div
+                    className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-100 to-lavender-100 flex items-center justify-center text-2xl"
+                    style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}
+                  >
+                    {user?.displayName?.[0] || "Y"}
+                  </div>
+                )}
+                {/* Camera overlay hint */}
+                <span className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm opacity-90">
+                  <Camera className="w-3 h-3 text-gray-600" />
+                </span>
+              </button>
               <p className={`text-sm font-medium text-${getAccentColor(myAccent)}`}>{user?.displayName || "You"}</p>
             </div>
 
@@ -139,37 +156,48 @@ export default function ProfilePage() {
               <span className="text-xs font-medium text-rose-400">{daysTogether || 0} days</span>
             </div>
 
-            {/* Partner */}
+            {/* Partner — tapping opens fullscreen photo viewer */}
             <div className="text-center">
-              {partner?.photoURL ? (
-                <img
-                  src={partner.photoURL}
-                  alt={partner.name}
-                  className={`w-20 h-20 rounded-2xl object-cover ring-4 ring-${getAccentColor(partnerAccent)} mx-auto mb-2`}
-                />
-              ) : (
-                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br from-lavender-100 to-sky-100 flex items-center justify-center text-2xl ring-4 ring-${getAccentColor(partnerAccent)} mx-auto mb-2`}>
-                  {partner?.name?.[0] || "P"}
-                </div>
-              )}
+              <button
+                onClick={() => partner?.photoURL && setShowPartnerPhoto(true)}
+                className="relative block mx-auto mb-2"
+                aria-label="View partner's photo"
+                style={{ cursor: partner?.photoURL ? 'pointer' : 'default' }}
+              >
+                {partner?.photoURL ? (
+                  <img
+                    src={partner.photoURL}
+                    alt={partner.name}
+                    className="w-20 h-20 rounded-2xl object-cover"
+                    style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}
+                  />
+                ) : (
+                  <div
+                    className="w-20 h-20 rounded-2xl bg-gradient-to-br from-lavender-100 to-sky-100 flex items-center justify-center text-2xl"
+                    style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.10)' }}
+                  >
+                    {partner?.name?.[0] || "P"}
+                  </div>
+                )}
+              </button>
               <p className={`text-sm font-medium text-${getAccentColor(partnerAccent)}`}>{partner?.name || "Partner"}</p>
             </div>
           </div>
 
           {/* Stats & Scoreboard */}
-          <div className="flex flex-col gap-4">
-            <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-              <div className="text-center p-3 rounded-2xl bg-white/30">
+          <div className="flex flex-col gap-3">
+            <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              <div className="flex-1 text-center py-3 rounded-2xl bg-white/30">
                 <Mail className="w-5 h-5 text-rose-400 mx-auto mb-1" />
                 <p className="text-xl font-bold text-gray-800">{letterCount}</p>
                 <p className="text-xs text-gray-500">Letters</p>
               </div>
-              <div className="text-center p-3 rounded-2xl bg-white/30">
+              <div className="flex-1 text-center py-3 rounded-2xl bg-white/30">
                 <Calendar className="w-5 h-5 text-green-400 mx-auto mb-1" />
                 <p className="text-xl font-bold text-gray-800">{daysTogether || 0}</p>
                 <p className="text-xs text-gray-500">Days</p>
               </div>
-              <div className="text-center p-3 rounded-2xl bg-white/30">
+              <div className="flex-1 text-center py-3 rounded-2xl bg-white/30">
                 <Gamepad2 className="w-5 h-5 text-lavender-300 mx-auto mb-1" />
                 <p className="text-xl font-bold text-gray-800">{gameCount}</p>
                 <p className="text-xs text-gray-500">Games</p>
@@ -401,6 +429,42 @@ export default function ProfilePage() {
         confirmText="Sign Out"
         isDanger={true}
       />
+
+      {/* Partner Photo Lightbox */}
+      {showPartnerPhoto && partner?.photoURL && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{
+            backgroundColor: 'rgba(0,0,0,0.70)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            animation: 'fadeInScale 0.22s ease',
+          }}
+          onClick={() => setShowPartnerPhoto(false)}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => setShowPartnerPhoto(false)}
+            className="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Photo */}
+          <img
+            src={partner.photoURL}
+            alt={partner.name || 'Partner'}
+            onClick={(e) => e.stopPropagation()}
+            className="rounded-2xl object-contain"
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              boxShadow: '0 8px 48px rgba(0,0,0,0.40)',
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
