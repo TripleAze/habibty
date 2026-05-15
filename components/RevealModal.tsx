@@ -89,6 +89,67 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
     tick();
   }, [stopTyping]);
 
+  // ─── Location Lock Gate ───────────────────────────────────
+  useEffect(() => {
+    if (!isOpen || !message) {
+      setIsLocationLocked(false);
+      setDistanceToUnlock(null);
+      return;
+    }
+
+    // Only apply for location-unlocked messages that haven't been unlocked yet
+    const loc = message.unlockLocation;
+    if (message.unlockType !== 'event' || !loc || message.isUnlocked) {
+      setIsLocationLocked(false);
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      // Can't check — fail open so the user isn't permanently blocked
+      setIsLocationLocked(false);
+      return;
+    }
+
+    let watchId: number;
+
+    const check = (pos: GeolocationPosition) => {
+      const dist = Math.round(
+        getDistance(pos.coords.latitude, pos.coords.longitude, loc.lat, loc.lng)
+      );
+      const radius = loc.radius ?? 200; // default 200 m if not set
+      if (dist <= radius) {
+        setIsLocationLocked(false);
+        setDistanceToUnlock(null);
+        // Mark as unlocked in Firestore so it stays unlocked next time
+        import('@/lib/messages').then(({ updateMessageStatus }) => {
+          updateMessageStatus(message.id, 'opened').catch(() => {});
+        });
+        navigator.geolocation.clearWatch(watchId);
+      } else {
+        setIsLocationLocked(true);
+        setDistanceToUnlock(dist);
+      }
+    };
+
+    const onError = () => {
+      // Location denied / unavailable — fail open so user isn't stuck
+      setIsLocationLocked(false);
+    };
+
+    // Get an immediate reading, then watch for movement
+    navigator.geolocation.getCurrentPosition(check, onError, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+    });
+    watchId = navigator.geolocation.watchPosition(check, onError, {
+      enableHighAccuracy: true,
+    });
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, [isOpen, message?.id, message?.unlockType, message?.isUnlocked]);
+
   useEffect(() => {
     if (isOpen && message) {
       setPhase('content');
