@@ -120,9 +120,14 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
       if (dist <= radius) {
         setIsLocationLocked(false);
         setDistanceToUnlock(null);
-        // Mark as unlocked in Firestore so it stays unlocked next time
-        import('@/lib/messages').then(({ updateMessageStatus }) => {
-          updateMessageStatus(message.id, 'opened').catch(() => {});
+        // Mark as opened only if the current user is the recipient
+        import('@/lib/firebase').then(({ auth }) => {
+          const currentUid = auth?.currentUser?.uid;
+          if (currentUid && currentUid === message.receiverId) {
+            import('@/lib/messages').then(({ updateMessageStatus }) => {
+              updateMessageStatus(message.id, 'opened').catch(() => {});
+            });
+          }
         });
         navigator.geolocation.clearWatch(watchId);
       } else {
@@ -160,6 +165,15 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
       setShowReplyInput(false);
       setReplyText('');
       setShowAllReplies(false);
+
+      // In preview mode (sender viewing their own letter) show content instantly
+      const senderPreview = !!(currentUserId.current && currentUserId.current === message.senderId);
+      if (senderPreview) {
+        setDisplayedText(message.content || '');
+        setIsFinishingTyping(true);
+        setTypingComplete(true);
+        return;
+      }
 
       if (message.type === 'text' && message.content) {
         typeText(message.content);
@@ -202,14 +216,13 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
       unsubReactions = unsubR;
       unsubReplies = unsubRep;
 
-      // Mark as opened
-      if (message.status !== 'opened') {
+      // Mark as opened — only if the current user is the recipient (not the sender previewing)
+      if (message.status !== 'opened' && currentUserId.current === message.receiverId) {
         const { updateMessageStatus } = await import('@/lib/messages');
         const { addMoment } = await import('@/lib/moments');
         await updateMessageStatus(message.id, 'opened');
 
-        const partnerId = message.senderId === currentUserId.current ? message.receiverId : message.senderId;
-        await addMoment(partnerId, {
+        await addMoment(message.senderId, {
           type: 'message_opened',
           title: `Opened a letter`,
           description: `"${message.title}" was finally read.`,
@@ -321,6 +334,9 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
       setSendingReply(false);
     }
   };
+
+  // Derive preview mode — sender tapping their own sent letter
+  const isPreview = !!(currentUserId.current && currentUserId.current === message?.senderId);
 
   if (!message) return null;
 
@@ -671,6 +687,12 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
             <span className="rev-pill-emoji">{message.emoji || '💌'}</span>
             <div className="rev-pill-divider" />
             <span className="rev-pill-title">{message.title}</span>
+            {isPreview && (
+              <>
+                <div className="rev-pill-divider" />
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: '#C9B8D8', textTransform: 'uppercase' }}>Your letter</span>
+              </>
+            )}
           </div>
 
           <button className="rev-close" onClick={onClose}>✕</button>
@@ -720,24 +742,26 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
             </div>
           </div>
 
-          <div 
-            className={`rev-swipe-hint ${isFinishingTyping && phase === 'content' ? '' : 'hide'}`}
-            onClick={(e) => { e.stopPropagation(); setPhase('actions'); }}
-            style={{
-              padding: '10px 24px',
-              borderRadius: '100px',
-              background: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(232, 160, 160, 0.2)',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-              cursor: 'pointer',
-              zIndex: 101,
-              pointerEvents: 'all'
-            }}
-          >
-            <span className="rev-hint-arrow" style={{ fontSize: 18, marginBottom: 2 }}>↑</span>
-            <span className="rev-hint-text" style={{ fontWeight: 700, color: '#E8A0A0' }}>Tap to React & Reply</span>
-          </div>
+          {!isPreview && (
+            <div 
+              className={`rev-swipe-hint ${isFinishingTyping && phase === 'content' ? '' : 'hide'}`}
+              onClick={(e) => { e.stopPropagation(); setPhase('actions'); }}
+              style={{
+                padding: '10px 24px',
+                borderRadius: '100px',
+                background: 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(232, 160, 160, 0.2)',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+                cursor: 'pointer',
+                zIndex: 101,
+                pointerEvents: 'all'
+              }}
+            >
+              <span className="rev-hint-arrow" style={{ fontSize: 18, marginBottom: 2 }}>↑</span>
+              <span className="rev-hint-text" style={{ fontWeight: 700, color: '#E8A0A0' }}>Tap to React & Reply</span>
+            </div>
+          )}
 
           {/* Location Lock Screen */}
           {isLocationLocked && (
@@ -758,108 +782,110 @@ export default function RevealModal({ isOpen, onClose, message }: RevealModalPro
           )}
         </div>
 
-        {/* Layer 2: Actions Sheet */}
-        <div className="rev-actions-sheet">
-          <div className="rev-drag-handle-wrapper">
-            <div className="rev-drag-handle" />
-            <button className="rev-hide-btn" onClick={() => setPhase('content')}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
-              </svg>
-            </button>
-          </div>
-
-          {/* Reactions Thread */}
-          {reactions.length > 0 && (
-            <div className="rev-reactions-thread">
-              {reactions.map((r, i) => (
-                <span key={i} className="rev-reaction-chip">{r.emoji}</span>
-              ))}
-            </div>
-          )}
-
-          {/* Replies Thread */}
-          {replies.length > 0 && (
-            <div>
-              <p className="rev-replies-label">Conversation</p>
-              {(showAllReplies ? replies : replies.slice(-2)).map((reply) => (
-                <div key={reply.id} className="rev-reply-item">
-                  <div className="rev-reply-avatar">
-                    {reply.userPhoto ? (
-                      <Image src={reply.userPhoto} alt="" fill className="object-cover" unoptimized />
-                    ) : (
-                      reply.userName.charAt(0).toUpperCase()
-                    )}
-                  </div>
-                  <div className="rev-reply-body">
-                    <span className="rev-reply-name">{reply.userName}</span>
-                    {reply.type === 'voice' && reply.mediaUrl ? (
-                      <MediaPlayer src={reply.mediaUrl} type="audio" />
-                    ) : (
-                      <p className="rev-reply-text">{reply.text}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {replies.length > 2 && !showAllReplies && (
-                <p className="rev-more-replies" onClick={() => setShowAllReplies(true)}>
-                  + {replies.length - 2} more replies
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="rev-action-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {REACTION_EMOJIS.slice(0, 4).map((emoji) => (
-                <button
-                  key={emoji}
-                  className={`rev-emoji-btn ${userReaction?.emoji === emoji ? 'active' : ''}`}
-                  onClick={() => handleReactionToggle(emoji)}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-
-            <button className="rev-play-secondary" onClick={() => {
-              onClose();
-              setTimeout(() => router.push('/games'), 300);
-            }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h2m-1-1v2"/>
-              </svg>
-              <span>Play Together ▸</span>
-            </button>
-          </div>
-
-          {/* Reply Input Row */}
-          {showReplyInput && (
-            <form className="rev-input-row" onSubmit={handleSendReply}>
-              <input 
-                className="rev-input"
-                placeholder="Type a response..."
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                autoFocus
-              />
-              <button className="rev-send" disabled={sendingReply || !replyText.trim()}>
-                {sendingReply ? '...' : '➤'}
+        {/* Layer 2: Actions Sheet — hidden entirely in preview mode */}
+        {!isPreview && (
+          <div className="rev-actions-sheet">
+            <div className="rev-drag-handle-wrapper">
+              <div className="rev-drag-handle" />
+              <button className="rev-hide-btn" onClick={() => setPhase('content')}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+                </svg>
               </button>
-            </form>
-          )}
+            </div>
 
-          {/* Primary Reply CTA */}
-          <button 
-            className="rev-reply-primary"
-            onClick={() => setShowReplyInput(!showReplyInput)}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            <span>{showReplyInput ? 'Close Reply' : 'Reply to message'}</span>
-          </button>
-        </div>
+            {/* Reactions Thread */}
+            {reactions.length > 0 && (
+              <div className="rev-reactions-thread">
+                {reactions.map((r, i) => (
+                  <span key={i} className="rev-reaction-chip">{r.emoji}</span>
+                ))}
+              </div>
+            )}
+
+            {/* Replies Thread */}
+            {replies.length > 0 && (
+              <div>
+                <p className="rev-replies-label">Conversation</p>
+                {(showAllReplies ? replies : replies.slice(-2)).map((reply) => (
+                  <div key={reply.id} className="rev-reply-item">
+                    <div className="rev-reply-avatar">
+                      {reply.userPhoto ? (
+                        <Image src={reply.userPhoto} alt="" fill className="object-cover" unoptimized />
+                      ) : (
+                        reply.userName.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className="rev-reply-body">
+                      <span className="rev-reply-name">{reply.userName}</span>
+                      {reply.type === 'voice' && reply.mediaUrl ? (
+                        <MediaPlayer src={reply.mediaUrl} type="audio" />
+                      ) : (
+                        <p className="rev-reply-text">{reply.text}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {replies.length > 2 && !showAllReplies && (
+                  <p className="rev-more-replies" onClick={() => setShowAllReplies(true)}>
+                    + {replies.length - 2} more replies
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="rev-action-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {REACTION_EMOJIS.slice(0, 4).map((emoji) => (
+                  <button
+                    key={emoji}
+                    className={`rev-emoji-btn ${userReaction?.emoji === emoji ? 'active' : ''}`}
+                    onClick={() => handleReactionToggle(emoji)}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+
+              <button className="rev-play-secondary" onClick={() => {
+                onClose();
+                setTimeout(() => router.push('/games'), 300);
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h2m-1-1v2"/>
+                </svg>
+                <span>Play Together ▸</span>
+              </button>
+            </div>
+
+            {/* Reply Input Row */}
+            {showReplyInput && (
+              <form className="rev-input-row" onSubmit={handleSendReply}>
+                <input 
+                  className="rev-input"
+                  placeholder="Type a response..."
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  autoFocus
+                />
+                <button className="rev-send" disabled={sendingReply || !replyText.trim()}>
+                  {sendingReply ? '...' : '➤'}
+                </button>
+              </form>
+            )}
+
+            {/* Primary Reply CTA */}
+            <button 
+              className="rev-reply-primary"
+              onClick={() => setShowReplyInput(!showReplyInput)}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>{showReplyInput ? 'Close Reply' : 'Reply to message'}</span>
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
