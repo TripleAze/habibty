@@ -284,7 +284,7 @@ export default function EditProfilePage() {
         <button
           onClick={handleSave}
           disabled={loading || uploading || saved}
-          className="w-full p-4 rounded-2xl bg-gradient-to-r from-rose-400 to-lavender-400 text-white font-bold shadow-lg shadow-rose-200/50 flex items-center justify-center gap-2 disabled:opacity-70 transition-all active:scale-[0.98]"
+          className="w-full py-5 px-4 rounded-2xl bg-gradient-to-r from-rose-400 to-lavender-400 text-white font-bold shadow-lg shadow-rose-200/50 flex items-center justify-center gap-2 disabled:opacity-70 transition-all active:scale-[0.98]"
         >
           {loading ? (
             <Loader2 className="w-5 h-5 animate-spin" />

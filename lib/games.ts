@@ -163,8 +163,8 @@ export async function rematch(gameId: string, initiatorUid: string): Promise<str
       if (!snap.exists()) return gameId;
       const data = snap.data() as GameState;
 
-      // If a rematch was already created by the partner, use that
-      if (data.rematchId) return data.rematchId;
+      // If a rematch was already created by the partner, use that (but not a self-reference)
+      if (data.rematchId && data.rematchId !== gameId) return data.rematchId;
 
       const nextId = generateGameId();
       const players = data.players || [];

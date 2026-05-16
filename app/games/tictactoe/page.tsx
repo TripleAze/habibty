@@ -71,6 +71,16 @@ function TicTacToeInner() {
     }
   }, [game?.rematchId, gameId, router]);
 
+  // Fix 2 — reset joiningRef whenever gameId changes so second+ rematches don't skip join
+  useEffect(() => {
+    joiningRef.current = false;
+  }, [gameId]);
+
+  // Fix 3 — reset rematching state whenever gameId changes (guards against no-remount edge case)
+  useEffect(() => {
+    setRematching(false);
+  }, [gameId]);
+
   useEffect(() => {
     if (!game || !uid || game.status !== 'waiting' || joiningRef.current) return;
     if (!game.players?.includes(uid)) {
@@ -185,11 +195,22 @@ function TicTacToePlaying({
     makeMove(gameId, uid, i);
   };
 
+  // Fix 1 — try/catch/finally + same-ID guard prevents permanent "Starting…" spinner
   const handleRematch = async () => {
     setRematching(true);
-    const { rematch: rm } = await import('@/lib/games');
-    const newId = await rm(gameId, uid);
-    router.replace(`/games/tictactoe?id=${newId}`);
+    try {
+      const { rematch: rm } = await import('@/lib/games');
+      const newId = await rm(gameId, uid);
+      if (newId === gameId) {
+        // Transaction returned the current ID (self-referencing guard hit) — just reset
+        setRematching(false);
+        return;
+      }
+      router.replace(`/games/tictactoe?id=${newId}`);
+    } catch (e) {
+      console.error('Rematch failed:', e);
+      setRematching(false);
+    }
   };
 
   const copyCode = () => { navigator.clipboard.writeText(gameId); setCopied(true); setTimeout(() => setCopied(false), 2000); };
