@@ -20,7 +20,7 @@ interface GameState {
   currentTurn: string; // The Inquisitor (who picks)
   currentPrompt: Prompt | null;
   promptType: 'truth' | 'dare' | null;
-  status: 'waiting' | 'selecting' | 'awaiting_response' | 'awaiting_approval' | 'active';
+  status: 'waiting' | 'selecting' | 'awaiting_response' | 'awaiting_approval';
   response: {
     text?: string;
     submittedBy: string;
@@ -187,7 +187,7 @@ function TruthOrDareInner() {
       players: arrayUnion(uid),
       [`playerNames.${uid}`]: user?.displayName || 'Partner',
       ...(user?.photoURL ? { [`playerPhotos.${uid}`]: user.photoURL } : {}),
-      status: 'active', // Set to active when second player joins
+      status: 'selecting', // Set to selecting when second player joins
     });
   };
 
